@@ -12,6 +12,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- CSS separado: todo o visual do jogo fica em css/style.css -->
 <link rel="stylesheet" href="css/style.css">
+<!-- GSAP: timelines, FLIP, springs/easing e microinterações de alta performance -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js" defer></script>
 <!-- Favicon -->
 <link rel="icon" type="image/png" sizes="512x512" href="/assets/cards/icon.png?v=1.8.3">
 <link rel="shortcut icon" type="image/png" href="/assets/cards/icon.png?v=1.8.3">
@@ -20,7 +22,7 @@
 <link rel="apple-touch-icon" sizes="512x512" href="/assets/cards/icon.png?v=1.8.3">
 </head>
 <body>
-<div class="version-badge" aria-label="Versão atual">v2.0.0</div>
+<div class="version-badge" aria-label="Versão atual">v2.0.2</div>
 <div class="grain"></div>
 <div class="vignette"></div>
 <canvas id="fxCanvas" class="fx-canvas" aria-hidden="true"></canvas>
@@ -159,6 +161,7 @@
   </aside>
 </div>
 <div id="enemyActionPopup" class="enemy-action-popup" role="status" aria-live="polite"></div>
+<div id="actionBlockPopup" class="action-block-popup" role="alert" aria-live="assertive"></div>
 <!-- Tooltip dinâmico das cartas -->
 <div id="tip" class="tip"><b id="tipName"></b><span id="tipCond" class="cond"></span><br><span id="tipAbility"></span></div>
 <!-- Modal de regras / fim de partida -->
@@ -166,6 +169,7 @@
   <!-- JavaScript separado: regras, BOT, renderização e interações (inalterado) -->
   <script src="js/game.js"></script>
   <script src="js/multiplayer.js"></script>
+<script src="js/battle-fx.js"></script>
   <script>
     // Navegação visual da mão: não interfere na lógica do jogo.
     document.querySelectorAll('.hand-nav').forEach(btn => {
