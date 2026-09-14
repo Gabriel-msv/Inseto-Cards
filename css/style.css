@@ -207,6 +207,7 @@ button { cursor: pointer; }
   .hand-carousel { height: 135px; flex: 0 0 135px; overflow-x: auto; overflow-y: hidden; touch-action: pan-x; }
   .hand { flex-direction: row; align-items: stretch; gap: 6px; width: max-content; min-width: 100%; height: 100%; padding: 3px; }
   .hand .card, .right-sidebar .hand .card { width: 15vw; min-width: 15vw; height: auto; aspect-ratio: 84 / 118; touch-action: none; }
+  .battle-main .card { touch-action: none; }
   .right-sidebar { padding-bottom: 184px; }
 }
 @media (max-width: 520px) {
@@ -216,5 +217,6 @@ button { cursor: pointer; }
   .hand-panel { height: 155px; }
   .hand-carousel { height: 116px; flex-basis: 116px; }
   .hand .card, .right-sidebar .hand .card { width: 15vw; min-width: 15vw; touch-action: none; }
+  .battle-main .card { touch-action: none; }
   .right-sidebar { padding-bottom: 165px; }
 }

@@ -174,7 +174,7 @@ const DECK_KEYS = Object.keys(CARDS); // 40 cartas disponíveis, uma cópia de c
 // 2. ESTADO DA PARTIDA
 // Guarda jogadores, baralho, cemitério, turno e seleção do jogador.
 // ================================================================
-const APP_VERSION = '1.11.0'; // X=reforma, Y=adição, Z=correção de bug.
+const APP_VERSION = '1.11.1'; // X=reforma, Y=adição, Z=correção de bug.
 const state = { started: false, over: false, round: 1, turn: 'player', deck: [], grave: [], players: [null, null], selected: null, targetMode: null, log: [], skip: [false, false], tie: false };
 function P(name, bot = false) { return { name, bot, leaves: 5, hand: [], front: null, bank: [null, null, null], moves: 1, std: 1, passiveBuy: false, adubo: 0, antiSteal: 0, revealed: 0 }; }
 function card(key, owner) { let c = CARDS[key]; return { id: Math.random().toString(36).slice(2), key, owner, atk: c.atk ?? 0, hp: c.hp ?? 0, maxHp: c.hp ?? 0, baseAtk: c.atk ?? 0, baseHp: c.hp ?? 0, damage: 0, buffs: [], equipment: [], activeTurns: 0, poison: 0, poisonTurns: 0, root: 0, skipAttack: 0, reload: 0, protectedOnce: key === 'louva', barataUsed: false, mel: false, customAbility: null, copiedKey: null, debuffNext: false }; }
@@ -459,8 +459,8 @@ function installTouchDrag() {
   if (!window.matchMedia('(max-width: 900px)').matches) return;
   let drag = null;
   document.addEventListener('pointerdown', e => {
-    let cardEl = e.target.closest('.card[draggable="true"]');
-    if (!cardEl) return;
+    let cardEl = e.target.closest('.card');
+    if (!cardEl || !cardEl.draggable) return;
     drag = { id: cardEl.dataset.cardId, x: e.clientX, y: e.clientY, moved: false, el: cardEl };
     cardEl.setPointerCapture?.(e.pointerId);
   }, { passive: true });
@@ -472,7 +472,7 @@ function installTouchDrag() {
       e.preventDefault();
     }
   }, { passive: false });
-  document.addEventListener('pointerup', e => {
+  function finishTouchDrag(e) {
     if (!drag) return;
     let current = drag;
     drag = null;
@@ -484,7 +484,9 @@ function installTouchDrag() {
     if (target?.id === 'hand') handleDropOnHand(fakeEvent);
     else if (target?.classList.contains('slot')) handleDropOnSlot(target, fakeEvent);
     clearDropTargets();
-  }, { passive: true });
+  }
+  document.addEventListener('pointerup', finishTouchDrag, { passive: true });
+  document.addEventListener('pointercancel', finishTouchDrag, { passive: true });
 }
 function renderGrave() {
   let top = document.getElementById('graveTop');
