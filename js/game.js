@@ -174,7 +174,7 @@ const DECK_KEYS = Object.keys(CARDS); // 40 cartas disponíveis, uma cópia de c
 // 2. ESTADO DA PARTIDA
 // Guarda jogadores, baralho, cemitério, turno e seleção do jogador.
 // ================================================================
-const APP_VERSION = '1.11.1'; // X=reforma, Y=adição, Z=correção de bug.
+const APP_VERSION = '1.11.2'; // X=reforma, Y=adição, Z=correção de bug.
 const state = { started: false, over: false, round: 1, turn: 'player', deck: [], grave: [], players: [null, null], selected: null, targetMode: null, log: [], skip: [false, false], tie: false };
 function P(name, bot = false) { return { name, bot, leaves: 5, hand: [], front: null, bank: [null, null, null], moves: 1, std: 1, passiveBuy: false, adubo: 0, antiSteal: 0, revealed: 0 }; }
 function card(key, owner) { let c = CARDS[key]; return { id: Math.random().toString(36).slice(2), key, owner, atk: c.atk ?? 0, hp: c.hp ?? 0, maxHp: c.hp ?? 0, baseAtk: c.atk ?? 0, baseHp: c.hp ?? 0, damage: 0, buffs: [], equipment: [], activeTurns: 0, poison: 0, poisonTurns: 0, root: 0, skipAttack: 0, reload: 0, protectedOnce: key === 'louva', barataUsed: false, mel: false, customAbility: null, copiedKey: null, debuffNext: false }; }
@@ -444,9 +444,9 @@ function installDropTargets() { document.querySelectorAll('#pf0,#pb0,#pb1,#pb2,#
 function syncTouchCardIds() {
   let p = state.players[0];
   if (!p) return;
-  document.querySelectorAll('#hand .card').forEach((el, i) => { if (p.hand[i]) el.dataset.cardId = p.hand[i].id });
+  document.querySelectorAll('#hand .card').forEach((el, i) => { el.draggable = false; el.dataset.enemy = 'false'; if (p.hand[i]) el.dataset.cardId = p.hand[i].id });
   let fields = [['#pf0 .card', p.front], ['#pb0 .card', p.bank[0]], ['#pb1 .card', p.bank[1]], ['#pb2 .card', p.bank[2]]];
-  fields.forEach(([selector, c]) => { let el = document.querySelector(selector); if (el && c) el.dataset.cardId = c.id });
+  fields.forEach(([selector, c]) => { let el = document.querySelector(selector); if (el && c) { el.draggable = false; el.dataset.enemy = 'false'; el.dataset.cardId = c.id } });
 }
 function updateMobileHandVisibility() {
   let handPanel = document.querySelector('.hand-panel');
@@ -456,28 +456,44 @@ function updateMobileHandVisibility() {
   handPanel.classList.toggle('mobile-hand-visible', window.innerWidth > 900 || window.scrollY >= threshold);
 }
 function installTouchDrag() {
-  if (!window.matchMedia('(max-width: 900px)').matches) return;
   let drag = null;
   document.addEventListener('pointerdown', e => {
     let cardEl = e.target.closest('.card');
-    if (!cardEl || !cardEl.draggable) return;
-    drag = { id: cardEl.dataset.cardId, x: e.clientX, y: e.clientY, moved: false, el: cardEl };
-    cardEl.setPointerCapture?.(e.pointerId);
+    if (!cardEl || cardEl.dataset.enemy === 'true' || !cardEl.dataset.cardId) return;
+    e.preventDefault();
+    let ghost = cardEl.cloneNode(true);
+    ghost.classList.add('pointer-drag-ghost');
+    ghost.style.width = `${cardEl.getBoundingClientRect().width}px`;
+    ghost.style.height = `${cardEl.getBoundingClientRect().height}px`;
+    document.body.appendChild(ghost);
+    drag = { id: cardEl.dataset.cardId, x: e.clientX, y: e.clientY, moved: false, el: cardEl, ghost, pointerId: e.pointerId };
+    cardEl.classList.add('dragging');
+    prepareDropTargets(cardEl);
+    moveGhost(e);
   }, { passive: true });
   document.addEventListener('pointermove', e => {
     if (!drag) return;
+    e.preventDefault();
+    moveGhost(e);
     if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 8) {
       drag.moved = true;
       drag.el.classList.add('dragging');
-      e.preventDefault();
     }
   }, { passive: false });
+  function moveGhost(e) {
+    if (!drag) return;
+    drag.ghost.style.transform = `translate3d(${e.clientX - drag.ghost.offsetWidth / 2}px, ${e.clientY - drag.ghost.offsetHeight / 2}px, 0)`;
+    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+    let target = document.elementFromPoint(e.clientX, e.clientY)?.closest('.slot, #hand');
+    if (target) target.classList.add('drag-over');
+  }
   function finishTouchDrag(e) {
     if (!drag) return;
     let current = drag;
     drag = null;
     current.el.classList.remove('dragging');
-    if (!current.moved || !current.id) return;
+    current.ghost.remove();
+    if (!current.moved || !current.id) { clearDropTargets(); return; }
     touchDropAt = Date.now() + 350;
     let target = document.elementFromPoint(e.clientX, e.clientY)?.closest('.slot, #hand');
     let fakeEvent = { preventDefault() {}, dataTransfer: { getData() { return current.id } } };
@@ -505,7 +521,7 @@ function renderGrave() {
 // Atualiza o tabuleiro inteiro a partir do estado atual.
 // ================================================================
 function render() { let p = state.players[0], o = state.players[1]; if (!p) return; document.getElementById('round').textContent = state.round; document.getElementById('turn').textContent = state.turn === 0 ? 'VOCÊ' : 'BOT'; document.getElementById('turnNo').textContent = state.round; document.getElementById('deckCount').textContent = state.deck.length; document.getElementById('deckCount2').textContent = state.deck.length; document.getElementById('graveCount').textContent = state.grave.length; document.getElementById('graveCount2').textContent = state.grave.length; document.getElementById('playerLeaves').textContent = p.leaves; document.getElementById('enemyLeaves').textContent = o.leaves; document.getElementById('playerName').textContent = p.name.toUpperCase(); document.getElementById('moves').textContent = p.moves; document.getElementById('std').textContent = p.std; document.getElementById('draw').disabled = state.turn !== 0 || p.std <= 0 || p.leaves < 3 || !state.deck.length; document.getElementById('harvest').disabled = state.turn !== 0 || p.std <= 0; document.getElementById('attackBtn').disabled = state.turn !== 0 || state.over || p.std <= 0 || !p.front; document.getElementById('secondMove').disabled = state.turn !== 0 || state.over || p.moves <= 0 || p.std <= 0; document.getElementById('returnBtn').disabled = state.turn !== 0 || state.over || p.moves <= 0 || !state.selectedField; document.getElementById('sell').disabled = state.turn !== 0 || p.std <= 0 || state.selected === null && !state.selectedField; document.getElementById('end').disabled = state.turn !== 0 || state.over; document.getElementById('attackBtn').classList.toggle('waiting', !!(state.targetMode && state.targetMode.type === 'attack')); document.getElementById('returnBtn').classList.toggle('waiting', !!state.selectedField); document.getElementById('sell').classList.toggle('waiting', !!(state.selected !== null || state.selectedField)); renderSlot('ef0', o.front, true, true); for (let i = 0; i < 3; i++) { renderSlot('eb' + i, o.bank[i], true, false); renderSlot('pb' + i, p.bank[i], false, false) } renderSlot('pf0', p.front, false, true); let h = document.getElementById('hand'); h.innerHTML = ''; p.hand.forEach((c, i) => { let el = makeCard(c, false); if (state.selected === i) el.classList.add('selected'); el.onclick = () => clickCard(0, 'hand', i); h.appendChild(el) }); document.getElementById('log').innerHTML = state.log.map(x => `<div>› ${x}</div>`).join('') }
-function renderSlot(id, c, enemy, front) { let s = document.getElementById(id); s.innerHTML = ''; if (!c) { s.textContent = front ? 'FRONTE' : 'BANCO'; return } let el = makeCard(c, enemy); if (front) el.classList.add('fronte-card'); if (c.equipment && c.equipment.length) { el.classList.add('equipped-card'); c.equipment.forEach(item => { let badge = document.createElement('span'); badge.className = 'equipment-preview'; badge.textContent = CARDS[item.key].emoji; el.appendChild(badge) }) } if (c.activeTurns > 0) { let counter = document.createElement('span'); counter.className = 'effect-counter'; counter.textContent = `${c.activeTurns} turnos`; el.appendChild(counter) } s.appendChild(el); el.onclick = () => clickCard(enemy ? 1 : 0, front ? 'front' : 'bank', front ? 0 : Number(id.slice(-1))); if (!enemy) el.title = 'Clique para mover'; }
+function renderSlot(id, c, enemy, front) { let s = document.getElementById(id); s.innerHTML = ''; if (!c) { s.textContent = front ? 'FRONTE' : 'BANCO'; return } let el = makeCard(c, enemy); el.draggable = false; el.dataset.enemy = enemy ? 'true' : 'false'; el.dataset.cardId = c.id; if (front) el.classList.add('fronte-card'); if (c.equipment && c.equipment.length) { el.classList.add('equipped-card'); c.equipment.forEach(item => { let badge = document.createElement('span'); badge.className = 'equipment-preview'; badge.textContent = CARDS[item.key].emoji; el.appendChild(badge) }) } if (c.activeTurns > 0) { let counter = document.createElement('span'); counter.className = 'effect-counter'; counter.textContent = `${c.activeTurns} turnos`; el.appendChild(counter) } s.appendChild(el); el.onclick = () => clickCard(enemy ? 1 : 0, front ? 'front' : 'bank', front ? 0 : Number(id.slice(-1))); if (!enemy) el.title = 'Clique para mover'; }
 // Cria o elemento visual de uma carta e liga eventos de interação.
 function makeCard(c, enemy) { let d = CARDS[c.key], el = document.createElement('div'); let art = CARD_IMAGES[c.key]; el.className = 'card' + (enemy ? ' enemy-card' : '') + (art ? ' has-art' : ''); el.draggable = !enemy; let hp = Math.max(0, c.hp), atk = Math.max(0, c.atk); el.innerHTML = `${art ? `<div class=\"card-art-wrap\"><img class=\"card-art\" src=\"${art}\" alt=\"${d.name}\" draggable=\"false\"></div>` : ''}<span class=\"card-cost\">${d.cost} 🍃</span><div class=\"card-body\"><div class=\"card-silhouette\">${art ? '' : d.emoji}</div></div><div class=\"card-footer\"><div class=\"card-name\">${d.name}</div><div class=\"card-stats\"><span class=\"atk\">⚔ ${atk}</span><span class=\"hp\">♥ ${hp}/${c.maxHp || ''}</span></div></div>`; el.addEventListener('mouseenter', e => showTip(e, c)); el.addEventListener('mouseleave', hideTip); if (!enemy) { el.addEventListener('dragstart', e => { e.stopPropagation(); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', c.id); el.classList.add('dragging'); prepareDropTargets(c) }); el.addEventListener('dragend', () => { el.classList.remove('dragging'); clearDropTargets() }); } return el }
 // ================================================================

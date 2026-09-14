@@ -123,6 +123,7 @@ button { cursor: pointer; }
 .turn { text-align: center; color: var(--amber); font-weight: 700; }
 
 .card { position: relative; display: flex; flex-direction: column; width: 84px; height: 118px; flex: 0 0 auto; padding: 5px; overflow: hidden; background: var(--panel-light); border: 1px solid var(--line); border-radius: 8px; }
+.pointer-drag-ghost { position: fixed !important; top: 0; left: 0; z-index: 1000; pointer-events: none; opacity: .82; margin: 0 !important; transform-origin: top left; }
 .equipped-card { margin-top: 8px; overflow: visible; }
 .equipped-card::before { content: 'EQUIPADO'; position: absolute; top: -8px; left: 4px; z-index: 3; padding: 1px 3px; color: var(--amber); background: var(--panel); border: 1px solid var(--line); border-radius: 3px; font-size: 6px; }
 .equipment-preview { position: absolute; top: -6px; right: -10px; z-index: 2; padding: 2px 4px; background: var(--panel-light); border: 1px solid var(--amber); border-radius: 4px; font-size: 13px; }
