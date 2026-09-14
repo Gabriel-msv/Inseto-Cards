@@ -1,21 +1,23 @@
 /* ============================================================================
-   INSETO CARDS — BATTLE FX / MOTION SYSTEM
-   GSAP-powered visual layer. Does not change game rules.
+   INSETO CARDS — BATTLE FX 2.0.3
+   Camada puramente visual. NÃO altera a estrutura do tabuleiro nem as regras.
+   Requer GSAP 3.x carregado antes deste arquivo.
    ============================================================================ */
 (() => {
   'use strict';
 
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-  const reduceMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const reduced = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const gs = () => window.gsap;
-  const safe = (fn) => { try { fn?.(); } catch (_) {} };
+  const safe = fn => { try { fn?.(); } catch (_) {} };
 
-  const MotionFX = {
+  const FX = {
     booted: false,
-    firstRender: true,
-    lastCards: new Map(),
-    cardTimers: new WeakMap(),
+    rendered: false,
+    swayTargets: new WeakSet(),
+    popupObserver: null,
+    stateObserver: null,
 
     boot() {
       if (this.booted) return;
@@ -25,351 +27,373 @@
         g.config({ force3D: true, nullTargetWarn: false });
         g.defaults({ overwrite: 'auto' });
       }
-
-      this.installRenderFLIP();
-      this.installBoardFX();
-      this.installInteractions();
+      this.wrapRender();
+      this.wrapGameFX();
+      this.installCardMotion();
+      this.installPointerFX();
+      this.installStateMotion();
       this.installPopups();
-      this.installMobileUX();
       this.installAmbient();
-      this.animateIntro();
+      this.intro();
     },
 
-    installRenderFLIP() {
-      if (typeof window.render !== 'function') return;
-      const originalRender = window.render;
-      if (originalRender.__motionWrapped) return;
-
+    wrapRender() {
+      if (typeof window.render !== 'function' || window.render.__motion203) return;
+      const original = window.render;
+      const self = this;
       const wrapped = function (...args) {
         const before = new Map();
         $$('.card[data-card-id]').forEach(el => {
-          const id = el.dataset.cardId;
-          if (!id) return;
           const r = el.getBoundingClientRect();
-          before.set(id, { x: r.left, y: r.top, w: r.width, h: r.height, zone: el.parentElement?.id || '' });
+          before.set(el.dataset.cardId, { x:r.left, y:r.top, w:r.width, h:r.height, parent:el.parentElement });
         });
-
-        const result = originalRender.apply(this, args);
-
+        const result = original.apply(this, args);
         requestAnimationFrame(() => {
-          if (reduceMotion()) return;
+          if (reduced()) return;
           $$('.card[data-card-id]').forEach(el => {
-            const id = el.dataset.cardId;
-            if (!id) return;
-            const now = el.getBoundingClientRect();
-            const old = before.get(id);
-            const fresh = !old;
-            const moved = old && (Math.abs(old.x - now.left) > 3 || Math.abs(old.y - now.top) > 3 || old.zone !== (el.parentElement?.id || ''));
-
-            if (fresh) {
-              MotionFX.enterCard(el);
-            } else if (moved) {
-              MotionFX.flipCard(el, old, now);
-            }
+            const old = before.get(el.dataset.cardId);
+            const r = el.getBoundingClientRect();
+            if (!old) self.cardEnter(el);
+            else if (Math.abs(old.x-r.left)>2 || Math.abs(old.y-r.top)>2 || old.parent !== el.parentElement) self.cardFLIP(el, old, r);
           });
-          MotionFX.refreshCards();
+          self.refreshCards();
+          self.refreshSelection();
         });
         return result;
       };
-      wrapped.__motionWrapped = true;
+      wrapped.__motion203 = true;
       window.render = wrapped;
     },
 
-    enterCard(el) {
-      const g = gs();
-      if (!g || reduceMotion()) return;
-      const rect = el.getBoundingClientRect();
-      const fromY = rect.top > innerHeight * .65 ? 38 : -30;
-      g.fromTo(el,
-        { autoAlpha: 0, y: fromY, scale: .72, rotateZ: (Math.random() * 10 - 5), rotateY: 20, filter: 'blur(7px) brightness(1.5)' },
-        { autoAlpha: 1, y: 0, scale: 1, rotateZ: 0, rotateY: 0, filter: 'blur(0px) brightness(1)', duration: .68, ease: 'back.out(1.7)', clearProps: 'filter' }
+    cardEnter(el) {
+      const g = gs(); if (!g || reduced()) return;
+      const fromBottom = el.getBoundingClientRect().top > innerHeight * .58;
+      const tl = g.timeline({ defaults:{ overwrite:'auto' } });
+      tl.fromTo(el,
+        { autoAlpha:0, y:fromBottom?42:-34, scale:.58, rotateZ:(Math.random()*18-9), rotateY:fromBottom?-24:24, filter:'blur(9px) brightness(1.7)' },
+        { autoAlpha:1, y:0, scale:1, rotateZ:0, rotateY:0, filter:'blur(0px) brightness(1)', duration:.72, ease:'back.out(1.55)', clearProps:'filter' }
       );
-      g.fromTo(el.querySelector('.card-art-wrap'), { scale: 1.15 }, { scale: 1, duration: .75, ease: 'power3.out' });
+      tl.fromTo(el.querySelector('.card-art-wrap'), { scale:1.2, rotate:2 }, { scale:1, rotate:0, duration:.82, ease:'power3.out' }, '<');
+      this.spark(el, 12, 42);
     },
 
-    flipCard(el, old, now) {
-      const g = gs();
-      if (!g || reduceMotion()) return;
-      const dx = old.x - now.left;
-      const dy = old.y - now.top;
-      const sx = old.w / Math.max(now.width, 1);
-      const sy = old.h / Math.max(now.height, 1);
+    cardFLIP(el, old, now) {
+      const g = gs(); if (!g || reduced()) return;
       g.fromTo(el,
-        { x: dx, y: dy, scaleX: sx, scaleY: sy, rotateY: 14, filter: 'brightness(1.35)' },
-        { x: 0, y: 0, scaleX: 1, scaleY: 1, rotateY: 0, filter: 'brightness(1)', duration: .62, ease: 'expo.out', clearProps: 'filter' }
+        { x:old.x-now.left, y:old.y-now.top, scaleX:old.w/Math.max(now.width,1), scaleY:old.h/Math.max(now.height,1), rotateY:16, rotateZ:(old.x-now.left)/12, filter:'brightness(1.45)' },
+        { x:0, y:0, scaleX:1, scaleY:1, rotateY:0, rotateZ:0, filter:'brightness(1)', duration:.7, ease:'expo.out', clearProps:'filter' }
       );
-      g.fromTo(el, { boxShadow: '0 0 0 rgba(125,245,156,0)' }, { boxShadow: '0 0 32px rgba(125,245,156,.22)', duration: .18, yoyo: true, repeat: 1, clearProps: 'boxShadow' });
+      g.fromTo(el, { boxShadow:'0 0 0 rgba(216,255,125,0)' }, { boxShadow:'0 0 30px rgba(216,255,125,.26)', duration:.16, yoyo:true, repeat:1, clearProps:'boxShadow' });
+      this.spark(el, 8, 30);
     },
 
     refreshCards() {
-      if (reduceMotion()) return;
       $$('.card').forEach(el => {
-        if (el.dataset.motionReady) return;
-        el.dataset.motionReady = '1';
-        this.cardTilt(el);
+        if (!el.dataset.motionReady) {
+          el.dataset.motionReady = '1';
+          this.cardInteraction(el);
+        }
+        this.startHypnoticSway(el);
       });
     },
 
-    cardTilt(el) {
-      const g = gs();
-      if (!g) return;
-      const isTouch = matchMedia?.('(pointer: coarse)').matches;
+    startHypnoticSway(el) {
+      const g = gs(); if (!g || reduced() || this.swayTargets.has(el)) return;
+      this.swayTargets.add(el);
+      const phase = Math.random() * 1.5;
+      const amp = el.closest('#hand, .hand') ? 1.35 : 0.72;
+      const duration = 2.8 + Math.random() * 1.3;
+      g.to(el, {
+        rotation: amp,
+        yoyo:true,
+        repeat:-1,
+        duration,
+        delay:phase,
+        ease:'sine.inOut',
+        transformOrigin:'50% 100%',
+        overwrite:false
+      });
+      g.to(el, {
+        rotationY:1.1,
+        yoyo:true,
+        repeat:-1,
+        duration:duration*1.7,
+        delay:phase+.25,
+        ease:'sine.inOut',
+        overwrite:false
+      });
+    },
 
-      if (!isTouch) {
+    cardInteraction(el) {
+      const g = gs(); if (!g || reduced()) return;
+      const coarse = matchMedia?.('(pointer: coarse)').matches;
+      if (!coarse) {
         el.addEventListener('pointermove', e => {
           if (el.classList.contains('dragging')) return;
           const r = el.getBoundingClientRect();
-          const px = (e.clientX - r.left) / r.width - .5;
-          const py = (e.clientY - r.top) / r.height - .5;
-          g.to(el, { rotateY: px * 12, rotateX: -py * 12, x: px * 4, y: py * 3, duration: .25, ease: 'power2.out', transformPerspective: 700 });
-          const art = el.querySelector('.card-art');
-          if (art) g.to(art, { x: px * 5, y: py * 4, scale: 1.045, duration: .25, overwrite: true });
+          const px=(e.clientX-r.left)/r.width-.5, py=(e.clientY-r.top)/r.height-.5;
+          g.to(el,{ rotation:0, rotateY:px*15, rotateX:-py*14, x:px*5, y:py*4, scale:1.055, duration:.25, ease:'power3.out' });
+          const art=el.querySelector('.card-art');
+          if(art) g.to(art,{x:px*7,y:py*5,scale:1.06,duration:.28,ease:'power2.out'});
         });
-        el.addEventListener('pointerleave', () => {
-          g.to(el, { rotateY: 0, rotateX: 0, x: 0, y: 0, duration: .45, ease: 'elastic.out(1,.5)' });
-          const art = el.querySelector('.card-art');
-          if (art) g.to(art, { x: 0, y: 0, scale: 1, duration: .45, ease: 'elastic.out(1,.5)' });
-        });
+        el.addEventListener('pointerleave',()=>this.releaseCard(el));
       } else {
-        el.addEventListener('pointerdown', () => g.to(el, { scale: 1.055, y: -5, duration: .16, ease: 'power2.out' }), { passive: true });
-        el.addEventListener('pointerup', () => g.to(el, { scale: 1, y: 0, duration: .3, ease: 'back.out(2)' }), { passive: true });
-        el.addEventListener('pointercancel', () => g.to(el, { scale: 1, y: 0, duration: .3 }), { passive: true });
+        el.addEventListener('pointerdown',()=>g.to(el,{rotation:0,scale:1.065,y:-6,duration:.12,ease:'power2.out'}),{passive:true});
+        el.addEventListener('pointerup',()=>this.releaseCard(el),{passive:true});
+        el.addEventListener('pointercancel',()=>this.releaseCard(el),{passive:true});
       }
     },
 
-    installBoardFX() {
-      const board = $('.board');
-      if (!board) return;
-      const original = window.FX;
-      if (!original || original.__motionEnhanced) return;
-      original.__motionEnhanced = true;
-      const baseBoard = original.boardState.bind(original);
-      const baseRing = original.ring.bind(original);
-      const baseBurst = original.burst.bind(original);
-      const baseSlash = original.slash.bind(original);
-      const baseLeaves = original.leaves.bind(original);
+    releaseCard(el) {
+      const g=gs(); if(!g || reduced()) return;
+      g.to(el,{rotation:0,rotateX:0,rotateY:0,x:0,y:0,scale:1,duration:.55,ease:'elastic.out(1,.42)' });
+      const art=el.querySelector('.card-art');
+      if(art) g.to(art,{x:0,y:0,scale:1,duration:.5,ease:'elastic.out(1,.45)' });
+    },
 
-      original.boardState = (cls, ms = 550) => {
-        baseBoard(cls, ms);
-        if (reduceMotion()) return;
-        const g = gs();
-        const b = $('.board');
-        if (!g || !b) return;
-        const map = {
-          'fx-attack': () => this.attackCinematic(),
-          'fx-hit': () => this.hitCinematic(),
-          'fx-summon': () => this.summonCinematic(),
-          'fx-move': () => this.moveCinematic(),
-          'fx-draw': () => this.drawCinematic(),
-          'fx-harvest': () => this.harvestCinematic()
+    wrapGameFX() {
+      const base = window.FX;
+      if (!base || base.__motion203) return;
+      base.__motion203 = true;
+      const boardState = base.boardState.bind(base);
+      const ring = base.ring.bind(base);
+      const burst = base.burst.bind(base);
+      const slash = base.slash.bind(base);
+      const leaves = base.leaves.bind(base);
+      base.boardState = (cls, ms=550) => {
+        boardState(cls,ms);
+        if(reduced()) return;
+        const map={
+          'fx-attack':()=>this.attack(),
+          'fx-hit':()=>this.hit(),
+          'fx-summon':()=>this.summon(),
+          'fx-move':()=>this.move(),
+          'fx-draw':()=>this.draw(),
+          'fx-harvest':()=>this.harvest()
         };
         safe(map[cls]);
       };
-
-      original.ring = (el) => {
-        baseRing(el);
-        this.energyRing(el);
-      };
-      original.burst = (el, n = 12) => {
-        baseBurst(el, n);
-        this.glitterBurst(el, Math.min(28, n + 8));
-      };
-      original.slash = (from, to) => {
-        baseSlash(from, to);
-        this.attackBeam(from, to);
-      };
-      original.leaves = (from, to) => {
-        baseLeaves(from, to);
-        this.leafStream(from, to);
-      };
+      base.ring = el => { ring(el); this.energy(el); };
+      base.burst = (el,n=12) => { burst(el,n); this.spark(el,Math.min(34,n+12),70); };
+      base.slash = (a,b) => { slash(a,b); this.beam(a,b); this.impact(b); };
+      base.leaves = (a,b) => { leaves(a,b); this.leafStream(a,b); };
     },
 
-    attackCinematic() {
-      const g = gs();
-      if (!g) return;
-      const cards = $$('.pf0 .card, .ef0 .card, .pb0 .card, .eb0 .card, .eb1 .card, .eb2 .card');
-      g.timeline({ defaults: { overwrite: 'auto' } })
-        .to('.battle-main', { x: -3, duration: .055, ease: 'power2.out' })
-        .to('.battle-main', { x: 3, duration: .07, ease: 'power2.inOut' })
-        .to('.battle-main', { x: 0, duration: .09, ease: 'power2.out' });
-      if (cards.length) g.fromTo(cards, { scale: 1 }, { scale: 1.035, duration: .11, stagger: .018, yoyo: true, repeat: 1, ease: 'power2.inOut' });
+    attack() {
+      const g=gs(); if(!g) return;
+      const main=$('.battle-main');
+      if(main) g.timeline().to(main,{x:-5,rotateZ:-.18,duration:.045,ease:'power4.out'}).to(main,{x:5,rotateZ:.18,duration:.06}).to(main,{x:-2,rotateZ:-.06,duration:.05}).to(main,{x:0,rotateZ:0,duration:.11,ease:'elastic.out(1,.5)'});
+      const cards=$$('.pf0 .card,.ef0 .card,.pb0 .card,.eb0 .card,.eb1 .card,.eb2 .card');
+      if(cards.length) g.fromTo(cards,{scale:1},{scale:1.045,duration:.1,stagger:.014,yoyo:true,repeat:1,ease:'power2.inOut'});
+      this.shockwave($('.board'), 'coral');
     },
 
-    hitCinematic() {
-      const g = gs(); if (!g) return;
-      g.fromTo('.board', { filter: 'brightness(1)' }, { filter: 'brightness(1.2)', duration: .07, yoyo: true, repeat: 1, clearProps: 'filter' });
+    hit() {
+      const g=gs(); if(!g) return;
+      g.timeline().to('.board',{filter:'brightness(1.65) saturate(1.35)',duration:.055}).to('.board',{filter:'brightness(1) saturate(1)',duration:.22,clearProps:'filter'});
+      this.shockwave($('.board'),'white');
     },
 
-    summonCinematic() {
-      const g = gs(); if (!g) return;
-      const target = $('.pf0 .card, .pb0 .card, .pb1 .card, .pb2 .card');
-      if (!target) return;
-      g.timeline()
-        .fromTo(target, { scale: .55, rotateZ: -10, filter: 'brightness(2) saturate(1.5)' }, { scale: 1.08, rotateZ: 2, duration: .28, ease: 'back.out(2)' })
-        .to(target, { scale: 1, rotateZ: 0, filter: 'brightness(1)', duration: .42, ease: 'elastic.out(1,.55)', clearProps: 'filter' });
-      this.glitterBurst(target, 22);
+    summon() {
+      const g=gs(); if(!g) return;
+      const target=$('.pf0 .card, .pb0 .card, .pb1 .card, .pb2 .card');
+      if(!target) return;
+      g.timeline().fromTo(target,{scale:.38,rotateZ:-16,rotateY:-30,filter:'brightness(2.4) saturate(1.8)'},{scale:1.13,rotateZ:3,rotateY:0,duration:.3,ease:'back.out(2.2)'}).to(target,{scale:1,rotateZ:0,filter:'brightness(1)',duration:.5,ease:'elastic.out(1,.48)',clearProps:'filter'});
+      this.energy(target); this.spark(target,32,95); this.rune(target);
     },
 
-    moveCinematic() {
-      const g = gs(); if (!g) return;
-      g.fromTo('.board', { scale: 1 }, { scale: 1.006, duration: .16, yoyo: true, repeat: 1, ease: 'sine.inOut' });
+    move() {
+      const g=gs(); if(!g) return;
+      g.timeline().to('.battle-main',{scale:1.012,duration:.14,ease:'power2.out'}).to('.battle-main',{scale:1,duration:.38,ease:'elastic.out(1,.5)'});
+      this.shockwave($('.board'),'lime');
     },
 
-    drawCinematic() {
-      const g = gs(); if (!g) return;
-      const pile = $('.natureza .pile');
-      if (pile) g.fromTo(pile, { rotateY: 0, scale: 1 }, { rotateY: 360, scale: 1.1, duration: .7, ease: 'back.out(1.2)' });
+    draw() {
+      const g=gs(); if(!g) return;
+      const pile=$('.natureza .pile');
+      if(pile) g.timeline().to(pile,{rotateY:-18,rotateZ:-5,scale:1.14,duration:.18,ease:'power2.out'}).to(pile,{rotateY:360,rotateZ:5,duration:.42,ease:'power3.inOut'}).to(pile,{rotateY:0,rotateZ:0,scale:1,duration:.36,ease:'elastic.out(1,.5)'});
+      this.energy(pile); this.spark(pile,24,80);
     },
 
-    harvestCinematic() {
-      const g = gs(); if (!g) return;
-      const pile = $('.natureza .pile');
-      if (pile) g.timeline().to(pile, { y: -7, scale: 1.08, duration: .18, ease: 'power2.out' }).to(pile, { y: 0, scale: 1, duration: .45, ease: 'bounce.out' });
+    harvest() {
+      const g=gs(); if(!g) return;
+      const pile=$('.natureza .pile');
+      if(pile) g.timeline().to(pile,{y:-10,scale:1.12,rotateZ:-2,duration:.16,ease:'power3.out'}).to(pile,{y:0,scale:1,rotateZ:0,duration:.5,ease:'bounce.out'});
+      this.spark(pile,20,75); this.leafStorm(pile);
     },
 
-    energyRing(el) {
-      if (reduceMotion()) return;
-      const g = gs(); const layer = $('#fxLayer');
-      if (!g || !layer || !el) return;
-      const r = el.getBoundingClientRect();
-      const ring = document.createElement('i');
-      ring.className = 'fx-energy-ring';
-      ring.style.left = `${r.left + r.width / 2}px`;
-      ring.style.top = `${r.top + r.height / 2}px`;
-      ring.style.width = `${Math.max(r.width, 42)}px`;
-      ring.style.height = `${Math.max(r.width, 42)}px`;
+    energy(el) {
+      if(reduced() || !el) return;
+      const g=gs(), layer=$('#fxLayer'); if(!g||!layer) return;
+      const r=el.getBoundingClientRect();
+      const ring=document.createElement('i'); ring.className='fx-energy-ring';
+      Object.assign(ring.style,{left:`${r.left+r.width/2}px`,top:`${r.top+r.height/2}px`,width:`${Math.max(r.width,40)}px`,height:`${Math.max(r.width,40)}px`});
       layer.appendChild(ring);
-      g.fromTo(ring, { opacity: .9, scale: .25, rotate: 0 }, { opacity: 0, scale: 2.8, rotate: 90, duration: .7, ease: 'power3.out', onComplete: () => ring.remove() });
+      g.timeline({onComplete:()=>ring.remove()}).fromTo(ring,{opacity:.9,scale:.2,rotate:0},{opacity:.25,scale:1.25,rotate:70,duration:.2,ease:'power2.out'}).to(ring,{opacity:0,scale:3.3,rotate:180,duration:.55,ease:'power3.out'});
     },
 
-    glitterBurst(el, count = 18) {
-      if (reduceMotion()) return;
-      const g = gs(); const layer = $('#fxLayer'); if (!g || !layer || !el) return;
-      const r = el.getBoundingClientRect();
-      for (let i = 0; i < count; i++) {
-        const p = document.createElement('i'); p.className = 'fx-glitter';
-        p.style.left = `${r.left + r.width / 2}px`; p.style.top = `${r.top + r.height / 2}px`;
-        const a = Math.random() * Math.PI * 2, d = 25 + Math.random() * 100;
-        p.style.setProperty('--tx', `${Math.cos(a) * d}px`); p.style.setProperty('--ty', `${Math.sin(a) * d}px`);
+    spark(el,count=16,distance=60) {
+      if(reduced() || !el) return;
+      const g=gs(), layer=$('#fxLayer'); if(!g||!layer) return;
+      const r=el.getBoundingClientRect();
+      for(let i=0;i<count;i++){
+        const p=document.createElement('i'); p.className='fx-glitter';
+        p.style.left=`${r.left+r.width/2}px`; p.style.top=`${r.top+r.height/2}px`;
+        const a=Math.random()*Math.PI*2,d=18+Math.random()*distance;
         layer.appendChild(p);
-        g.to(p, { x: `var(--tx)`, y: `var(--ty)`, scale: .1, opacity: 0, rotation: Math.random() * 360, duration: .45 + Math.random() * .4, delay: Math.random() * .05, ease: 'power3.out', onComplete: () => p.remove() });
+        g.to(p,{x:Math.cos(a)*d,y:Math.sin(a)*d,scale:.05,opacity:0,rotation:Math.random()*720,duration:.38+Math.random()*.55,delay:Math.random()*.08,ease:'power3.out',onComplete:()=>p.remove()});
       }
     },
 
-    attackBeam(from, to) {
-      if (reduceMotion() || !from || !to) return;
-      const g = gs(); const layer = $('#fxLayer'); if (!g || !layer) return;
-      const a = from.getBoundingClientRect(), b = to.getBoundingClientRect();
-      const beam = document.createElement('i'); beam.className = 'fx-attack-beam';
-      beam.style.left = `${a.left + a.width / 2}px`; beam.style.top = `${a.top + a.height / 2}px`;
-      const dx = b.left + b.width / 2 - (a.left + a.width / 2);
-      const dy = b.top + b.height / 2 - (a.top + a.height / 2);
-      beam.style.width = `${Math.hypot(dx, dy)}px`; beam.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`;
+    beam(from,to) {
+      if(reduced()||!from||!to) return;
+      const g=gs(),layer=$('#fxLayer'); if(!g||!layer) return;
+      const a=from.getBoundingClientRect(),b=to.getBoundingClientRect();
+      const x1=a.left+a.width/2,y1=a.top+a.height/2,x2=b.left+b.width/2,y2=b.top+b.height/2;
+      const beam=document.createElement('i'); beam.className='fx-attack-beam';
+      beam.style.left=`${x1}px`;beam.style.top=`${y1}px`;beam.style.width=`${Math.hypot(x2-x1,y2-y1)}px`;beam.style.transform=`rotate(${Math.atan2(y2-y1,x2-x1)}rad)`;
       layer.appendChild(beam);
-      g.timeline({ onComplete: () => beam.remove() })
-        .fromTo(beam, { scaleX: 0, opacity: 0, transformOrigin: '0% 50%' }, { scaleX: 1, opacity: 1, duration: .12, ease: 'power3.out' })
-        .to(beam, { opacity: 0, scaleY: 2.2, duration: .16, ease: 'power2.in' });
+      g.timeline({onComplete:()=>beam.remove()}).fromTo(beam,{scaleX:0,opacity:0},{scaleX:1,opacity:1,duration:.09,ease:'power4.out'}).to(beam,{scaleY:3,opacity:0,duration:.19,ease:'power2.in'});
     },
 
-    leafStream(from, to) {
-      if (reduceMotion()) return;
-      const g = gs(); const layer = $('#fxLayer'); if (!g || !layer || !from || !to) return;
-      const a = from.getBoundingClientRect(), b = to.getBoundingClientRect();
-      for (let i = 0; i < 7; i++) {
-        const leaf = document.createElement('i'); leaf.className = 'fx-leaf-gsap'; leaf.textContent = '🍃';
-        leaf.style.left = `${a.left + a.width / 2}px`; leaf.style.top = `${a.top + a.height / 2}px`;
-        layer.appendChild(leaf);
-        g.to(leaf, { x: b.left + b.width / 2 - (a.left + a.width / 2), y: b.top + b.height / 2 - (a.top + a.height / 2), rotation: 360 + Math.random() * 360, scale: .45, opacity: 0, duration: .65 + Math.random() * .2, delay: i * .035, ease: 'power2.inOut', onComplete: () => leaf.remove() });
+    impact(el) {
+      if(!el||reduced()) return;
+      const g=gs(); if(!g) return;
+      g.timeline().to(el,{scale:1.11,rotateZ:-2,duration:.08,ease:'power3.out'}).to(el,{scale:.98,rotateZ:1,duration:.07}).to(el,{scale:1,rotateZ:0,duration:.28,ease:'elastic.out(1,.45)'});
+      this.spark(el,20,70); this.shockwave(el,'coral');
+    },
+
+    leafStream(from,to) {
+      if(reduced()||!from||!to) return;
+      const g=gs(),layer=$('#fxLayer');if(!g||!layer)return;
+      const a=from.getBoundingClientRect(),b=to.getBoundingClientRect();
+      for(let i=0;i<10;i++){
+        const leaf=document.createElement('i');leaf.className='fx-leaf-gsap';leaf.textContent='🍃';
+        leaf.style.left=`${a.left+a.width/2}px`;leaf.style.top=`${a.top+a.height/2}px`;layer.appendChild(leaf);
+        g.to(leaf,{x:b.left+b.width/2-(a.left+a.width/2)+Math.random()*34-17,y:b.top+b.height/2-(a.top+a.height/2)+Math.random()*34-17,rotation:360+Math.random()*720,scale:.35,opacity:0,duration:.65+Math.random()*.3,delay:i*.025,ease:'power2.inOut',onComplete:()=>leaf.remove()});
       }
     },
 
-    installInteractions() {
-      document.addEventListener('click', e => {
-        const button = e.target.closest('button, .action, .mp-btn');
-        if (!button || button.disabled || reduceMotion()) return;
-        this.ripple(button, e.clientX, e.clientY);
-        const g = gs();
-        if (g) g.fromTo(button, { scale: .96 }, { scale: 1, duration: .4, ease: 'elastic.out(1,.55)' });
-      }, true);
-
-      document.addEventListener('pointerdown', e => {
-        const button = e.target.closest('.btn, .action, .mp-btn');
-        if (!button || button.disabled || reduceMotion()) return;
-        const g = gs(); if (g) g.to(button, { y: 1, scale: .975, duration: .09, ease: 'power2.out' });
-      }, { passive: true });
-      document.addEventListener('pointerup', e => {
-        const button = e.target.closest('.btn, .action, .mp-btn');
-        if (!button || reduceMotion()) return;
-        const g = gs(); if (g) g.to(button, { y: 0, scale: 1, duration: .28, ease: 'back.out(2)' });
-      }, { passive: true });
+    leafStorm(el) {
+      if(!el) return;
+      const g=gs(),layer=$('#fxLayer');if(!g||!layer||reduced())return;
+      const r=el.getBoundingClientRect();
+      for(let i=0;i<12;i++){
+        const leaf=document.createElement('i');leaf.className='fx-leaf-gsap';leaf.textContent='🍃';leaf.style.left=`${r.left+r.width/2}px`;leaf.style.top=`${r.top+r.height/2}px`;layer.appendChild(leaf);
+        g.to(leaf,{x:(Math.random()-.5)*150,y:-35-Math.random()*95,rotation:(Math.random()>.5?1:-1)*(180+Math.random()*360),scale:.5,opacity:0,duration:.65+Math.random()*.35,delay:Math.random()*.15,ease:'power2.out',onComplete:()=>leaf.remove()});
+      }
     },
 
-    ripple(button, x, y) {
-      const g = gs(); const r = button.getBoundingClientRect();
-      const wave = document.createElement('i'); wave.className = 'fx-ripple';
-      wave.style.left = `${(x || r.left + r.width / 2) - r.left}px`;
-      wave.style.top = `${(y || r.top + r.height / 2) - r.top}px`;
-      button.appendChild(wave);
-      if (g) g.fromTo(wave, { scale: 0, opacity: .55 }, { scale: 3.5, opacity: 0, duration: .55, ease: 'power2.out', onComplete: () => wave.remove() });
-      else setTimeout(() => wave.remove(), 600);
+    shockwave(el,tone='lime') {
+      if(reduced()||!el) return;
+      const g=gs(),layer=$('#fxLayer');if(!g||!layer)return;
+      const r=el.getBoundingClientRect();const q=document.createElement('i');q.className=`fx-shockwave ${tone}`;
+      q.style.left=`${r.left+r.width/2}px`;q.style.top=`${r.top+r.height/2}px`;layer.appendChild(q);
+      g.fromTo(q,{scale:.1,opacity:.8},{scale:2.7,opacity:0,duration:.65,ease:'power3.out',onComplete:()=>q.remove()});
+    },
+
+    rune(el) {
+      if(reduced()||!el) return;
+      const g=gs(),layer=$('#fxLayer');if(!g||!layer)return;
+      const r=el.getBoundingClientRect();const q=document.createElement('i');q.className='fx-rune';q.textContent='✦';q.style.left=`${r.left+r.width/2}px`;q.style.top=`${r.top+r.height/2}px`;layer.appendChild(q);
+      g.timeline({onComplete:()=>q.remove()}).fromTo(q,{scale:0,opacity:0,rotation:-90},{scale:1.6,opacity:1,rotation:0,duration:.22,ease:'back.out(2)'}).to(q,{scale:3,opacity:0,rotation:180,duration:.55,ease:'power2.in'});
+    },
+
+    installPointerFX() {
+      document.addEventListener('pointermove',e=>{
+        const button=e.target.closest('.btn,.action,.mp-btn');if(!button)return;
+        const r=button.getBoundingClientRect();button.style.setProperty('--mx',`${e.clientX-r.left}px`);button.style.setProperty('--my',`${e.clientY-r.top}px`);
+      },{passive:true});
+      document.addEventListener('click',e=>{
+        const button=e.target.closest('button,.action,.mp-btn');if(!button||button.disabled||reduced())return;
+        const g=gs();if(g)g.fromTo(button,{scale:.94},{scale:1,duration:.48,ease:'elastic.out(1,.55)'});
+        this.ripple(button,e.clientX,e.clientY);
+      },true);
+    },
+
+    ripple(button,x,y) {
+      const g=gs();if(!g)return;const r=button.getBoundingClientRect();const q=document.createElement('i');q.className='fx-ripple';q.style.left=`${x-r.left}px`;q.style.top=`${y-r.top}px`;button.appendChild(q);
+      g.fromTo(q,{scale:0,opacity:.65},{scale:4.2,opacity:0,duration:.65,ease:'power3.out',onComplete:()=>q.remove()});
+    },
+
+    installStateMotion() {
+      const board=$('.board'); if(!board)return;
+      this.stateObserver=new MutationObserver(mutations=>{
+        if(reduced())return;
+        const changed=new Set();
+        mutations.forEach(m=>{ if(m.type==='attributes' && m.attributeName==='class') changed.add(m.target); });
+        changed.forEach(el=>{
+          if(el.classList.contains('selected')) this.selected(el,true);
+          else if(el.classList.contains('card')) this.selected(el,false);
+          if(el.classList.contains('drag-over')) this.dropReady(el,true);
+          else if(el.classList.contains('slot')) this.dropReady(el,false);
+        });
+      });
+      this.stateObserver.observe(board,{subtree:true,attributes:true,attributeFilter:['class']});
+    },
+
+    selected(el,on) {
+      const g=gs();if(!g)return;
+      if(on) g.timeline().to(el,{scale:1.07,y:-7,rotateZ:0,duration:.16,ease:'power2.out'}).to(el,{boxShadow:'0 0 0 2px rgba(216,255,125,.8), 0 0 32px rgba(125,245,156,.35)',duration:.2}).to(el,{rotateZ:1.2,yoyo:true,repeat:3,duration:.16,ease:'sine.inOut'});
+      else g.to(el,{scale:1,y:0,rotateZ:0,boxShadow:'none',duration:.35,ease:'back.out(1.6)'});
+    },
+
+    dropReady(el,on) {
+      const g=gs();if(!g)return;
+      if(on)g.to(el,{scale:1.045,boxShadow:'inset 0 0 24px rgba(125,245,156,.18), 0 0 20px rgba(125,245,156,.18)',duration:.2,ease:'power2.out'});
+      else g.to(el,{scale:1,boxShadow:'none',duration:.3,ease:'power2.out'});
     },
 
     installPopups() {
-      const observer = new MutationObserver(() => {
-        $$('.action-block-popup.is-visible, .enemy-action-popup.is-visible, .overlay[style*="display: flex"]').forEach(el => {
-          if (el.dataset.motionPopup) return;
-          el.dataset.motionPopup = '1';
-          const g = gs(); if (!g || reduceMotion()) return;
-          g.fromTo(el, { opacity: 0, scale: .82, y: -12, filter: 'blur(5px)' }, { opacity: 1, scale: 1, y: 0, filter: 'blur(0px)', duration: .42, ease: 'back.out(1.8)', clearProps: 'filter' });
+      this.popupObserver=new MutationObserver(()=>{
+        $$('.action-block-popup.is-visible,.enemy-action-popup.is-visible,.overlay[style*="display: flex"]').forEach(el=>{
+          if(el.dataset.motion203) return; el.dataset.motion203='1';
+          const g=gs();if(!g||reduced())return;
+          g.fromTo(el,{autoAlpha:0,scale:.72,y:-24,rotateX:12,filter:'blur(8px)'},{autoAlpha:1,scale:1,y:0,rotateX:0,filter:'blur(0)',duration:.55,ease:'back.out(1.8)',clearProps:'filter'});
+          const modal=el.querySelector('.modal');if(modal)g.fromTo(modal,{scale:.88,rotateZ:-1.5},{scale:1,rotateZ:0,duration:.6,ease:'elastic.out(1,.45)'});
         });
       });
-      observer.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
+      this.popupObserver.observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','style']});
     },
 
-    installMobileUX() {
-      const hand = $('.hand-panel');
-      if (!hand) return;
-      const mq = matchMedia('(max-width: 900px)');
-      const update = () => {
-        if (!mq.matches) hand.classList.remove('mobile-hand-visible');
-      };
-      mq.addEventListener?.('change', update);
-      update();
-
-      let lastY = 0;
-      document.addEventListener('touchstart', e => { lastY = e.touches[0]?.clientY || 0; }, { passive: true });
-      document.addEventListener('touchmove', e => {
-        if (!mq.matches) return;
-        const y = e.touches[0]?.clientY || lastY;
-        const dy = lastY - y;
-        if (Math.abs(dy) > 20) hand.classList.toggle('mobile-hand-visible', dy > 0);
-        lastY = y;
-      }, { passive: true });
+    installCardMotion() {
+      // Drag visual feedback — não interfere no sistema de drag existente.
+      document.addEventListener('dragstart',e=>{const c=e.target.closest('.card');if(c&&!reduced()){const g=gs();g&&g.to(c,{rotation:0,scale:1.08,y:-10,duration:.16,ease:'power2.out'});this.spark(c,10,35);}},true);
+      document.addEventListener('dragend',e=>{const c=e.target.closest('.card');if(c)this.releaseCard(c);},true);
     },
 
     installAmbient() {
-      if (reduceMotion()) return;
-      const g = gs(); if (!g) return;
-      const piles = $$('.pile');
-      piles.forEach((pile, i) => g.to(pile, { y: i % 2 ? 1.5 : -1.5, duration: 2.5 + i * .35, repeat: -1, yoyo: true, ease: 'sine.inOut', delay: i * .25 }));
-      const turn = $('.turn');
-      if (turn) g.to(turn, { scale: 1.035, opacity: .82, duration: 1.8, repeat: -1, yoyo: true, ease: 'sine.inOut' });
+      const g=gs();if(!g||reduced())return;
+      $$('.pile').forEach((p,i)=>g.to(p,{y:i%2?2:-2,rotateZ:i%2?-.35:.35,duration:2.7+i*.35,repeat:-1,yoyo:true,ease:'sine.inOut',delay:i*.22}));
+      const turn=$('.turn');if(turn)g.to(turn,{scale:1.04,opacity:.78,duration:1.4,repeat:-1,yoyo:true,ease:'sine.inOut'});
+      const hud=$('.hud');if(hud)g.to(hud,{y:1.5,duration:2.4,repeat:-1,yoyo:true,ease:'sine.inOut'});
+      this.ambientDust();
     },
 
-    animateIntro() {
-      const g = gs(); if (!g || reduceMotion()) return;
-      g.timeline({ defaults: { ease: 'power3.out' } })
-        .from('.battle-main', { opacity: 0, scale: .975, duration: .65 })
-        .from('.left-sidebar .glass-panel', { x: -28, opacity: 0, duration: .5, stagger: .08 }, '-=.4')
-        .from('.right-sidebar .glass-panel', { x: 28, opacity: 0, duration: .5, stagger: .08 }, '-=.45')
-        .from('.hud', { y: -14, opacity: 0, duration: .35 }, '-=.25');
+    ambientDust() {
+      const g=gs(),layer=$('#fxLayer');if(!g||!layer||reduced())return;
+      for(let i=0;i<14;i++){
+        const p=document.createElement('i');p.className='fx-dust';p.style.left=`${Math.random()*100}%`;p.style.top=`${45+Math.random()*50}%`;layer.appendChild(p);
+        g.to(p,{x:(Math.random()-.5)*90,y:-50-Math.random()*100,opacity:0,duration:4+Math.random()*4,delay:Math.random()*4,repeat:-1,ease:'sine.inOut'});
+      }
+    },
+
+    refreshSelection() {
+      $$('.card.selected').forEach(c=>this.selected(c,true));
+    },
+
+    intro() {
+      const g=gs();if(!g||reduced())return;
+      g.timeline({defaults:{ease:'power3.out'}})
+        .from('.battle-main',{autoAlpha:0,scale:.965,filter:'blur(5px)',duration:.7,clearProps:'filter'})
+        .from('.left-sidebar .glass-panel',{x:-34,autoAlpha:0,rotateY:-7,duration:.5,stagger:.07},'-=.48')
+        .from('.right-sidebar .glass-panel',{x:34,autoAlpha:0,rotateY:7,duration:.5,stagger:.07},'-=.5')
+        .from('.hud',{y:-18,autoAlpha:0,duration:.35},'-=.22')
+        .from('.card',{y:18,autoAlpha:0,stagger:.035,duration:.35,ease:'back.out(1.5)'},'-=.15');
     }
   };
 
-  const wait = () => {
-    if (window.gsap && window.FX && typeof window.render === 'function') MotionFX.boot();
-    else setTimeout(wait, 50);
-  };
-  wait();
-  window.InsetoMotion = MotionFX;
+  const boot=()=>{ if(window.gsap && window.FX && typeof window.render==='function') FX.boot(); else setTimeout(boot,50); };
+  boot();
+  window.InsetoMotion=FX;
 })();

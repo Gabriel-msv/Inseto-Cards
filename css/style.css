@@ -269,9 +269,11 @@ button { cursor: pointer; }
     padding: 7px;
     border-radius: 8px 8px 0 0;
     box-shadow: 0 -8px 18px rgba(0,0,0,.35);
-    transform: translateY(100%);
-    opacity: 0;
-    pointer-events: none;
+    /* A mão permanece visível durante toda a partida no mobile.
+       Mantemos a estrutura original: painel fixo inferior, sem alterar o layout do campo. */
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
     transition: transform .2s ease, opacity .2s ease;
   }
   .hand-panel.mobile-hand-visible { transform: translateY(0); opacity: 1; pointer-events: auto; }
@@ -307,96 +309,88 @@ button { cursor: pointer; }
 }
 
 /* ========================================================================
-   MOTION OVERHAUL 2.0.2 — camada visual premium
+   MOTION 2.0.3 — SOMENTE CAMADA VISUAL
+   A estrutura/responsividade do v2.0.1 permanece intacta.
    ======================================================================== */
-:root {
-  --motion-glow: rgba(125,245,156,.32);
-  --motion-lime: #d8ff7d;
+.card {
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform, box-shadow, filter;
 }
-
-html, body { scroll-behavior: smooth; }
-button, .card, .slot, .pile, .glass-panel { -webkit-tap-highlight-color: transparent; }
-.card { transform-style: preserve-3d; will-change: transform, filter; backface-visibility: hidden; }
 .card-art-wrap, .card-art { will-change: transform; transform: translateZ(0); }
-.card::after { content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; opacity:0; background:linear-gradient(120deg, transparent 15%, rgba(255,255,255,.14) 45%, transparent 65%); transform:translateX(-130%); transition:opacity .2s; }
-.card:hover::after { opacity:1; animation:card-sheen .8s ease forwards; }
-@keyframes card-sheen { to { transform:translateX(130%); } }
 
-.btn, .action, .mp-btn { position:relative; overflow:hidden; isolation:isolate; transform:translateZ(0); }
-.btn::before, .action::before, .mp-btn::before { content:""; position:absolute; inset:-2px; z-index:-1; opacity:0; background:radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(216,255,125,.26), transparent 45%); transition:opacity .25s; }
-.btn:hover::before, .action:hover::before, .mp-btn:hover::before { opacity:1; }
-.fx-ripple { position:absolute; width:22px; height:22px; border-radius:50%; pointer-events:none; transform:translate(-50%,-50%); background:rgba(216,255,125,.38); box-shadow:0 0 20px rgba(125,245,156,.25); }
-.fx-energy-ring { position:fixed; z-index:150; pointer-events:none; border:2px solid var(--motion-lime); border-radius:50%; box-shadow:0 0 28px rgba(216,255,125,.32), inset 0 0 12px rgba(216,255,125,.12); transform:translate(-50%,-50%); }
-.fx-glitter { position:fixed; z-index:151; width:5px; height:5px; border-radius:50%; pointer-events:none; background:#d8ff7d; box-shadow:0 0 10px #d8ff7d; }
-.fx-attack-beam { position:fixed; z-index:149; height:3px; pointer-events:none; transform-origin:0 50%; background:linear-gradient(90deg, transparent, #ff8585 15%, #fff 50%, #ff8585 85%, transparent); box-shadow:0 0 12px rgba(255,133,133,.85), 0 0 30px rgba(255,133,133,.4); }
-.fx-leaf-gsap { position:fixed; z-index:151; pointer-events:none; font-size:18px; filter:drop-shadow(0 0 7px rgba(125,245,156,.65)); }
+/* Brilho vivo ao passar o mouse sem alterar tamanho/estrutura. */
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(115deg, transparent 18%, rgba(255,255,255,.18) 45%, transparent 68%);
+  transform: translateX(-130%);
+}
+.card:hover::after { opacity: 1; animation: card-sheen-203 .85s ease forwards; }
+@keyframes card-sheen-203 { to { transform: translateX(130%); } }
 
-.board.fx-attack { filter:drop-shadow(0 0 18px rgba(255,133,133,.12)); }
-.board.fx-summon { filter:drop-shadow(0 0 20px rgba(125,245,156,.13)); }
-.board.fx-move { filter:drop-shadow(0 0 16px rgba(216,255,125,.1)); }
+/* Hipnose / pêndulo: a animação principal é GSAP; estes estados dão profundidade. */
+.card:not(.dragging) { perspective: 900px; }
+.card.affected-lupa {
+  box-shadow: 0 0 0 1px var(--amber), 0 0 14px rgba(239,197,104,.22);
+  animation: lupa-pulse-203 1.15s ease-in-out infinite;
+}
+.card.affected-teia {
+  box-shadow: 0 0 0 1px var(--coral), 0 0 14px rgba(255,133,133,.2);
+  animation: teia-pulse-203 1s ease-in-out infinite;
+}
+.card.affected-aranha, .card.affected-centopeia {
+  box-shadow: 0 0 0 1px var(--coral), inset 0 0 18px rgba(255,133,133,.12);
+}
+@keyframes lupa-pulse-203 { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.12); } }
+@keyframes teia-pulse-203 { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.16) saturate(1.1); } }
 
-.action.waiting, .action:not(:disabled):focus-visible { box-shadow:0 0 0 1px var(--motion-lime), 0 0 22px rgba(125,245,156,.25); }
-.action:not(:disabled):hover { transform:translateY(-2px); }
-.action:disabled { filter:saturate(.45); }
+.btn, .action, .mp-btn { position: relative; overflow: hidden; isolation: isolate; transform: translateZ(0); }
+.btn::before, .action::before, .mp-btn::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  z-index: -1;
+  opacity: 0;
+  background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(216,255,125,.28), transparent 48%);
+  transition: opacity .22s;
+}
+.btn:hover::before, .action:hover::before, .mp-btn:hover::before { opacity: 1; }
+.action:not(:disabled):hover { transform: translateY(-2px); }
+.action.waiting { box-shadow: 0 0 0 1px var(--lime), 0 0 22px rgba(125,245,156,.25); }
 
-.glass-panel { transition: border-color .25s, box-shadow .25s, transform .25s; }
-.glass-panel:hover { border-color:rgba(125,245,156,.22); box-shadow:0 12px 35px rgba(0,0,0,.22), 0 0 28px rgba(125,245,156,.035); }
+.fx-ripple { position:absolute; width:20px; height:20px; margin:-10px; border-radius:50%; pointer-events:none; background:rgba(216,255,125,.4); box-shadow:0 0 20px rgba(125,245,156,.3); }
+.fx-energy-ring { position:fixed; z-index:150; pointer-events:none; border:2px solid var(--lime); border-radius:50%; box-shadow:0 0 28px rgba(216,255,125,.38), inset 0 0 14px rgba(216,255,125,.15); transform:translate(-50%,-50%); }
+.fx-glitter { position:fixed; z-index:151; width:5px; height:5px; border-radius:50%; pointer-events:none; background:var(--lime); box-shadow:0 0 10px var(--lime),0 0 20px rgba(125,245,156,.45); }
+.fx-attack-beam { position:fixed; z-index:149; height:4px; pointer-events:none; transform-origin:0 50%; background:linear-gradient(90deg,transparent,#ff8585 12%,#fff 50%,#ff8585 88%,transparent); box-shadow:0 0 14px rgba(255,133,133,.9),0 0 34px rgba(255,133,133,.45); }
+.fx-leaf-gsap { position:fixed; z-index:151; pointer-events:none; font-size:18px; filter:drop-shadow(0 0 8px rgba(125,245,156,.75)); }
+.fx-shockwave { position:fixed; z-index:148; width:30px; height:30px; margin:-15px; border:2px solid var(--lime); border-radius:50%; pointer-events:none; box-shadow:0 0 25px rgba(125,245,156,.35); }
+.fx-shockwave.coral { border-color:var(--coral); box-shadow:0 0 25px rgba(255,133,133,.45); }
+.fx-shockwave.white { border-color:#fff; box-shadow:0 0 28px rgba(255,255,255,.5); }
+.fx-shockwave.lime { border-color:var(--lime); }
+.fx-rune { position:fixed; z-index:152; pointer-events:none; color:var(--lime); font-size:34px; text-shadow:0 0 12px rgba(216,255,125,.85),0 0 30px rgba(125,245,156,.5); transform:translate(-50%,-50%); }
+.fx-dust { position:fixed; z-index:114; width:3px; height:3px; border-radius:50%; background:var(--lime); opacity:.15; pointer-events:none; box-shadow:0 0 8px rgba(216,255,125,.55); }
 
-#mpFixedTimer { box-shadow:0 0 18px rgba(216,255,125,.12); backdrop-filter:blur(14px); }
-#mpFixedTimer.urgent { animation:timer-urgent .45s ease-in-out infinite alternate; }
-@keyframes timer-urgent { from { transform:translateX(-50%) scale(1); box-shadow:0 0 8px rgba(255,133,133,.15); } to { transform:translateX(-50%) scale(1.08); box-shadow:0 0 28px rgba(255,133,133,.42); } }
+#mpFixedTimer { box-shadow:0 0 20px rgba(216,255,125,.15), inset 0 0 14px rgba(216,255,125,.05); backdrop-filter:blur(14px); }
+#mpFixedTimer.urgent { animation:timer-urgent-203 .4s ease-in-out infinite alternate; }
+@keyframes timer-urgent-203 { from { transform:translateX(-50%) scale(1); box-shadow:0 0 10px rgba(255,133,133,.18); } to { transform:translateX(-50%) scale(1.1); box-shadow:0 0 30px rgba(255,133,133,.48); } }
 
 .action-block-popup, .enemy-action-popup, .modal { backdrop-filter:blur(18px) saturate(1.15); }
-.action-block-popup.is-visible { animation:block-pop-premium .4s cubic-bezier(.2,1.4,.4,1); }
-@keyframes block-pop-premium { 0% { opacity:0; transform:translateX(-50%) translateY(-14px) scale(.78) rotateX(10deg); } 70% { transform:translateX(-50%) translateY(2px) scale(1.025); } 100% { opacity:1; transform:translateX(-50%) translateY(0) scale(1); } }
+.action-block-popup.is-visible { animation:block-pop-203 .45s cubic-bezier(.2,1.4,.4,1); }
+@keyframes block-pop-203 { 0% { opacity:0; transform:translateX(-50%) translateY(-18px) scale(.72) rotateX(12deg); } 70% { transform:translateX(-50%) translateY(2px) scale(1.03); } 100% { opacity:1; transform:translateX(-50%) translateY(0) scale(1); } }
 
-/* Mobile: o campo vira protagonista; ações ficam em uma dock confortável para toque. */
-@media (max-width: 900px) {
-  body { overscroll-behavior-y:none; }
-  .root { display:block; width:100%; min-height:100svh; padding:6px; }
-  .left-sidebar { display:grid; grid-template-columns:1fr; gap:6px; }
-  .left-sidebar .control-panel { display:grid; grid-template-columns:auto 1fr; align-items:center; gap:7px; padding:7px; }
-  .left-sidebar .logo { grid-row:span 2; transform:scale(.8); transform-origin:left center; }
-  .left-sidebar .control-actions { grid-column:2; display:grid; grid-template-columns:1fr 1fr 1fr; gap:4px; }
-  .left-sidebar .stats, .left-sidebar .hint, .left-sidebar .turn-status { display:none; }
-  .battle-main { min-height:calc(100svh - 84px); padding:8px 2px 215px; }
-  .right-sidebar { display:block; position:static; padding:0; }
-  .right-sidebar .action-panel { position:fixed; left:6px; right:6px; bottom:166px; z-index:80; padding:7px; border-radius:12px; display:block; background:rgba(7,13,9,.88); backdrop-filter:blur(18px); box-shadow:0 -12px 35px rgba(0,0,0,.35); }
-  .right-sidebar .action-panel .action-group { display:inline-block; width:auto; vertical-align:top; margin-right:4px; }
-  .right-sidebar .action-panel .action-header { display:none; }
-  .right-sidebar .action-panel .actions { display:flex; gap:5px; }
-  .right-sidebar .action-panel .action { min-width:70px; min-height:38px; padding:7px 8px; font-size:8px; border-radius:8px; }
-  .right-sidebar .action-summary { display:flex; justify-content:space-between; margin-bottom:5px; font-size:8px; }
-  #mpMobileTurn { position:fixed !important; left:50%; bottom:211px; top:auto !important; transform:translateX(-50%); width:min(180px,55vw); z-index:85; margin:0 !important; border-radius:999px; padding:6px 10px !important; backdrop-filter:blur(14px); box-shadow:0 0 25px rgba(125,245,156,.16); }
-  .hand-panel { position:fixed; left:6px; right:6px; bottom:6px; width:auto; height:152px; z-index:90; border-radius:13px; box-shadow:0 -12px 35px rgba(0,0,0,.45); transform:translateY(calc(100% + 12px)); transition:transform .35s cubic-bezier(.2,.8,.2,1), opacity .25s; }
-  .hand-panel.mobile-hand-visible { transform:translateY(0); }
-  .hand-panel-head { padding:0 3px; }
-  .hand-carousel { height:112px; flex-basis:112px; }
-  .hand .card, .right-sidebar .hand .card { width:74px; min-width:74px; height:104px; }
-  .right-sidebar { padding-bottom:0; }
-  .slot, .shared-zone { width:68px; height:95px; flex-basis:68px; }
-  .slot.fronte { width:76px; height:105px; flex-basis:76px; }
-  .card { width:62px; height:87px; }
-  .card.fronte-card { width:72px; height:100px; }
-  .center-zone { margin:7px auto; }
-}
-
-@media (max-width: 520px) {
-  .left-sidebar .control-panel { grid-template-columns:70px 1fr; }
-  .left-sidebar .logo-name { font-size:9px; }
-  .left-sidebar .control-actions .btn { min-height:30px; padding:5px 3px; font-size:7px; }
-  .battle-main { min-height:calc(100svh - 76px); padding-bottom:206px; }
-  .right-sidebar .action-panel { bottom:157px; }
-  #mpMobileTurn { bottom:201px; }
-  .hand-panel { height:145px; }
-  .hand-carousel { height:105px; flex-basis:105px; }
-  .hand .card, .right-sidebar .hand .card { width:68px; min-width:68px; height:96px; }
-  .slot, .shared-zone { width:58px; height:82px; flex-basis:58px; }
-  .slot.fronte { width:64px; height:90px; flex-basis:64px; }
-  .card { width:54px; height:76px; }
-  .card.fronte-card { width:60px; height:84px; }
-}
+/* Ações de drag/drop ganham energia sem mudar o layout. */
+.slot.drop-ready, .hand.drop-ready { animation:drop-ready-203 .8s ease-in-out infinite alternate; }
+.slot.drag-over, .hand.drag-over { animation:drop-over-203 .28s ease-out forwards; }
+@keyframes drop-ready-203 { from { box-shadow:0 0 0 rgba(125,245,156,0); } to { box-shadow:0 0 24px rgba(125,245,156,.2), inset 0 0 18px rgba(125,245,156,.08); } }
+@keyframes drop-over-203 { from { transform:scale(1); } to { transform:scale(1.035); } }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; scroll-behavior:auto !important; }
+  .card, .card::after, .slot.drop-ready, .hand.drop-ready { animation: none !important; }
+  *, *::before, *::after { transition-duration:.01ms !important; }
 }
