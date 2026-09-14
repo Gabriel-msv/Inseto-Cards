@@ -20,7 +20,7 @@
 <link rel="apple-touch-icon" sizes="512x512" href="/assets/cards/icon.png?v=1.8.3">
 </head>
 <body>
-<div class="version-badge" aria-label="Versão atual">v1.8.3</div>
+<div class="version-badge" aria-label="Versão atual">v1.11.0</div>
 <div class="grain"></div>
 <div class="vignette"></div>
 <canvas id="fxCanvas" class="fx-canvas" aria-hidden="true"></canvas>
@@ -135,6 +135,11 @@
         <div>
           <div class="action-header">SUA MÃO</div>
           <div class="hand-subtitle">Arraste uma carta para o Banco ou Fronte</div>
+        </div>
+        <div class="mobile-hand-status" aria-live="polite">
+          <span>FOLHAS <b id="handLeaves">5</b></span>
+          <span>AÇÃO <b id="handStd">1</b></span>
+          <span>MOV. <b id="handMoves">1</b></span>
         </div>
         <div class="hand-carousel-controls" aria-hidden="true">
           <button class="hand-nav" type="button" data-dir="-1">‹</button>

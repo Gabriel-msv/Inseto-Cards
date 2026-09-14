@@ -174,7 +174,7 @@ const DECK_KEYS = Object.keys(CARDS); // 40 cartas disponíveis, uma cópia de c
 // 2. ESTADO DA PARTIDA
 // Guarda jogadores, baralho, cemitério, turno e seleção do jogador.
 // ================================================================
-const APP_VERSION = '1.8.3'; // X=reforma, Y=adição, Z=correção de bug.
+const APP_VERSION = '1.11.0'; // X=reforma, Y=adição, Z=correção de bug.
 const state = { started: false, over: false, round: 1, turn: 'player', deck: [], grave: [], players: [null, null], selected: null, targetMode: null, log: [], skip: [false, false], tie: false };
 function P(name, bot = false) { return { name, bot, leaves: 5, hand: [], front: null, bank: [null, null, null], moves: 1, std: 1, passiveBuy: false, adubo: 0, antiSteal: 0, revealed: 0 }; }
 function card(key, owner) { let c = CARDS[key]; return { id: Math.random().toString(36).slice(2), key, owner, atk: c.atk ?? 0, hp: c.hp ?? 0, maxHp: c.hp ?? 0, baseAtk: c.atk ?? 0, baseHp: c.hp ?? 0, damage: 0, buffs: [], equipment: [], activeTurns: 0, poison: 0, poisonTurns: 0, root: 0, skipAttack: 0, reload: 0, protectedOnce: key === 'louva', barataUsed: false, mel: false, customAbility: null, copiedKey: null, debuffNext: false }; }
@@ -299,7 +299,9 @@ function activateEffect(pi, idx, zone, slot) { let p = state.players[pi], c = p.
 function resolveEffect(pi, c) { let p = state.players[pi], o = state.players[1 - pi]; switch (c.key) { case 'adubo': p.adubo = 4; break; case 'formigueiro': p.antiSteal = 3; break; case 'propolis': c.protectsBank = true; break; case 'inseticida': { let t = o.bank.find(Boolean); if (t) { t.hp -= 1; if (t.hp <= 0) defeat(o, t, pi) } break } case 'lupa': { let t = o.front || o.bank.find(Boolean); if (t) { t.hp -= 2; if (t.hp <= 0) defeat(o, t, pi); log('Lupa aplicou 2 dano imediato; o efeito contínuo fica representado pelo estado curto da partida.') } break } case 'teia': { let t = o.front || o.bank.find(Boolean); if (t && !isImmuneRoot(t)) t.skipAttack = 1; break } } }
 function isBankProtected(pi) { let p = state.players[pi]; return !!(p && p.front && p.front.key === 'propolis' && p.front.activeTurns > 0) }
 function equip(pi, idx, target) { let p = state.players[pi], c = p.hand[idx], d = c && CARDS[c.key]; if (!c || !d || !d.equip || p.std <= 0 || p.leaves < d.cost) return false; p.leaves -= d.cost; p.hand.splice(idx, 1); target.equipment ||= []; target.equipment.push(c); if (c.key === 'mel') { target.atk += 1; target.maxHp += 1; target.hp += 1; target.mel = true } if (c.key === 'casulo') { target.maxHp += 2; target.hp += 2 } if (c.key === 'veneno') { target.poison = 1; target.poisonTurns = 2 } if (c.key === 'propolis') { target.poison = 0; target.poisonTurns = 0 } p.std--; state.targetMode = null; log(`${p.name} equipou ${d.name} em ${CARDS[target.key].name}.`); render(); return true }
+let touchDropAt = 0;
 function clickCard(pi, zone, slot) {
+  if (Date.now() < touchDropAt) return;
   let p = state.players[pi], c = zone === 'hand' ? p.hand[slot] : (zone === 'front' ? p.front : p.bank[slot]);
   if (!c) return;
   // Equipar uma carta de efeito já selecionada.
@@ -439,6 +441,51 @@ function handleDropOnSlot(slotEl, e) {
   clearDropTargets(); render(); winCheck();
 }
 function installDropTargets() { document.querySelectorAll('#pf0,#pb0,#pb1,#pb2,#ef0,#eb0,#eb1,#eb2').forEach(slot => { slot.addEventListener('dragover', e => { if (!e.dataTransfer.types.includes('text/plain')) return; e.preventDefault(); if (state.turn === 0 && !state.over) slot.classList.add('drag-over') }); slot.addEventListener('dragleave', () => slot.classList.remove('drag-over')); slot.addEventListener('drop', e => handleDropOnSlot(slot, e)); }); let hand = document.getElementById('hand'); hand.addEventListener('dragover', e => { if (!e.dataTransfer.types.includes('text/plain')) return; e.preventDefault(); if (state.turn === 0 && !state.over) hand.classList.add('drag-over') }); hand.addEventListener('dragleave', () => hand.classList.remove('drag-over')); hand.addEventListener('drop', handleDropOnHand); }
+function syncTouchCardIds() {
+  let p = state.players[0];
+  if (!p) return;
+  document.querySelectorAll('#hand .card').forEach((el, i) => { if (p.hand[i]) el.dataset.cardId = p.hand[i].id });
+  let fields = [['#pf0 .card', p.front], ['#pb0 .card', p.bank[0]], ['#pb1 .card', p.bank[1]], ['#pb2 .card', p.bank[2]]];
+  fields.forEach(([selector, c]) => { let el = document.querySelector(selector); if (el && c) el.dataset.cardId = c.id });
+}
+function updateMobileHandVisibility() {
+  let handPanel = document.querySelector('.hand-panel');
+  let menu = document.querySelector('.left-sidebar');
+  if (!handPanel || !menu) return;
+  let threshold = menu.offsetTop + menu.offsetHeight;
+  handPanel.classList.toggle('mobile-hand-visible', window.innerWidth > 900 || window.scrollY >= threshold);
+}
+function installTouchDrag() {
+  if (!window.matchMedia('(max-width: 900px)').matches) return;
+  let drag = null;
+  document.addEventListener('pointerdown', e => {
+    let cardEl = e.target.closest('.card[draggable="true"]');
+    if (!cardEl) return;
+    drag = { id: cardEl.dataset.cardId, x: e.clientX, y: e.clientY, moved: false, el: cardEl };
+    cardEl.setPointerCapture?.(e.pointerId);
+  }, { passive: true });
+  document.addEventListener('pointermove', e => {
+    if (!drag) return;
+    if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 8) {
+      drag.moved = true;
+      drag.el.classList.add('dragging');
+      e.preventDefault();
+    }
+  }, { passive: false });
+  document.addEventListener('pointerup', e => {
+    if (!drag) return;
+    let current = drag;
+    drag = null;
+    current.el.classList.remove('dragging');
+    if (!current.moved || !current.id) return;
+    touchDropAt = Date.now() + 350;
+    let target = document.elementFromPoint(e.clientX, e.clientY)?.closest('.slot, #hand');
+    let fakeEvent = { preventDefault() {}, dataTransfer: { getData() { return current.id } } };
+    if (target?.id === 'hand') handleDropOnHand(fakeEvent);
+    else if (target?.classList.contains('slot')) handleDropOnSlot(target, fakeEvent);
+    clearDropTargets();
+  }, { passive: true });
+}
 function renderGrave() {
   let top = document.getElementById('graveTop');
   if (!top) return;
@@ -468,5 +515,7 @@ document.getElementById('start').onclick = init; document.getElementById('restar
 document.addEventListener('click', hideEnemyActions); document.addEventListener('keydown', hideEnemyActions);
 document.querySelector('.version-badge').textContent = `v${APP_VERSION}`;
 const renderWithActionControls = render;
-render = function() { renderWithActionControls(); let p = state.players[0]; if (p) { document.getElementById('secondMove').disabled = state.turn !== 0 || state.over || p.std <= 0 || p.moves >= 2; document.getElementById('stdActions').textContent = p.std; document.getElementById('moveActions').textContent = p.moves; } };
-FX.init(); installDropTargets(); render(); log('Pronto. Clique em INICIAR PARTIDA.');
+render = function() { renderWithActionControls(); let p = state.players[0]; if (p) { document.getElementById('secondMove').disabled = state.turn !== 0 || state.over || p.std <= 0 || p.moves >= 2; document.getElementById('stdActions').textContent = p.std; document.getElementById('moveActions').textContent = p.moves; document.getElementById('handLeaves').textContent = p.leaves; document.getElementById('handStd').textContent = p.std; document.getElementById('handMoves').textContent = p.moves; syncTouchCardIds(); } };
+window.addEventListener('scroll', updateMobileHandVisibility, { passive: true });
+window.addEventListener('resize', updateMobileHandVisibility);
+FX.init(); installDropTargets(); installTouchDrag(); render(); updateMobileHandVisibility(); log('Pronto. Clique em INICIAR PARTIDA.');

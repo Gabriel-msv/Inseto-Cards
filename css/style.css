@@ -156,6 +156,7 @@ button { cursor: pointer; }
 
 .hand-panel { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; padding: 10px; overflow: hidden; }
 .hand-panel-head { display: flex; align-items: center; justify-content: space-between; flex: 0 0 auto; margin-bottom: 7px; }
+.mobile-hand-status { display: none; }
 .hand-carousel-controls { display: none; }
 .hand-carousel { min-height: 0; height: 0; flex: 1 1 0; overflow-x: hidden; overflow-y: auto; }
 .hand { display: flex; flex-direction: column; align-items: stretch; gap: 6px; width: 100%; height: auto; padding: 3px; }
@@ -173,16 +174,47 @@ button { cursor: pointer; }
 @media (max-width: 1050px) and (min-width: 901px) { .root { grid-template-columns: 190px minmax(0, 1fr) 235px; gap: 8px; padding: 8px; } }
 @media (max-width: 900px) {
   body { overflow: auto; }
-  .root { grid-template-columns: 1fr; grid-template-rows: auto auto auto; width: 100%; height: auto; min-height: 100vh; overflow: visible; gap: 9px; padding: 7px; }
-  .battle-main { grid-column: 1; grid-row: 1; height: auto; overflow: visible; justify-content: flex-start; }
-  .left-sidebar { grid-column: 1; grid-row: 2; }
-  .right-sidebar { grid-column: 1; grid-row: 3; height: auto; overflow: visible; }
+  .root { grid-template-columns: minmax(0, 1fr) minmax(140px, 30vw); grid-template-rows: auto auto; width: 100%; height: auto; min-height: 100vh; overflow: visible; gap: 9px; padding: 7px; }
+  .left-sidebar { grid-column: 1 / -1; grid-row: 1; }
+  .battle-main { grid-column: 1; grid-row: 2; height: auto; overflow: visible; justify-content: flex-start; padding-bottom: 198px; }
+  .right-sidebar { grid-column: 2; grid-row: 2; height: auto; overflow: visible; }
   .battle-sidebar { height: auto; overflow: visible; }
-  .hand-panel { min-height: 230px; }
-  .hand-carousel { height: 190px; flex-basis: 190px; }
+  .right-sidebar .action-panel { padding: 7px; }
+  .right-sidebar .actions { grid-template-columns: 1fr; gap: 5px; }
+  .right-sidebar .action { min-height: 34px; padding: 6px 3px; font-size: 8px; }
+  .right-sidebar .target-actions { grid-template-columns: 1fr; }
+  .hand-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    min-height: 0;
+    height: 174px;
+    padding: 7px;
+    border-radius: 8px 8px 0 0;
+    box-shadow: 0 -8px 18px rgba(0,0,0,.35);
+    transform: translateY(100%);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform .2s ease, opacity .2s ease;
+  }
+  .hand-panel.mobile-hand-visible { transform: translateY(0); opacity: 1; pointer-events: auto; }
+  .hand-panel-head { margin-bottom: 4px; }
+  .hand-subtitle { display: none; }
+  .mobile-hand-status { display: flex; gap: 7px; align-items: center; color: var(--muted); font-size: 8px; white-space: nowrap; }
+  .mobile-hand-status b { color: var(--green); font-size: 11px; }
+  .hand-carousel { height: 135px; flex: 0 0 135px; overflow-x: auto; overflow-y: hidden; touch-action: pan-x; }
+  .hand { flex-direction: row; align-items: stretch; gap: 6px; width: max-content; min-width: 100%; height: 100%; padding: 3px; }
+  .hand .card, .right-sidebar .hand .card { width: 15vw; min-width: 15vw; height: auto; aspect-ratio: 84 / 118; touch-action: none; }
+  .right-sidebar { padding-bottom: 184px; }
 }
 @media (max-width: 520px) {
   .root { padding: 6px; }
-  .hand-panel { min-height: 205px; }
-  .hand-carousel { height: 165px; flex-basis: 165px; }
+  .root { grid-template-columns: minmax(0, 1fr) 132px; gap: 6px; }
+  .battle-main { padding-bottom: 189px; }
+  .hand-panel { height: 155px; }
+  .hand-carousel { height: 116px; flex-basis: 116px; }
+  .hand .card, .right-sidebar .hand .card { width: 15vw; min-width: 15vw; touch-action: none; }
+  .right-sidebar { padding-bottom: 165px; }
 }

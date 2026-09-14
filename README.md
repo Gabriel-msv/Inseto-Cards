@@ -2,7 +2,7 @@
 
 Jogo de cartas em HTML, CSS e JavaScript, jogável contra um BOT.
 
-**Versão atual:** `1.8.2`
+**Versão atual:** `1.11.0`
 
 ## Estrutura
 
@@ -19,6 +19,7 @@ Jogo de cartas em HTML, CSS e JavaScript, jogável contra um BOT.
 - Atacar, colher folhas e comprar cartas consomem ação padrão.
 - O botão `2º MOVIMENTO` troca a ação padrão por mais um movimento.
 - Após a primeira rodada, se o adversário não tiver cartas no campo, é possível fazer um ataque direto. Ele descarta uma carta aleatória da mão, sem combate.
+- O campo mostra o contador da rodada e cada rodada só avança depois dos dois turnos.
 
 ## Cartas e efeitos
 
@@ -28,6 +29,7 @@ Jogo de cartas em HTML, CSS e JavaScript, jogável contra um BOT.
 - Cartas com duração exibem um contador de turnos e são descartadas ao expirar.
 - Efeitos ativos não podem ser puxados de volta para a mão.
 - A última carta derrotada aparece no topo do Cemitério.
+- Própolis fica no Fronte por três rodadas e impede ataques e efeitos contra o Banco.
 
 ## Interações
 
@@ -36,6 +38,10 @@ Jogo de cartas em HTML, CSS e JavaScript, jogável contra um BOT.
 - Cartas podem ser arrastadas sobre alvos inimigos para atacar.
 - Equipáveis podem ser arrastados diretamente sobre o inseto escolhido.
 - As ações principais do BOT aparecem em um pop-up que fecha com clique ou tecla.
+- No mobile, o menu inicial fica no topo, o campo fica ao centro e as ações ficam ao lado.
+- A mão mobile fica em uma barra fixa no rodapé, com cartas horizontais, folhas e contadores de ações.
+- A barra da mão aparece depois que o usuário rola além do menu inicial.
+- O arraste por toque funciona para mover, equipar, ativar efeitos e atacar.
 
 ## Versionamento
 
