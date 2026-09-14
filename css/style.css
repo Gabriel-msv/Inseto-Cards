@@ -70,8 +70,7 @@ button { cursor: pointer; }
 
 .control-panel { padding: 13px; display: flex; flex-direction: column; gap: 9px; flex: 0 0 auto; }
 .logo { display: grid; grid-template-columns: 40px 1fr; gap: 8px; align-items: center; }
-.logo-mark { width: 40px; height: 40px; border-radius: 8px; background: #1d6337; display: grid; place-items: center; }
-.logo-mark::after { content: '🐞'; font-size: 20px; }
+.logo-mark { width: 40px; height: 40px; border-radius: 8px; background: #1d6337 url('../assets/cards/icon.png') center / 32px 32px no-repeat; display: grid; place-items: center; }
 .logo-name { font-weight: 700; letter-spacing: .08em; }
 .logo > span:last-child { grid-column: 2; color: var(--muted); font-size: 9px; }
 .field-label, .action-header { color: var(--amber); font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
