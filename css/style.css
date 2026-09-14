@@ -21,6 +21,7 @@ body {
   color: var(--text);
   font: 13px var(--sans);
 }
+.version-badge { position: fixed; top: 4px; left: 50%; z-index: 120; transform: translateX(-50%); padding: 2px 7px; color: var(--muted); background: var(--panel); border: 1px solid var(--line); border-radius: 4px; font-size: 10px; font-weight: 700; }
 button, input { font: inherit; color: inherit; }
 button { cursor: pointer; }
 
@@ -126,6 +127,7 @@ button { cursor: pointer; }
 .equipped-card { margin-top: 8px; overflow: visible; }
 .equipped-card::before { content: 'EQUIPADO'; position: absolute; top: -8px; left: 4px; z-index: 3; padding: 1px 3px; color: var(--amber); background: var(--panel); border: 1px solid var(--line); border-radius: 3px; font-size: 6px; }
 .equipment-preview { position: absolute; top: -6px; right: -10px; z-index: 2; padding: 2px 4px; background: var(--panel-light); border: 1px solid var(--amber); border-radius: 4px; font-size: 13px; }
+.effect-counter { position: absolute; top: 3px; left: 3px; z-index: 4; padding: 2px 4px; color: #fff; background: rgba(0,0,0,.75); border: 1px solid var(--amber); border-radius: 4px; font-size: 8px; font-weight: 700; }
 .card.fronte-card { width: 100px; height: 138px; }
 .card-body { display: flex; align-items: center; justify-content: center; flex: 1; }
 .card-silhouette { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; }
