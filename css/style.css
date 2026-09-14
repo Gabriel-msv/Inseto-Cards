@@ -26,6 +26,7 @@ button, input { font: inherit; color: inherit; }
 button { cursor: pointer; }
 
 .grain, .vignette, .fx-canvas, .ant-trail, .fx-layer { display: none; }
+.fx-layer { display: block; position: fixed; inset: 0; z-index: 115; overflow: hidden; pointer-events: none; }
 
 .root {
   display: grid;
@@ -96,6 +97,7 @@ button { cursor: pointer; }
 .action-panel { padding: 11px; display: flex; flex-direction: column; gap: 9px; }
 .action-summary { display: flex; justify-content: space-between; gap: 8px; padding-bottom: 7px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 10px; font-weight: 700; }
 .action-summary b { color: var(--green); font-size: 13px; }
+#mpTurnTimer { margin-left: auto; color: var(--amber); font-variant-numeric: tabular-nums; }
 .action-group { display: flex; flex-direction: column; gap: 6px; }
 .actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
 .target-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -122,6 +124,7 @@ button { cursor: pointer; }
 .pile-label { position: absolute; bottom: -14px; left: 0; right: 0; text-align: center; color: var(--muted); font-size: 9px; }
 .turn { text-align: center; color: var(--amber); font-weight: 700; }
 
+.battle-main, .card, .slot, .hand, .pointer-drag-ghost { user-select: none; }
 .card { position: relative; display: flex; flex-direction: column; width: 84px; height: 118px; flex: 0 0 auto; padding: 5px; overflow: hidden; background: var(--panel-light); border: 1px solid var(--line); border-radius: 8px; }
 .pointer-drag-ghost { position: fixed !important; top: 0; left: 0; z-index: 1000; pointer-events: none; opacity: .82; margin: 0 !important; transform-origin: top left; }
 .equipped-card { margin-top: 8px; overflow: visible; }
@@ -150,6 +153,34 @@ button { cursor: pointer; }
 .board.fx-attack .card {
   animation: soft-hit .3s ease-out;
 }
+
+.board.fx-harvest .natureza .pile,
+.board.fx-draw .natureza .pile {
+  animation: pile-pulse .55s ease-out;
+}
+
+.board.fx-move .card,
+.board.fx-summon .card {
+  animation: card-arrive .45s ease-out;
+}
+
+.card.dragging {
+  z-index: 10;
+  transform: translateY(-5px) rotate(2deg) scale(1.04);
+  box-shadow: 0 12px 24px rgba(0,0,0,.45), 0 0 0 2px var(--green);
+}
+
+.fx-ring { position: fixed; width: 18px; height: 18px; margin: -9px; border: 2px solid var(--lime); border-radius: 50%; animation: fx-ring .7s ease-out forwards; }
+.fx-hit-particle { position: fixed; width: 6px; height: 6px; border-radius: 50%; background: var(--coral); animation: fx-particle .6s ease-out forwards; }
+.fx-leaf { position: fixed; color: var(--green); font-size: 15px; animation: fx-leaf .85s ease-out forwards; }
+.fx-slash { position: fixed; width: 130px; height: 3px; background: var(--coral); transform: translate(-50%, -50%) rotate(var(--angle)); animation: fx-slash .32s ease-out forwards; }
+
+@keyframes pile-pulse { 0% { transform: scale(1); } 45% { transform: scale(1.12); } 100% { transform: scale(1); } }
+@keyframes card-arrive { 0% { opacity: .35; transform: translateY(-12px) scale(.96); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes fx-ring { 0% { opacity: .9; transform: scale(.4); } 100% { opacity: 0; transform: scale(3); } }
+@keyframes fx-particle { 0% { opacity: 1; transform: translate(0, 0) scale(1); } 100% { opacity: 0; transform: translate(var(--px), var(--py)) scale(.2); } }
+@keyframes fx-leaf { 0% { opacity: 1; transform: translate(0, 0) rotate(0); } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(180deg); } }
+@keyframes fx-slash { 0% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--angle)) scaleX(0); } 35% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--angle)) scaleX(1); } }
 
 @media (prefers-reduced-motion: reduce) {
   .board.fx-attack .card { animation: none; }

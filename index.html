@@ -20,7 +20,7 @@
 <link rel="apple-touch-icon" sizes="512x512" href="/assets/cards/icon.png?v=1.8.3">
 </head>
 <body>
-<div class="version-badge" aria-label="Versão atual">v1.11.2</div>
+<div class="version-badge" aria-label="Versão atual">v2.0.0</div>
 <div class="grain"></div>
 <div class="vignette"></div>
 <canvas id="fxCanvas" class="fx-canvas" aria-hidden="true"></canvas>
@@ -110,14 +110,20 @@
       <div class="action-summary" aria-live="polite">
         <span>AÇÕES PADRÃO: <b id="stdActions">1</b></span>
         <span>MOVIMENTOS: <b id="moveActions">1</b></span>
+        <span id="mpTurnTimer" hidden>00:30</span>
       </div>
       <div class="action-group">
         <div class="action-header">AÇÕES PADRÃO</div>
         <div class="actions">
           <button class="action" id="draw">COMPRAR <span class="action-cost">3 🍃</span></button>
           <button class="action" id="harvest">COLHER <span class="action-cost">+1 🍃</span></button>
-          <button class="action" id="secondMove">2º MOVIMENTO</button>
           <button class="action" id="end">ENCERRAR TURNO</button>
+        </div>
+      </div>
+      <div class="action-group">
+        <div class="action-header">MOVIMENTO</div>
+        <div class="actions">
+          <button class="action" id="secondMove">2º MOVIMENTO</button>
         </div>
       </div>
       <div class="action-group">
@@ -159,6 +165,7 @@
 <div id="overlay" class="overlay"><div class="modal glass-panel"><div id="modalContent"></div><button id="modalClose" class="btn btn-primary">FECHAR</button></div></div>
   <!-- JavaScript separado: regras, BOT, renderização e interações (inalterado) -->
   <script src="js/game.js"></script>
+  <script src="js/multiplayer.js"></script>
   <script>
     // Navegação visual da mão: não interfere na lógica do jogo.
     document.querySelectorAll('.hand-nav').forEach(btn => {

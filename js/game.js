@@ -174,7 +174,7 @@ const DECK_KEYS = Object.keys(CARDS); // 40 cartas disponíveis, uma cópia de c
 // 2. ESTADO DA PARTIDA
 // Guarda jogadores, baralho, cemitério, turno e seleção do jogador.
 // ================================================================
-const APP_VERSION = '1.11.2'; // X=reforma, Y=adição, Z=correção de bug.
+const APP_VERSION = '2.0.0'; // X=reforma, Y=adição, Z=correção de bug.
 const state = { started: false, over: false, round: 1, turn: 'player', deck: [], grave: [], players: [null, null], selected: null, targetMode: null, log: [], skip: [false, false], tie: false };
 function P(name, bot = false) { return { name, bot, leaves: 5, hand: [], front: null, bank: [null, null, null], moves: 1, std: 1, passiveBuy: false, adubo: 0, antiSteal: 0, revealed: 0 }; }
 function card(key, owner) { let c = CARDS[key]; return { id: Math.random().toString(36).slice(2), key, owner, atk: c.atk ?? 0, hp: c.hp ?? 0, maxHp: c.hp ?? 0, baseAtk: c.atk ?? 0, baseHp: c.hp ?? 0, damage: 0, buffs: [], equipment: [], activeTurns: 0, poison: 0, poisonTurns: 0, root: 0, skipAttack: 0, reload: 0, protectedOnce: key === 'louva', barataUsed: false, mel: false, customAbility: null, copiedKey: null, debuffNext: false }; }
@@ -533,7 +533,7 @@ document.getElementById('start').onclick = init; document.getElementById('restar
 document.addEventListener('click', hideEnemyActions); document.addEventListener('keydown', hideEnemyActions);
 document.querySelector('.version-badge').textContent = `v${APP_VERSION}`;
 const renderWithActionControls = render;
-render = function() { renderWithActionControls(); let p = state.players[0]; if (p) { document.getElementById('secondMove').disabled = state.turn !== 0 || state.over || p.std <= 0 || p.moves >= 2; document.getElementById('stdActions').textContent = p.std; document.getElementById('moveActions').textContent = p.moves; document.getElementById('handLeaves').textContent = p.leaves; document.getElementById('handStd').textContent = p.std; document.getElementById('handMoves').textContent = p.moves; syncTouchCardIds(); } };
+render = function() { renderWithActionControls(); renderGrave(); let p = state.players[0]; if (p) { document.getElementById('secondMove').disabled = state.turn !== 0 || state.over || p.std <= 0 || p.moves >= 2; document.getElementById('stdActions').textContent = p.std; document.getElementById('moveActions').textContent = p.moves; document.getElementById('handLeaves').textContent = p.leaves; document.getElementById('handStd').textContent = p.std; document.getElementById('handMoves').textContent = p.moves; syncTouchCardIds(); } };
 window.addEventListener('scroll', updateMobileHandVisibility, { passive: true });
 window.addEventListener('resize', updateMobileHandVisibility);
 FX.init(); installDropTargets(); installTouchDrag(); render(); updateMobileHandVisibility(); log('Pronto. Clique em INICIAR PARTIDA.');
