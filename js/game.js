@@ -176,7 +176,7 @@ const DECK_KEYS = Object.keys(CARDS); // catálogo completo atual, uma cópia de
 // 2. ESTADO DA PARTIDA
 // Guarda jogadores, baralho, cemitério, turno e seleção do jogador.
 // ================================================================
-const APP_VERSION = '2.0.5'; // X=reforma, Y=adição, Z=correção de bug.
+const APP_VERSION = '2.0.7'; // X=reforma, Y=adição, Z=correção de bug.
 const state = { started: false, over: false, round: 1, turn: 'player', deck: [], grave: [], players: [null, null], selected: null, selectedField: null, targetMode: null, log: [], skip: [false, false], tie: false };
 function P(name, bot = false) { return { name, bot, leaves: 5, hand: [], front: null, bank: [null, null, null], moves: 1, std: 1, passiveBuy: false, adubo: 0, antiSteal: 0, revealed: 0 }; }
 function card(key, owner) { let c = CARDS[key]; return { id: Math.random().toString(36).slice(2), key, owner, atk: c.atk ?? 0, hp: c.hp ?? 0, maxHp: c.hp ?? 0, baseAtk: c.atk ?? 0, baseHp: c.hp ?? 0, damage: 0, buffs: [], equipment: [], activeTurns: 0, poison: 0, poisonTurns: 0, root: 0, skipAttack: 0, reload: 0, protectedOnce: key === 'louva', barataUsed: false, mel: false, customAbility: null, copiedKey: null, debuffNext: false, bonusAtk: 0, bonusHp: 0, passiveAtkBonus: 0, passiveHpBonus: 0, debuffAtk: 0, lupa: 0, teia: 0, effectMarks: [] }; }
@@ -973,6 +973,10 @@ function makeCard(c, enemy) {
   const art = CARD_IMAGES[c.key], marks = c.effectMarks || [];
   el.className = 'card' + (enemy ? ' enemy-card' : '') + (art ? ' has-art' : '') + (!d.type ? ' has-ability' : '');
   el.dataset.cardId = c.id;
+  if (d.type === 'effect') {
+    el.classList.add('effect-card', `effect-${c.key}`);
+    if (d.equip) el.classList.add('effect-equipment');
+  }
   if (marks.includes('lupa')) el.classList.add('affected-lupa');
   if (marks.includes('teia')) el.classList.add('affected-teia');
   if (marks.includes('aranha')) el.classList.add('affected-aranha');
@@ -980,7 +984,11 @@ function makeCard(c, enemy) {
   if (d.type === 'effect' && (c.activeTurns > 0 || marks.length)) el.classList.add('active-effect-card');
   el.draggable = !enemy;
   const hp = Math.max(0, c.hp), atk = Math.max(0, c.atk);
-  el.innerHTML = `${art ? `<div class="card-art-wrap"><img class="card-art" src="${art}" alt="${d.name}" draggable="false"></div>` : ''}<span class="card-cost">${d.cost} 🍃</span><div class="card-body"><div class="card-silhouette">${art ? '' : d.emoji}</div></div><div class="card-footer"><div class="card-name">${d.name}</div><div class="card-stats"><span class="atk">⚔ ${atk}</span><span class="hp">♥ ${hp}/${c.maxHp || ''}</span></div></div>`;
+  const isEffect = d.type === 'effect';
+  const footer = isEffect
+    ? `<div class="card-name">${d.name}</div><div class="effect-type">${d.cond === 'Equipável' ? 'EQUIPÁVEL' : 'EFEITO'}</div>`
+    : `<div class="card-name">${d.name}</div><div class="card-stats"><span class="atk">⚔ ${atk}</span><span class="hp">♥ ${hp}/${c.maxHp || ''}</span></div>`;
+  el.innerHTML = `${art ? `<div class="card-art-wrap"><img class="card-art" src="${art}" alt="${d.name}" draggable="false"></div>` : ''}<span class="card-cost">${d.cost} 🍃</span><div class="card-body"><div class="card-silhouette">${art ? '' : d.emoji}</div></div><div class="card-footer">${footer}</div>`;
   if (marks.length) {
     const badge = document.createElement('span');
     badge.className = 'card-effects';

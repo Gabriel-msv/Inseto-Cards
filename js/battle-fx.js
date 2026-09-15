@@ -168,7 +168,6 @@
           'fx-hit':()=>this.hit(),
           'fx-summon':()=>this.summon(),
           'fx-move':()=>this.move(),
-          'fx-discard':()=>this.discard(),
           'fx-draw':()=>this.draw(),
           'fx-harvest':()=>this.harvest()
         };
@@ -178,17 +177,6 @@
       base.burst = (el,n=12) => { burst(el,n); this.spark(el,Math.min(34,n+12),70); };
       base.slash = (a,b) => { slash(a,b); this.beam(a,b); this.impact(b); };
       base.leaves = (a,b) => { leaves(a,b); this.leafStream(a,b); };
-    },
-
-    discard() {
-      const g = gs(); if (!g || reduced()) return;
-      const board = $('.board');
-      if (board) g.timeline().to(board,{x:2,duration:.05,ease:'power2.out'}).to(board,{x:0,duration:.16,ease:'power2.out'});
-      this.shockwave($('.board'), 'white');
-      const grave = $('#graveTop');
-      if (grave) {
-        g.fromTo(grave,{scale:.75,opacity:.35,rotateZ:-5},{scale:1.08,opacity:1,rotateZ:0,duration:.3,ease:'back.out(2)'});
-      }
     },
 
     attack() {

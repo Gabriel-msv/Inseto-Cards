@@ -188,27 +188,6 @@ button { cursor: pointer; }
 .revenge-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
 .revenge-actions .btn { min-height: 42px; }
 
-.card.affected-lupa {
-  animation: effect-lupa-pulse 1.25s ease-in-out infinite;
-  box-shadow: 0 0 0 1px var(--amber), 0 0 18px rgba(239,197,104,.22);
-}
-.card.affected-teia {
-  animation: effect-teia-pulse 1.1s ease-in-out infinite;
-  box-shadow: 0 0 0 1px var(--coral), 0 0 18px rgba(255,133,133,.2);
-}
-.card.affected-aranha,
-.card.affected-centopeia {
-  box-shadow: 0 0 0 1px var(--coral), inset 0 0 18px rgba(255,133,133,.1);
-}
-@keyframes effect-lupa-pulse {
-  0%,100% { box-shadow: 0 0 0 1px var(--amber), 0 0 8px rgba(239,197,104,.14); }
-  50% { box-shadow: 0 0 0 2px var(--amber), 0 0 22px rgba(239,197,104,.35); }
-}
-@keyframes effect-teia-pulse {
-  0%,100% { box-shadow: 0 0 0 1px var(--coral), 0 0 8px rgba(255,133,133,.14); }
-  50% { box-shadow: 0 0 0 2px var(--coral), 0 0 22px rgba(255,133,133,.35); }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .board.fx-attack .card { animation: none; }
 }
@@ -336,19 +315,77 @@ button { cursor: pointer; }
 
 /* Hipnose / pêndulo: a animação principal é GSAP; estes estados dão profundidade. */
 .card:not(.dragging) { perspective: 900px; }
-.card.affected-lupa {
-  box-shadow: 0 0 0 1px var(--amber), 0 0 14px rgba(239,197,104,.22);
-  animation: lupa-pulse-203 1.15s ease-in-out infinite;
+
+/* ========================================================================
+   EFEITOS DE CARTA — iluminação limpa
+   O brilho fica no contorno, sem clarear/alterar a arte da carta.
+   ======================================================================== */
+.card.affected-lupa,
+.card.affected-teia,
+.card.affected-aranha,
+.card.affected-centopeia {
+  position: relative;
+  isolation: isolate;
+  filter: none !important;
 }
-.card.affected-teia {
-  box-shadow: 0 0 0 1px var(--coral), 0 0 14px rgba(255,133,133,.2);
-  animation: teia-pulse-203 1s ease-in-out infinite;
+.card.affected-lupa { box-shadow: 0 0 0 1px rgba(239,197,104,.82), 0 0 12px rgba(239,197,104,.16); }
+.card.affected-teia { box-shadow: 0 0 0 1px rgba(255,133,133,.82), 0 0 12px rgba(255,133,133,.16); }
+.card.affected-aranha,
+.card.affected-centopeia { box-shadow: 0 0 0 1px rgba(255,133,133,.68), 0 0 9px rgba(255,133,133,.11); }
+
+.card.affected-lupa::before,
+.card.affected-teia::before,
+.card.affected-aranha::before,
+.card.affected-centopeia::before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  z-index: 7;
+  border-radius: 7px;
+  pointer-events: none;
+  opacity: .7;
 }
-.card.affected-aranha, .card.affected-centopeia {
-  box-shadow: 0 0 0 1px var(--coral), inset 0 0 18px rgba(255,133,133,.12);
+.card.affected-lupa::before {
+  border: 1px solid rgba(239,197,104,.55);
+  box-shadow: inset 0 0 8px rgba(239,197,104,.10);
 }
-@keyframes lupa-pulse-203 { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.12); } }
-@keyframes teia-pulse-203 { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.16) saturate(1.1); } }
+.card.affected-teia::before {
+  border: 1px solid rgba(255,133,133,.52);
+  box-shadow: inset 0 0 8px rgba(255,133,133,.08);
+}
+.card.affected-aranha::before,
+.card.affected-centopeia::before {
+  border: 1px dashed rgba(255,133,133,.42);
+}
+
+/* Cartas de efeito têm identidade própria, mas continuam com o mesmo tamanho/layout. */
+.card.effect-card {
+  border-color: rgba(216,255,125,.42);
+  background: #101f15;
+}
+.card.effect-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  border-radius: inherit;
+  border-top: 2px solid rgba(216,255,125,.58);
+  background: linear-gradient(180deg, rgba(216,255,125,.08), transparent 30%);
+}
+.card.effect-equipment { border-color: rgba(239,197,104,.55); }
+.card.effect-equipment::before { border-top-color: rgba(239,197,104,.7); background: linear-gradient(180deg, rgba(239,197,104,.10), transparent 30%); }
+.card.effect-card .card-cost { color: var(--amber); }
+.card.effect-card .card-footer { background: rgba(7,17,10,.78); }
+.card.effect-card .effect-type {
+  color: var(--lime);
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: .08em;
+}
+.card.effect-equipment .effect-type { color: var(--amber); }
+.card.effect-card.active-effect-card { box-shadow: 0 0 0 1px rgba(216,255,125,.62), 0 0 13px rgba(216,255,125,.15); }
+.card.effect-equipment.active-effect-card { box-shadow: 0 0 0 1px rgba(239,197,104,.68), 0 0 13px rgba(239,197,104,.16); }
 
 .btn, .action, .mp-btn { position: relative; overflow: hidden; isolation: isolate; transform: translateZ(0); }
 .btn::before, .action::before, .mp-btn::before {
@@ -393,69 +430,4 @@ button { cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   .card, .card::after, .slot.drop-ready, .hand.drop-ready { animation: none !important; }
   *, *::before, *::after { transition-duration:.01ms !important; }
-}
-
-
-/* ========================================================================
-   2.0.5 — terminal, timer, card ability aura e Cupim preview
-   Somente apresentação; não altera layout estrutural/responsividade.
-   ======================================================================== */
-.log {
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  white-space: normal;
-  scroll-behavior: smooth;
-  scrollbar-width: thin;
-}
-.log > div {
-  padding: 2px 0;
-  opacity: .92;
-  border-bottom: 1px solid rgba(125,245,156,.035);
-}
-.log > div::first-letter { color: var(--green); }
-
-#mpFixedTimer {
-  box-shadow: 0 0 20px rgba(216,255,125,.15), inset 0 0 14px rgba(216,255,125,.05);
-  backdrop-filter: blur(14px);
-  transition: color .18s ease, border-color .18s ease, box-shadow .18s ease;
-}
-#mpFixedTimer.urgent {
-  color: var(--coral);
-  border-color: var(--coral);
-  box-shadow: 0 0 24px rgba(255,110,100,.3), inset 0 0 14px rgba(255,110,100,.08);
-}
-
-/* Habilidades no campo: aura contínua, sem redimensionar ou mover a carta. */
-.slot .card.has-ability::before,
-.slot .card.active-effect-card::before {
-  content: '';
-  position: absolute;
-  inset: -3px;
-  border-radius: inherit;
-  pointer-events: none;
-  z-index: 9;
-  border: 1px solid rgba(216,255,125,.5);
-  box-shadow: 0 0 12px rgba(125,245,156,.22), inset 0 0 12px rgba(216,255,125,.07);
-  animation: ability-aura-205 2.1s ease-in-out infinite;
-}
-.slot .card.active-effect-card::before {
-  border-color: rgba(239,197,104,.65);
-  box-shadow: 0 0 14px rgba(239,197,104,.22), inset 0 0 12px rgba(239,197,104,.08);
-}
-@keyframes ability-aura-205 {
-  0%,100% { opacity: .45; filter: brightness(1); }
-  50% { opacity: 1; filter: brightness(1.16); }
-}
-
-.cupim-modal { text-align: center; }
-.cupim-kicker { color: var(--amber); font: 700 10px/1 Orbitron, sans-serif; letter-spacing: .18em; }
-.cupim-modal h2 { margin: 8px 0 4px; }
-.cupim-preview-grid { display: grid; grid-template-columns: repeat(2,minmax(110px,1fr)); gap: 14px; margin: 16px auto; max-width: 330px; }
-.cupim-preview-card { min-height: 170px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 7px; padding: 8px; border: 1px solid var(--line); border-radius: 10px; background: rgba(19,40,26,.72); box-shadow: 0 12px 35px rgba(0,0,0,.25); }
-.cupim-preview-card img { width: 100%; max-height: 135px; object-fit: cover; border-radius: 7px; }
-.cupim-preview-card span { color: var(--text); font-size: 10px; font-weight: 700; }
-.cupim-preview-card.empty { justify-content: center; color: var(--muted); }
-@media (max-width: 520px) {
-  .cupim-preview-grid { gap: 8px; margin: 10px auto; }
-  .cupim-preview-card { min-height: 125px; }
-  .cupim-preview-card img { max-height: 92px; }
 }
