@@ -222,9 +222,8 @@ function refillNatureFromGrave() {
   if (!dead.length) return false;
   const deadIds = new Set(dead.map(c => c.id));
   state.grave = state.grave.filter(c => !deadIds.has(c.id));
-  dead.forEach(c => { c.dead = false; c.owner = null; });
   shuffleInPlace(dead);
-  state.deck.push(...dead);
+  state.deck.push(...dead.map(c => c.key));
   log(`A Natureza acabou. ${dead.length} carta(s) derrotada(s) foram embaralhadas e retornaram à Natureza.`);
   FX.boardState('fx-draw', 650);
   FX.ring(document.querySelector('.natureza .pile'));
@@ -459,7 +458,8 @@ function onSummon(pi, c) {
     log(`${p.name} curou todos os aliados com a Borboleta.`);
   }
   if (c.key === 'mosca') {
-    const ix = state.grave.findIndex(x => CARDS[x.key].type !== 'effect');
+    let ix = -1;
+    for (let i = state.grave.length - 1; i >= 0; i--) { if (CARDS[state.grave[i].key].type !== 'effect') { ix = i; break; } }
     if (ix >= 0) {
       const old = state.grave.splice(ix, 1)[0];
       const nc = card(old.key, pi);
@@ -846,7 +846,7 @@ function hideEnemyActions() { let popup = document.getElementById('enemyActionPo
 // IA simples baseada em prioridade de custo, campo e ataque.
 // ================================================================
 function aiBestCard() { let p = state.players[1]; return p.hand.map((c, i) => ({ c, i, d: CARDS[c.key] })).filter(x => !x.d.type && x.d.cost <= p.leaves).sort((a, b) => (b.d.atk + b.d.hp - a.d.cost) - (a.c.atk + a.c.hp - b.d.cost))[0] }
-function botTurn() { setTimeout(() => { if (state.over) return; let p = state.players[1], o = state.players[0], actions = [], direct = false; if (p.leaves < 8 && p.std) { harvest(1); actions.push('Colheu folhas.') } let x = aiBestCard(); if (x && p.moves) { let zone = !p.front ? 'front' : p.bank.findIndex(v => !v) >= 0 ? 'bank' : null; if (zone === 'front') { summonFromHand(1, x.i, 'front', 0); actions.push(`Invocou ${CARDS[x.c.key].name}.`) } else if (zone === 'bank') { summonFromHand(1, x.i, 'bank', p.bank.findIndex(v => !v)); actions.push(`Colocou ${CARDS[x.c.key].name} no Banco.`) } } if (p.std) { let targets = o.front ? [o.front] : o.bank.filter(Boolean); if (p.front && targets.length) { let t = targets.sort((a, b) => a.hp - b.hp)[0]; attack(1, p.front, t); actions.push(`Atacou com ${CARDS[p.front.key].name}.`) } else if (state.round > 1 && directAttack(1)) { actions.push('Fez um ataque direto.'); direct = true } } if (p.std && p.leaves >= 3 && ensureNature()) { drawCost(1); p.std--; actions.push('Comprou uma carta.') } if (p.std) { harvest(1); actions.push('Colheu folhas.') } showEnemyActions(actions, direct ? 'ATAQUE DIRETO DO BOT' : 'AÇÕES DO BOT'); if (!state.over) endTurn(1) }, 850) }
+function botTurn() { setTimeout(() => { if (state.over) return; let p = state.players[1], o = state.players[0], actions = [], direct = false; if (p.leaves < 8 && p.std) { harvest(1); actions.push('Colheu folhas.') } let x = aiBestCard(); if (x && p.moves) { let zone = !p.front ? 'front' : p.bank.findIndex(v => !v) >= 0 ? 'bank' : null; if (zone === 'front') { summonFromHand(1, x.i, 'front', 0); actions.push(`Invocou ${CARDS[x.c.key].name}.`) } else if (zone === 'bank') { summonFromHand(1, x.i, 'bank', p.bank.findIndex(v => !v)); actions.push(`Colocou ${CARDS[x.c.key].name} no Banco.`) } } if (p.std) { let targets = o.front ? [o.front] : o.bank.filter(Boolean); if (p.front && targets.length) { let t = targets.sort((a, b) => a.hp - b.hp)[0]; let attackerName = CARDS[p.front.key].name; attack(1, p.front, t); actions.push(`Atacou com ${attackerName}.`) } else if (state.round > 1 && directAttack(1)) { actions.push('Fez um ataque direto.'); direct = true } } if (p.std && p.leaves >= 3 && ensureNature()) { drawCost(1); p.std--; actions.push('Comprou uma carta.') } if (p.std) { harvest(1); actions.push('Colheu folhas.') } showEnemyActions(actions, direct ? 'ATAQUE DIRETO DO BOT' : 'AÇÕES DO BOT'); if (!state.over) endTurn(1) }, 850) }
 // ================================================================
 // DRAG & DROP
 // Cartas do jogador podem ser arrastadas para os slots válidos.
