@@ -119,9 +119,6 @@ const CARDS = {
   teia: { name: 'Teia', cost: 3, type: 'effect', emoji: '🕸️', cond: 'Ativado', ability: 'Impede a carta alvo de atacar no próximo turno.' },
   veneno: { name: 'Veneno', cost: 3, type: 'effect', equip: true, emoji: '☠️', cond: 'Equipável', ability: '+1 dano por ataque durante 2 turnos.' },
   ninho: { name: 'Ninho', cost: 4, type: 'effect', emoji: '🪺', cond: 'Ativado', ability: 'Invoca uma carta Larva grátis direto no Banco de quem usou.' },
-  casca: { name: 'Casca', cost: 3, type: 'effect', equip: true, emoji: '🥥', cond: 'Equipável', ability: 'A carta equipada ignora o próximo debuff que receber (inclui ser transformada em Larva).' },
-  casuloReal: { name: 'Casulo Real', cost: 4, type: 'effect', equip: true, emoji: '🥚', cond: 'Equipável', ability: '+4 HP na carta equipada.' },
-  fumaça: { name: 'Fumaça', cost: 3, type: 'effect', emoji: '💨', cond: 'Ativado', ability: 'Reduz o ATK de todas as cartas em campo, dos dois lados, em 1, por 2 turnos.' },
   propolis: { name: 'Própolis', cost: 3, type: 'effect', equip: true, emoji: '🍯', cond: 'Equipável', ability: 'Remove qualquer efeito de veneno (dano contínuo) da carta equipada.' },
   formigueiro: { name: 'Formigueiro', cost: 3, type: 'effect', emoji: '🏠', cond: 'Ativado', ability: 'As folhas de quem usou não podem ser roubadas por 3 rodadas.' }
 };
@@ -150,9 +147,6 @@ const CARD_IMAGES = {
   formigaVermelha: 'assets/cards/formigaVermelha.jpg',
   formigueiro: 'assets/cards/formigueiro.jpg',
   ninho: 'assets/cards/ninho.jpg',
-  casca: 'assets/cards/casca.jpg',
-  casuloReal: 'assets/cards/casuloReal.jpg',
-  fumaça: 'assets/cards/fumaca.jpg',
   gafanhoto: 'assets/cards/gafanhoto.jpg',
   grilo: 'assets/cards/grilo.jpg',
   inseticida: 'assets/cards/inseticida.jpg',
@@ -183,9 +177,9 @@ const DECK_KEYS = Object.keys(CARDS); // catálogo completo atual, uma cópia de
 // Guarda jogadores, baralho, cemitério, turno e seleção do jogador.
 // ================================================================
 const APP_VERSION = '2.0.5'; // X=reforma, Y=adição, Z=correção de bug.
-const state = { started: false, over: false, round: 1, turn: 'player', deck: [], grave: [], players: [null, null], selected: null, selectedField: null, targetMode: null, log: [], skip: [false, false], tie: false, smokeTurns: 0 };
+const state = { started: false, over: false, round: 1, turn: 'player', deck: [], grave: [], players: [null, null], selected: null, selectedField: null, targetMode: null, log: [], skip: [false, false], tie: false };
 function P(name, bot = false) { return { name, bot, leaves: 5, hand: [], front: null, bank: [null, null, null], moves: 1, std: 1, passiveBuy: false, adubo: 0, antiSteal: 0, revealed: 0 }; }
-function card(key, owner) { let c = CARDS[key]; return { id: Math.random().toString(36).slice(2), key, owner, atk: c.atk ?? 0, hp: c.hp ?? 0, maxHp: c.hp ?? 0, baseAtk: c.atk ?? 0, baseHp: c.hp ?? 0, damage: 0, buffs: [], equipment: [], activeTurns: 0, poison: 0, poisonTurns: 0, root: 0, skipAttack: 0, reload: 0, protectedOnce: key === 'louva', barataUsed: false, mel: false, customAbility: null, copiedKey: null, debuffNext: false, bonusAtk: 0, bonusHp: 0, passiveAtkBonus: 0, passiveHpBonus: 0, debuffAtk: 0, cascaReady: false, lupa: 0, teia: 0, effectMarks: [] }; }
+function card(key, owner) { let c = CARDS[key]; return { id: Math.random().toString(36).slice(2), key, owner, atk: c.atk ?? 0, hp: c.hp ?? 0, maxHp: c.hp ?? 0, baseAtk: c.atk ?? 0, baseHp: c.hp ?? 0, damage: 0, buffs: [], equipment: [], activeTurns: 0, poison: 0, poisonTurns: 0, root: 0, skipAttack: 0, reload: 0, protectedOnce: key === 'louva', barataUsed: false, mel: false, customAbility: null, copiedKey: null, debuffNext: false, bonusAtk: 0, bonusHp: 0, passiveAtkBonus: 0, passiveHpBonus: 0, debuffAtk: 0, lupa: 0, teia: 0, effectMarks: [] }; }
 function insect(x) { return x && CARDS[x.key] && CARDS[x.key].type !== 'effect' }
 // ---------------------------------------------------------------
 // Utilitários de interface e registro da partida.
@@ -210,7 +204,7 @@ function blockAction(text) {
   blockAction.timer = setTimeout(() => popup.classList.remove('is-visible'), 1800);
 }
 function init() {
-  clearSoloTurnTimer(); state.started = true; state.over = false; state.round = 1; state.turn = 'player'; state.grave = []; state.selected = null; state.selectedField = null; state.targetMode = null; state.skip = [false, false]; state.smokeTurns = 0; state.players = [P((document.getElementById('name').value || 'Jogador').trim() || 'Jogador'), P('BOT', true)]; state.deck = [...DECK_KEYS].sort(() => Math.random() - .5); for (let i = 0; i < 3; i++) { drawRaw(0); drawRaw(1) }; log('Partida iniciada. Mão inicial: 3 cartas.'); document.getElementById('enemyName').textContent = 'BOT';// ================================================================
+  clearSoloTurnTimer(); state.started = true; state.over = false; state.round = 1; state.turn = 'player'; state.grave = []; state.selected = null; state.selectedField = null; state.targetMode = null; state.skip = [false, false]; state.players = [P((document.getElementById('name').value || 'Jogador').trim() || 'Jogador'), P('BOT', true)]; state.deck = [...DECK_KEYS].sort(() => Math.random() - .5); for (let i = 0; i < 3; i++) { drawRaw(0); drawRaw(1) }; log('Partida iniciada. Mão inicial: 3 cartas.'); document.getElementById('enemyName').textContent = 'BOT';// ================================================================
   // EVENTOS DA INTERFACE
   // ================================================================
   document.getElementById('start').disabled = true; startTurn(0); render()
@@ -317,15 +311,14 @@ function endTurnIfBlocked(pi) {
 }
 function fieldCards(pi) { const p = state.players[pi]; return p ? [p.front, ...p.bank].filter(Boolean) : []; }
 function refreshPassiveStats() {
-  const smoke = state.smokeTurns > 0 ? 1 : 0;
   for (let pi = 0; pi < 2; pi++) {
     const p = state.players[pi]; if (!p) continue;
     const bees = p.bank.filter(c => c && c.key === 'abelha').length;
     const bankCount = p.bank.filter(Boolean).length;
     for (const c of fieldCards(pi)) {
       const eqAtk = (c.equipment || []).reduce((n, e) => n + (e.key === 'mel' ? 1 : 0), 0);
-      const eqHp = (c.equipment || []).reduce((n, e) => n + (e.key === 'mel' ? 1 : e.key === 'casulo' ? 2 : e.key === 'casuloReal' ? 4 : 0), 0);
-      const passiveAtk = (c.key === 'formiga' && p.front === c ? bankCount : 0) + (p.front === c ? bees : 0) - smoke + (c.debuffAtk || 0);
+      const eqHp = (c.equipment || []).reduce((n, e) => n + (e.key === 'mel' ? 1 : e.key === 'casulo' ? 2 : 0), 0);
+      const passiveAtk = (c.key === 'formiga' && p.front === c ? bankCount : 0) + (p.front === c ? bees : 0) + (c.debuffAtk || 0);
       const passiveHp = (c.key === 'formiga' && p.front === c ? bankCount : 0) + (p.front === c ? bees : 0);
       const desiredAtk = c.baseAtk + (c.bonusAtk || 0) + eqAtk + passiveAtk;
       const desiredMax = c.baseHp + (c.bonusHp || 0) + eqHp + passiveHp;
@@ -338,7 +331,6 @@ function refreshPassiveStats() {
     }
   }
 }
-function consumeCasca(c) { if (c?.cascaReady) { c.cascaReady = false; const i = (c.effectMarks || []).indexOf('casca'); if (i >= 0) c.effectMarks.splice(i, 1); log(`${CARDS[c.key].name} ignorou um debuff graças à Casca.`); return true; } return false; }
 
 const SOLO_TURN_LIMIT = 30000;
 let soloTurnTimer = null;
@@ -421,7 +413,6 @@ function startTurn(pi) {
   }
   if (p.adubo > 0) p.adubo--;
   if (p.antiSteal > 0) p.antiSteal--;
-  if (state.smokeTurns > 0) { state.smokeTurns--; if (state.smokeTurns === 0) log('A Fumaça se dissipou.'); }
   refreshPassiveStats();
   if (pi === 0) msg('Seu turno. Escolha uma ação.'); else botTurn();
   setTimeout(() => endTurnIfBlocked(pi), 900);
@@ -550,8 +541,8 @@ function attack(pi, a, t) {
   // Cada Grilo aliado ganha 1 folha sempre que QUALQUER aliado atacar.
   fieldCards(pi).filter(x => x.key === 'grilo').forEach(() => { p.leaves = Math.min(15, p.leaves + 1); });
   if (a.key === 'escorpiao') { t.poisonTurns = Math.max(t.poisonTurns, 2); t.poison = 1 }
-  if (a.key === 'aranha' && !isImmuneRoot(t) && !consumeCasca(t)) { t.root = Math.max(t.root, 1); t.effectMarks ||= []; if (!t.effectMarks.includes('aranha')) t.effectMarks.push('aranha'); }
-  if (a.key === 'centopeia' && t.hp <= (t.maxHp / 2) && !isImmuneRoot(t) && !consumeCasca(t)) { t.root = Math.max(t.root, 2); t.effectMarks ||= []; if (!t.effectMarks.includes('centopeia')) t.effectMarks.push('centopeia'); }
+  if (a.key === 'aranha' && !isImmuneRoot(t)) { t.root = Math.max(t.root, 1); t.effectMarks ||= []; if (!t.effectMarks.includes('aranha')) t.effectMarks.push('aranha'); }
+  if (a.key === 'centopeia' && t.hp <= (t.maxHp / 2) && !isImmuneRoot(t)) { t.root = Math.max(t.root, 2); t.effectMarks ||= []; if (!t.effectMarks.includes('centopeia')) t.effectMarks.push('centopeia'); }
   if (a.key === 'meganeura') a.reload = 1;
 
   let dealt = damage;
@@ -585,7 +576,6 @@ function attack(pi, a, t) {
 function isImmuneRoot(c) { return c && c.key === 'libelula' }
 function clearBuffs(c) {
   if (!c) return false;
-  if (consumeCasca(c)) return false;
   c.bonusAtk = 0; c.bonusHp = 0; c.debuffAtk = 0;
   c.poison = 0; c.poisonTurns = 0; c.root = 0; c.skipAttack = 0; c.reload = 0; c.lupa = 0; c.teia = 0;
   c.effectMarks = (c.effectMarks || []).filter(mark => !['lupa','teia','aranha','centopeia'].includes(mark));
@@ -661,11 +651,10 @@ function activateEffect(pi, idx, zone, slot) {
     log(`${p.name} usou Ninho e colocou uma Larva grátis no Banco.`);
     c.dead = false; state.grave.push(c); FX.boardState('fx-discard', 500); p.std--; refreshPassiveStats(); render(); endTurnIfBlocked(pi); return true;
   }
-  c.activeTurns = c.key === 'adubo' ? 4 : c.key === 'fumaça' ? 2 : c.key === 'formigueiro' ? 3 : 0;
+  c.activeTurns = c.key === 'adubo' ? 4 : c.key === 'formigueiro' ? 3 : 0;
   p.bank[bankSlot] = c;
   if (c.key === 'adubo') p.adubo = 4;
   if (c.key === 'formigueiro') p.antiSteal = 3;
-  if (c.key === 'fumaça') state.smokeTurns = 2;
   p.std--;
   log(`${p.name} ativou ${d.name}${c.activeTurns ? ` por ${c.activeTurns} rodadas` : ''}.`);
   refreshPassiveStats(); render(); endTurnIfBlocked(pi); return true;
@@ -678,7 +667,6 @@ function equip(pi, idx, target) {
   if (p.std <= 0) { if (pi === 0) blockAction('Você já gastou sua ação padrão.'); return false; }
   if (p.leaves < d.cost) { if (pi === 0) blockAction('Folhas insuficientes.'); return false; }
   p.leaves -= d.cost; p.hand.splice(idx, 1); target.equipment ||= []; target.equipment.push(c);
-  if (c.key === 'casca') { target.cascaReady = true; target.effectMarks ||= []; if (!target.effectMarks.includes('casca')) target.effectMarks.push('casca'); }
   if (c.key === 'veneno') { target.poison = 1; target.poisonTurns = 2; }
   if (c.key === 'propolis') { target.poison = 0; target.poisonTurns = 0; }
   p.std--; state.targetMode = null; refreshPassiveStats();
@@ -996,8 +984,8 @@ function makeCard(c, enemy) {
   if (marks.length) {
     const badge = document.createElement('span');
     badge.className = 'card-effects';
-    badge.textContent = marks.map(mark => ({lupa:'🔎', teia:'🕸️', aranha:'🕷️', centopeia:'🐛', casca:'🥥'}[mark] || '•')).join(' ');
-    badge.title = marks.map(mark => ({lupa:'Lupa', teia:'Teia', aranha:'Aranha', centopeia:'Centopeia', casca:'Casca'}[mark] || mark)).join(' · ');
+    badge.textContent = marks.map(mark => ({lupa:'🔎', teia:'🕸️', aranha:'🕷️', centopeia:'🐛'}[mark] || '•')).join(' ');
+    badge.title = marks.map(mark => ({lupa:'Lupa', teia:'Teia', aranha:'Aranha', centopeia:'Centopeia'}[mark] || mark)).join(' · ');
     el.appendChild(badge);
   }
   el.addEventListener('mouseenter', e => showTip(e, c));
