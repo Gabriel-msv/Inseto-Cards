@@ -244,39 +244,26 @@ function updateMultiplayerUI() {
   const actionPanel = document.querySelector('.right-sidebar .action-panel');
   const statusBadge = document.getElementById('mpStatusBadge');
   const timerElement = document.getElementById('mpTurnTimer');
-
   let fixedTimer = document.getElementById('mpFixedTimer');
-  if (!fixedTimer) {
-    fixedTimer = document.createElement('div');
-    fixedTimer.id = 'mpFixedTimer';
-    document.body.appendChild(fixedTimer);
-  }
-
+  if (!fixedTimer) { fixedTimer = document.createElement('div'); fixedTimer.id = 'mpFixedTimer'; document.body.appendChild(fixedTimer); }
   let mobileTurn = document.getElementById('mpMobileTurn');
-  if (!mobileTurn) {
-    mobileTurn = document.createElement('div');
-    mobileTurn.id = 'mpMobileTurn';
-    actionPanel?.insertAdjacentElement('afterend', mobileTurn);
-  } else if (actionPanel && mobileTurn.previousElementSibling !== actionPanel) {
-    actionPanel.insertAdjacentElement('afterend', mobileTurn);
+  if (!mobileTurn) { mobileTurn = document.createElement('div'); mobileTurn.id = 'mpMobileTurn'; document.querySelector('.right-sidebar')?.appendChild(mobileTurn); }
+  if (actionPanel) {
+    actionPanel.hidden = !localTurn || !state.started || state.over;
   }
-
-  if (actionPanel) actionPanel.hidden = !localTurn || !state.started || state.over;
   if (statusBadge) statusBadge.style.display = state.started ? 'none' : '';
-
   if (timerElement) {
     timerElement.hidden = !state.started || state.over;
     timerElement.textContent = formatTurnTime(state.mpTurnDeadline);
   }
   fixedTimer.hidden = !state.started || state.over;
   fixedTimer.textContent = formatTurnTime(state.mpTurnDeadline);
-
+  if (MP.role === 'guest') armGuestTurnTicker();
   document.getElementById('playerName').textContent = state.players[0].name.toUpperCase();
   document.getElementById('enemyName').textContent = state.players[1].name.toUpperCase();
-
   if (!localTurn && state.started && !state.over) {
     msg('Aguardando a ação do oponente.');
-    const latest = state.log.slice(0, 3).reverse();
+    const latest = state.log.slice(-3);
     showEnemyActions(latest.length ? latest : ['O oponente está pensando...'], `AÇÃO DE ${state.players[1].name.toUpperCase()}`);
     setBadge(`turno de ${state.players[1].name}`);
     mobileTurn.textContent = `TURNO DE ${state.players[1].name.toUpperCase()}`;
@@ -287,15 +274,24 @@ function updateMultiplayerUI() {
     mobileTurn.textContent = 'SEU TURNO';
   }
   mobileTurn.hidden = !state.started || state.over;
-}function formatTurnTime(deadline) {
+}
+
+function formatTurnTime(deadline) {
   const seconds = Math.max(0, Math.ceil((Number(deadline || 0) - Date.now()) / 1000));
   return `00:${String(seconds).padStart(2, '0')}`;
 }
 
 function updateTurnTimerDisplay() {
+  if (!MP.active || !state.started || state.over) return;
+  const text = formatTurnTime(state.mpTurnDeadline);
   const timerElement = document.getElementById('mpTurnTimer');
-  if (!timerElement || !MP.active || !state.started || state.over) return;
-  timerElement.textContent = formatTurnTime(state.mpTurnDeadline);
+  if (timerElement) { timerElement.hidden = false; timerElement.textContent = text; }
+  const fixedTimer = document.getElementById('mpFixedTimer');
+  if (fixedTimer) {
+    fixedTimer.hidden = false;
+    fixedTimer.textContent = text;
+    fixedTimer.classList.toggle('urgent', Math.max(0, state.mpTurnDeadline - Date.now()) <= 5000);
+  }
 }
 
 function returnToSessionMenu() {
@@ -305,46 +301,24 @@ function returnToSessionMenu() {
 }
 
 function showRevengeOffer() {
-  if (MP.revengeOffered) return;
+  if (!MP.active || MP.revengeOffered) return;
   MP.revengeOffered = true;
   MP.revengeAccepted = false;
   MP.revengePeerAccepted = false;
-
   let seconds = 15;
-  const multiplayer = MP.active;
-  showModal(`<h2>FIM DE PARTIDA</h2>
-    <p>${multiplayer ? 'Desejam jogar uma revanche?' : 'Quer jogar uma revanche?'}</p>
-    <p>Tempo para responder: <b id="revengeCountdown">15</b>s</p>
-    <div class="revenge-actions">
-      <button id="revengeAccept" class="btn btn-primary">ACEITAR REVANCHE</button>
-      <button id="revengeDecline" class="btn btn-secondary">VOLTAR AO MENU</button>
-    </div>`);
-
+  showModal(`<h2>FIM DE PARTIDA</h2><p>Desejam jogar uma revanche?</p><p>Tempo para responder: <b id="revengeCountdown">15</b>s</p><div class="revenge-actions"><button id="revengeAccept" class="btn btn-primary">ACEITAR REVANCHE</button><button id="revengeDecline" class="btn btn-secondary">VOLTAR AO MENU</button></div>`);
   const countdown = document.getElementById('revengeCountdown');
-  const finish = () => {
-    clearInterval(MP.revengeTicker);
-    returnToSessionMenu();
-  };
-
+  const finish = () => returnToSessionMenu();
   document.getElementById('revengeAccept').onclick = () => {
     MP.revengeAccepted = true;
-    if (!multiplayer) {
-      clearInterval(MP.revengeTicker);
-      document.getElementById('overlay').style.display = 'none';
-      MP.revengeOffered = false;
-      init();
-      return;
-    }
     send({ type: 'revenge', accepted: true });
     if (MP.role === 'host' && MP.revengePeerAccepted) MP.startGame?.();
     else if (countdown) countdown.textContent = 'aguardando';
   };
-
   document.getElementById('revengeDecline').onclick = finish;
-
   MP.revengeTicker = setInterval(() => {
     seconds--;
-    if (countdown && !MP.revengeAccepted) countdown.textContent = seconds;
+    if (countdown) countdown.textContent = seconds;
     if (seconds <= 0) { clearInterval(MP.revengeTicker); finish(); }
   }, 1000);
 }
@@ -373,6 +347,16 @@ function playGuestEffects(logEntry) {
   if (text.includes('invocou') || text.includes('moveu') || text.includes('puxou')) {
     FX.boardState(text.includes('invocou') ? 'fx-summon' : 'fx-move', 600);
   }
+}
+
+function armGuestTurnTicker() {
+  if (MP.role !== 'guest' || !state.started || state.over) { clearInterval(MP.turnTicker); MP.turnTicker = null; return; }
+  const key = `${state.round}:${state.turn}:${state.mpTurnDeadline}`;
+  if (MP.turnKey === key && MP.turnTicker) return;
+  clearInterval(MP.turnTicker);
+  MP.turnKey = key;
+  MP.turnTicker = setInterval(updateTurnTimerDisplay, 250);
+  updateTurnTimerDisplay();
 }
 
 function armTurnTimer() {
@@ -787,13 +771,7 @@ function applyHostState(hostState) {
 
   if (!hostState.started) return;
   if (document.getElementById('mpGate')) closeGate();
-  if (hostState.started && !hostState.over) {
-    clearInterval(MP.revengeTicker);
-    MP.revengeOffered = false;
-    MP.revengeAccepted = false;
-    MP.revengePeerAccepted = false;
-    document.getElementById('overlay').style.display = 'none';
-  }
+  if (hostState.started && !hostState.over) document.getElementById('overlay').style.display = 'none';
   if (typeof render === 'function') render();
   relabelOpponent();
   updateMultiplayerUI();
