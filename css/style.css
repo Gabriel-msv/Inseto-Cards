@@ -1500,24 +1500,58 @@ body { background-color:#08110c; background-image:radial-gradient(circle at 20% 
 
 
 /* ================================================================
-   3.2.7 — FRONTES IDÊNTICOS AO BANCO
+   3.2.8 — FRONTES AINDA MAIS PRÓXIMOS / TURNO SEM ESPAÇO EXTRA
    ================================================================ */
 @media (min-width: 901px) {
+  .battle-main {
+    grid-template-rows: 30px minmax(0,1fr) minmax(0,1fr) 22px minmax(0,1fr) minmax(0,1fr);
+  }
+
   .battle-main .slot.fronte,
   .battle-main .slot {
     width: clamp(72px, 6.1vw, 88px);
     height: clamp(92px, 8.1vw, 112px);
     flex-basis: clamp(72px, 6.1vw, 88px);
   }
+
   .battle-main .card.fronte-card {
     width: 100%;
     height: 100%;
     box-sizing: border-box;
   }
-  .battle-main .center-zone { width: min(320px, 55%); }
-  .battle-main .turn { gap: 8px; min-width: 68px; font-size: 8px; }
+
+  .battle-main .center-zone {
+    width: min(250px, 44%);
+    height: 22px;
+    min-height: 22px;
+    margin: 0;
+    padding: 0;
+  }
+
+  .battle-main .turn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    font-size: 8px;
+    line-height: 1;
+  }
 }
+
 @media (max-width: 1050px) and (min-width: 901px) {
-  .battle-main .center-zone { width: min(285px, 52%); }
-  .battle-main .turn { gap: 7px; min-width: 64px; }
+  .battle-main {
+    grid-template-rows: 30px minmax(0,1fr) minmax(0,1fr) 20px minmax(0,1fr) minmax(0,1fr);
+  }
+  .battle-main .center-zone {
+    width: min(220px, 42%);
+    height: 20px;
+    min-height: 20px;
+  }
+  .battle-main .turn {
+    gap: 6px;
+    font-size: 7px;
+  }
 }

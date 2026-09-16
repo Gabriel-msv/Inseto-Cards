@@ -2,7 +2,7 @@
 
 Jogo de cartas em HTML, CSS e JavaScript, jogável contra um BOT ou outro jogador pela rede.
 
-**Versão atual:** `3.2.5`
+**Versão atual:** `3.2.8`
 
 ## 3.2.5 — Turno compacto
 
@@ -15,6 +15,12 @@ Jogo de cartas em HTML, CSS e JavaScript, jogável contra um BOT ou outro jogado
 - Reorganizados os controles centrais para manter COMPRAR, COLHER, ENCERRAR TURNO e 2º MOVIMENTO na mesma linha.
 - Ações dependentes de seleção permanecem em uma segunda linha compacta.
 - Correção somente visual; regras, combate, BOT e multiplayer não foram alterados.
+
+## 3.2.8 — Frontes ainda mais próximos
+
+- Reduzido o espaço vertical entre os dois Frontes.
+- Removido o espaçamento extra do indicador de turno.
+- Mantidos os slots e cartas do Fronte na mesma dimensão dos slots do Banco.
 
 ## 3.2.7 — Ajuste final dos Frontes
 
