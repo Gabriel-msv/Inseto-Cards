@@ -188,6 +188,27 @@ button { cursor: pointer; }
 .revenge-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
 .revenge-actions .btn { min-height: 42px; }
 
+.card.affected-lupa {
+  animation: effect-lupa-pulse 1.25s ease-in-out infinite;
+  box-shadow: 0 0 0 1px var(--amber), 0 0 18px rgba(239,197,104,.22);
+}
+.card.affected-teia {
+  animation: effect-teia-pulse 1.1s ease-in-out infinite;
+  box-shadow: 0 0 0 1px var(--coral), 0 0 18px rgba(255,133,133,.2);
+}
+.card.affected-aranha,
+.card.affected-centopeia {
+  box-shadow: 0 0 0 1px var(--coral), inset 0 0 18px rgba(255,133,133,.1);
+}
+@keyframes effect-lupa-pulse {
+  0%,100% { box-shadow: 0 0 0 1px var(--amber), 0 0 8px rgba(239,197,104,.14); }
+  50% { box-shadow: 0 0 0 2px var(--amber), 0 0 22px rgba(239,197,104,.35); }
+}
+@keyframes effect-teia-pulse {
+  0%,100% { box-shadow: 0 0 0 1px var(--coral), 0 0 8px rgba(255,133,133,.14); }
+  50% { box-shadow: 0 0 0 2px var(--coral), 0 0 22px rgba(255,133,133,.35); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .board.fx-attack .card { animation: none; }
 }
@@ -315,77 +336,19 @@ button { cursor: pointer; }
 
 /* Hipnose / pêndulo: a animação principal é GSAP; estes estados dão profundidade. */
 .card:not(.dragging) { perspective: 900px; }
-
-/* ========================================================================
-   EFEITOS DE CARTA — iluminação limpa
-   O brilho fica no contorno, sem clarear/alterar a arte da carta.
-   ======================================================================== */
-.card.affected-lupa,
-.card.affected-teia,
-.card.affected-aranha,
-.card.affected-centopeia {
-  position: relative;
-  isolation: isolate;
-  filter: none !important;
+.card.affected-lupa {
+  box-shadow: 0 0 0 1px var(--amber), 0 0 14px rgba(239,197,104,.22);
+  animation: lupa-pulse-203 1.15s ease-in-out infinite;
 }
-.card.affected-lupa { box-shadow: 0 0 0 1px rgba(239,197,104,.82), 0 0 12px rgba(239,197,104,.16); }
-.card.affected-teia { box-shadow: 0 0 0 1px rgba(255,133,133,.82), 0 0 12px rgba(255,133,133,.16); }
-.card.affected-aranha,
-.card.affected-centopeia { box-shadow: 0 0 0 1px rgba(255,133,133,.68), 0 0 9px rgba(255,133,133,.11); }
-
-.card.affected-lupa::before,
-.card.affected-teia::before,
-.card.affected-aranha::before,
-.card.affected-centopeia::before {
-  content: '';
-  position: absolute;
-  inset: 1px;
-  z-index: 7;
-  border-radius: 7px;
-  pointer-events: none;
-  opacity: .7;
+.card.affected-teia {
+  box-shadow: 0 0 0 1px var(--coral), 0 0 14px rgba(255,133,133,.2);
+  animation: teia-pulse-203 1s ease-in-out infinite;
 }
-.card.affected-lupa::before {
-  border: 1px solid rgba(239,197,104,.55);
-  box-shadow: inset 0 0 8px rgba(239,197,104,.10);
+.card.affected-aranha, .card.affected-centopeia {
+  box-shadow: 0 0 0 1px var(--coral), inset 0 0 18px rgba(255,133,133,.12);
 }
-.card.affected-teia::before {
-  border: 1px solid rgba(255,133,133,.52);
-  box-shadow: inset 0 0 8px rgba(255,133,133,.08);
-}
-.card.affected-aranha::before,
-.card.affected-centopeia::before {
-  border: 1px dashed rgba(255,133,133,.42);
-}
-
-/* Cartas de efeito têm identidade própria, mas continuam com o mesmo tamanho/layout. */
-.card.effect-card {
-  border-color: rgba(216,255,125,.42);
-  background: #101f15;
-}
-.card.effect-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 6;
-  pointer-events: none;
-  border-radius: inherit;
-  border-top: 2px solid rgba(216,255,125,.58);
-  background: linear-gradient(180deg, rgba(216,255,125,.08), transparent 30%);
-}
-.card.effect-equipment { border-color: rgba(239,197,104,.55); }
-.card.effect-equipment::before { border-top-color: rgba(239,197,104,.7); background: linear-gradient(180deg, rgba(239,197,104,.10), transparent 30%); }
-.card.effect-card .card-cost { color: var(--amber); }
-.card.effect-card .card-footer { background: rgba(7,17,10,.78); }
-.card.effect-card .effect-type {
-  color: var(--lime);
-  font-size: 7px;
-  font-weight: 700;
-  letter-spacing: .08em;
-}
-.card.effect-equipment .effect-type { color: var(--amber); }
-.card.effect-card.active-effect-card { box-shadow: 0 0 0 1px rgba(216,255,125,.62), 0 0 13px rgba(216,255,125,.15); }
-.card.effect-equipment.active-effect-card { box-shadow: 0 0 0 1px rgba(239,197,104,.68), 0 0 13px rgba(239,197,104,.16); }
+@keyframes lupa-pulse-203 { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.12); } }
+@keyframes teia-pulse-203 { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.16) saturate(1.1); } }
 
 .btn, .action, .mp-btn { position: relative; overflow: hidden; isolation: isolate; transform: translateZ(0); }
 .btn::before, .action::before, .mp-btn::before {

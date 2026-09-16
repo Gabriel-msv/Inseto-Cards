@@ -258,12 +258,11 @@ function updateMultiplayerUI() {
   }
   fixedTimer.hidden = !state.started || state.over;
   fixedTimer.textContent = formatTurnTime(state.mpTurnDeadline);
-  if (MP.role === 'guest') armGuestTurnTicker();
   document.getElementById('playerName').textContent = state.players[0].name.toUpperCase();
   document.getElementById('enemyName').textContent = state.players[1].name.toUpperCase();
   if (!localTurn && state.started && !state.over) {
     msg('Aguardando a ação do oponente.');
-    const latest = state.log.slice(-3);
+    const latest = state.log.slice(0, 3).reverse();
     showEnemyActions(latest.length ? latest : ['O oponente está pensando...'], `AÇÃO DE ${state.players[1].name.toUpperCase()}`);
     setBadge(`turno de ${state.players[1].name}`);
     mobileTurn.textContent = `TURNO DE ${state.players[1].name.toUpperCase()}`;
@@ -282,16 +281,9 @@ function formatTurnTime(deadline) {
 }
 
 function updateTurnTimerDisplay() {
-  if (!MP.active || !state.started || state.over) return;
-  const text = formatTurnTime(state.mpTurnDeadline);
   const timerElement = document.getElementById('mpTurnTimer');
-  if (timerElement) { timerElement.hidden = false; timerElement.textContent = text; }
-  const fixedTimer = document.getElementById('mpFixedTimer');
-  if (fixedTimer) {
-    fixedTimer.hidden = false;
-    fixedTimer.textContent = text;
-    fixedTimer.classList.toggle('urgent', Math.max(0, state.mpTurnDeadline - Date.now()) <= 5000);
-  }
+  if (!timerElement || !MP.active || !state.started || state.over) return;
+  timerElement.textContent = formatTurnTime(state.mpTurnDeadline);
 }
 
 function returnToSessionMenu() {
@@ -347,16 +339,6 @@ function playGuestEffects(logEntry) {
   if (text.includes('invocou') || text.includes('moveu') || text.includes('puxou')) {
     FX.boardState(text.includes('invocou') ? 'fx-summon' : 'fx-move', 600);
   }
-}
-
-function armGuestTurnTicker() {
-  if (MP.role !== 'guest' || !state.started || state.over) { clearInterval(MP.turnTicker); MP.turnTicker = null; return; }
-  const key = `${state.round}:${state.turn}:${state.mpTurnDeadline}`;
-  if (MP.turnKey === key && MP.turnTicker) return;
-  clearInterval(MP.turnTicker);
-  MP.turnKey = key;
-  MP.turnTicker = setInterval(updateTurnTimerDisplay, 250);
-  updateTurnTimerDisplay();
 }
 
 function armTurnTimer() {
