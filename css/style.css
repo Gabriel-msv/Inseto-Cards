@@ -544,7 +544,54 @@ button { cursor: pointer; }
 .start-grid b { display:block; color:var(--brass-light); font:900 15px var(--display); }
 .start-grid span { color:var(--muted); font-size:7px; text-transform:uppercase; letter-spacing:.08em; }
 .start-cta { width:100%; min-height:44px; }
-.start-menu-actions { display:flex; justify-content:center; gap:18px; margin-top:11px; }
-.start-rules { display:block; margin:0; border:0; background:none; color:var(--muted); font:700 9px var(--sans); text-decoration:underline; cursor:pointer; }
-.online-menu-btn { color:var(--brass-light); }
+.start-rules { display:block; margin:11px auto 0; border:0; background:none; color:var(--muted); font:700 9px var(--sans); text-decoration:underline; cursor:pointer; }
 @media (max-width:600px) { .start-menu { padding:10px; } .start-menu-card { padding:21px; } .start-logo strong { font-size:20px; } .start-grid { grid-template-columns:repeat(2,1fr); } }
+
+
+/* ====================== 2.1.3 — MENU PRINCIPAL ONLINE ====================== */
+.multiplayer-menu-card { width:min(520px,94vw); position:relative; }
+.menu-arena-title { display:flex; flex-direction:column; gap:2px; padding:7px 0 5px; margin-bottom:10px; border-top:1px solid rgba(198,154,67,.28); border-bottom:1px solid rgba(198,154,67,.18); }
+.menu-arena-title span { color:var(--muted); font-size:8px; letter-spacing:.22em; }
+.menu-arena-title strong { color:var(--brass-light); font:700 16px var(--display); letter-spacing:.06em; }
+.menu-mode-grid { display:grid; grid-template-columns:1.2fr 1fr 1fr; gap:7px; margin:13px 0 10px; }
+.menu-mode { min-height:70px; padding:9px 7px; border:1px solid rgba(198,154,67,.28); border-radius:7px; background:rgba(0,0,0,.2); color:var(--parchment-300); text-align:left; cursor:pointer; transition:transform .16s, border-color .16s, background .16s, box-shadow .16s; }
+.menu-mode:hover { transform:translateY(-2px); border-color:var(--brass); }
+.menu-mode.is-active { border-color:var(--brass); background:linear-gradient(160deg,rgba(103,75,31,.42),rgba(20,18,12,.72)); box-shadow:0 0 0 1px rgba(198,154,67,.12), 0 8px 20px rgba(0,0,0,.24); }
+.menu-mode .mode-kicker { display:block; color:var(--brass); font:700 7px var(--display); letter-spacing:.15em; margin-bottom:5px; }
+.menu-mode strong { display:block; color:var(--parchment-100); font:700 10px var(--display); letter-spacing:.03em; }
+.menu-mode small { display:block; margin-top:5px; color:var(--muted); font-size:7px; line-height:1.3; }
+.menu-panel { display:none; padding:12px; border:1px solid rgba(198,154,67,.26); border-radius:7px; background:rgba(0,0,0,.17); }
+.menu-panel.is-active { display:block; }
+.menu-panel-title { margin-bottom:8px; color:var(--brass-light); font:700 10px var(--display); letter-spacing:.12em; }
+.menu-panel-copy { margin-bottom:10px; color:var(--parchment-300); font-size:10px; line-height:1.45; }
+.menu-preview { display:flex; align-items:center; justify-content:space-between; margin:7px 0 10px; padding:8px 10px; border:1px solid rgba(198,154,67,.18); border-radius:6px; color:var(--parchment-100); font:700 9px var(--display); }
+.menu-preview b { color:var(--brass); }
+.optional { color:var(--muted); font-weight:400; }
+.menu-code { text-align:center; text-transform:uppercase; letter-spacing:.28em; font:700 15px var(--display); }
+.menu-back { margin-top:6px; }
+.menu-error { min-height:16px; margin-top:8px; color:#d98d7e; font-size:9px; text-align:center; }
+.start-menu .mp-code-display { margin:8px 0 5px; color:var(--brass-light); font:900 30px var(--display); letter-spacing:.25em; text-align:center; }
+.start-menu.is-hidden { opacity:0; visibility:hidden; pointer-events:none; transition:opacity .24s ease,visibility .24s ease; }
+
+/* ====================== 2.1.3 — REVELAÇÃO DO VAGA-LUME ====================== */
+#vagalumeReveal { position:fixed; inset:0; z-index:1250; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(6,8,5,.78); backdrop-filter:blur(7px); opacity:0; visibility:hidden; pointer-events:none; transition:opacity .18s ease,visibility .18s ease; }
+#vagalumeReveal.is-visible { opacity:1; visibility:visible; pointer-events:auto; }
+.vagalume-reveal-panel { width:min(620px,94vw); padding:22px; border:1px solid var(--brass); border-radius:10px; background:linear-gradient(160deg,#2a2014,#0d120c); box-shadow:0 24px 70px rgba(0,0,0,.7), inset 0 1px 0 rgba(247,242,228,.08); text-align:center; }
+.vagalume-kicker { color:var(--brass); font:700 8px var(--display); letter-spacing:.25em; }
+.vagalume-reveal-panel h2 { margin:5px 0 4px; color:var(--brass-light); font:900 18px var(--display); letter-spacing:.07em; }
+.vagalume-reveal-panel p { color:var(--parchment-300); font-size:10px; margin-bottom:14px; }
+.vagalume-reveal-cards { display:grid; grid-template-columns:repeat(2,minmax(0,180px)); justify-content:center; gap:14px; margin:0 auto 16px; }
+.vagalume-reveal-card { padding:7px; border:1px solid var(--brass-dark); border-radius:7px; background:linear-gradient(175deg,#f7f1df,#e4cda5); color:var(--parchment-ink); box-shadow:0 10px 24px rgba(0,0,0,.35); }
+.vagalume-card-art { width:100%; aspect-ratio:84/96; overflow:hidden; border-radius:4px; background:#d7c7a5; }
+.vagalume-card-art img { width:100%; height:100%; object-fit:cover; display:block; }
+.vagalume-card-art span { display:grid; width:100%; height:100%; place-items:center; font-size:42px; }
+.vagalume-reveal-card strong { display:block; margin-top:6px; font:700 10px var(--display); }
+.vagalume-reveal-card small { display:block; margin-top:3px; font-size:8px; color:#526040; }
+.vagalume-reveal-panel .btn { min-width:170px; }
+@media (max-width:600px) {
+  .multiplayer-menu-card { width:min(470px,96vw); padding:20px; }
+  .menu-mode-grid { grid-template-columns:1fr; }
+  .menu-mode { min-height:54px; }
+  .vagalume-reveal-panel { padding:16px 10px; }
+  .vagalume-reveal-cards { gap:8px; grid-template-columns:repeat(2,minmax(0,145px)); }
+}
