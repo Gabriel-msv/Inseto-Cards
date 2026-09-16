@@ -13,7 +13,7 @@
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&amp;family=Cinzel+Decorative:wght@700;900&amp;family=Spectral:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap" rel="stylesheet"/>
 <!-- CSS separado: todo o visual do jogo fica em css/style.css. -->
-<link href="css/style.css?v=3.2.1" rel="stylesheet"/>
+<link href="css/style.css?v=3.2.2" rel="stylesheet"/>
 <!-- GSAP: timelines, FLIP, springs/easing e microinterações de alta performance -->
 <script defer="" src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
 <!-- Favicon -->
@@ -180,7 +180,7 @@
 </div>
 </section>
 </aside>
-<section aria-label="Status e controles da partida" class="center-controls" data-layout="controls"><section class="turn-status glass-panel center-status">
+<section aria-label="Status e controles da partida" class="center-controls" data-layout="controls"><section class="turn-status glass-panel center-status"><span id="round" hidden></span><span id="turn" hidden></span><span id="deckCount" hidden></span><span id="graveCount" hidden></span>
 <div class="message" id="message">Clique em INICIAR PARTIDA.</div>
 <div class="hud player-hud">
 <span class="player-name" id="playerName">VOCÊ</span>
@@ -224,9 +224,9 @@
 <!-- Modal de regras / fim de partida -->
 <div class="overlay" id="overlay"><div class="modal glass-panel"><div id="modalContent"></div><button class="btn btn-primary" id="modalClose">FECHAR</button></div></div>
 <!-- JavaScript separado: regras, BOT, renderização e interações (inalterado) -->
-<script src="js/game.js?v=3.2.1"></script>
-<script src="js/multiplayer.js?v=3.2.1"></script>
-<script src="js/battle-fx.js?v=3.2.1"></script>
+<script src="js/game.js?v=3.2.2"></script>
+<script src="js/multiplayer.js?v=3.2.2"></script>
+<script src="js/battle-fx.js?v=3.2.2"></script>
 <script>
     // Navegação visual da mão: não interfere na lógica do jogo.
     document.querySelectorAll('.hand-nav').forEach(btn => {

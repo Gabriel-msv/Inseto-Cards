@@ -1006,7 +1006,7 @@ body { background-color:#08110c; background-image:radial-gradient(circle at 20% 
 
   .root {
     grid-template-columns: 248px minmax(0, 1fr) 340px;
-    grid-template-rows: minmax(0, 1fr) 156px;
+    grid-template-rows: minmax(0, 1fr) 106px;
     gap: 10px;
     width:100vw;
     height:100vh;
@@ -1222,9 +1222,28 @@ body { background-color:#08110c; background-image:radial-gradient(circle at 20% 
 }
 
 @media (max-width:1050px) and (min-width:901px) {
-  .root { grid-template-columns:210px minmax(0,1fr) 280px; grid-template-rows:minmax(0,1fr) 150px; gap:8px; padding:8px; }
+  .root { grid-template-columns:210px minmax(0,1fr) 280px; grid-template-rows:minmax(0,1fr) 106px; gap:8px; padding:8px; }
   .battle-main { padding-left:10px; padding-right:10px; }
   .battle-main .field-row { gap:10px; }
   .center-controls { grid-template-columns:minmax(180px,.78fr) minmax(0,1.7fr); }
   .right-sidebar .hand { gap:6px; }
+}
+
+/* ================================================================
+   3.2.2 — CORREÇÃO DE FLUXO + STATUS COMPACTO
+   ================================================================ */
+@media (min-width:901px) {
+  .center-status, .center-actions { min-height:0; }
+  .center-status { padding:5px 8px; gap:3px; }
+  .center-status .message { min-height:14px; font-size:8px; }
+  .center-status .player-hud { gap:4px; padding:2px; }
+  .center-status .player-name { font-size:9px; }
+  .center-status .small { font-size:7px; }
+  .center-status .leaf-token { width:19px; height:19px; flex-basis:19px; }
+  .center-actions { padding:5px 7px; grid-template-rows:auto 1fr; gap:3px 6px; }
+  .center-actions .action-summary { min-height:12px; padding-bottom:1px; font-size:7px; }
+  .center-actions .action-summary b { font-size:8px; }
+  .center-actions .action-header { font-size:6px; }
+  .center-actions .actions { gap:3px; }
+  .center-actions .action { min-height:26px; padding:3px 4px; font-size:7px; }
 }
