@@ -1295,7 +1295,9 @@ body { background-color:#08110c; background-image:radial-gradient(circle at 20% 
   }
 
   .battle-main .pile { transform: scale(.82); }
-  .battle-main .turn { font-size: 11px; }
+  .battle-main .turn { font-size: 9px; line-height: 1; display:flex; align-items:center; justify-content:center; gap:3px; }
+  .battle-main .turn span { font-size:9px; }
+  .battle-main .turn b { font-size:10px; }
 
   .center-controls {
     grid-template-columns: minmax(205px, .72fr) minmax(0, 1.9fr);

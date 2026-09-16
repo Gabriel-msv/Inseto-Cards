@@ -2,7 +2,13 @@
 
 Jogo de cartas em HTML, CSS e JavaScript, jogável contra um BOT ou outro jogador pela rede.
 
-**Versão atual:** `3.2.4`
+**Versão atual:** `3.2.5`
+
+## 3.2.5 — Turno compacto
+
+- Reduzido o indicador de turno entre os dois Frontes.
+- "TURNO" e o número ficam na mesma linha, ocupando menos espaço vertical.
+- Mantidas as mecânicas e os botões horizontais da 3.2.4.
 
 ## 3.2.4 — Botões horizontais
 
