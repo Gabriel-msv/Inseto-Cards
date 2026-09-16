@@ -1187,3 +1187,72 @@ body { background-color:#08110c; background-image:radial-gradient(circle at 20% 
   .center-controls { gap:4px; }
   .right-sidebar .hand-panel { height:155px; min-height:155px; }
 }
+
+/* ================================================================
+   3.2.27 — CARTAS 5% MENORES
+   Redução uniforme somente no desktop; estrutura e mobile preservados.
+   ================================================================ */
+@media (min-width:901px) {
+  /* Cartas colocadas nos slots do campo. */
+  .battle-main .slot > .card {
+    width:calc(95% - 6px);
+    height:calc(95% - 6px);
+    flex:0 0 auto;
+    align-self:center;
+    justify-self:center;
+  }
+
+  .battle-main .card.fronte-card {
+    width:95%;
+    height:95%;
+  }
+
+  /* Cartas/miniaturas de Natureza e Cemitério. */
+  .battle-main .center-zone .pile-card {
+    width:calc(clamp(40px,3.85vw,56px) * .95);
+    height:calc(clamp(55px,5.15vw,74px) * .95);
+  }
+
+  /* Cartas da mão. */
+  .right-sidebar .hand .card {
+    width:95%;
+    justify-self:center;
+  }
+}
+
+/* ================================================================
+   3.2.28 — MÃO EM PARES HORIZONTAIS (2 COLUNAS × 3 LINHAS)
+   Desktop: seis cartas distribuídas em três pares horizontais.
+   Mobile permanece exatamente com o fluxo/scroll existente.
+   ================================================================ */
+@media (min-width:901px) {
+  .right-sidebar .hand-carousel {
+    overflow-x:hidden;
+    overflow-y:hidden;
+  }
+
+  .right-sidebar .hand {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    grid-template-rows:repeat(3,minmax(0,1fr));
+    grid-auto-flow:row;
+    align-content:stretch;
+    align-items:center;
+    justify-items:center;
+    gap:8px;
+    width:100%;
+    height:100%;
+    min-height:0;
+    padding:2px;
+  }
+
+  .right-sidebar .hand .card {
+    width:min(100%,112px);
+    height:auto;
+    max-width:112px;
+    min-width:0;
+    aspect-ratio:84 / 118;
+    justify-self:center;
+    align-self:center;
+  }
+}
