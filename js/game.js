@@ -119,9 +119,6 @@ const CARDS = {
   teia: { name: 'Teia', cost: 3, type: 'effect', emoji: '🕸️', cond: 'Ativado', ability: 'Impede a carta alvo de atacar no próximo turno.' },
   veneno: { name: 'Veneno', cost: 3, type: 'effect', equip: true, emoji: '☠️', cond: 'Equipável', ability: '+1 dano por ataque durante 2 turnos.' },
   ninho: { name: 'Ninho', cost: 4, type: 'effect', emoji: '🪺', cond: 'Ativado', ability: 'Invoca uma carta Larva grátis direto no Banco de quem usou.' },
-  casca: { name: 'Casca', cost: 3, type: 'effect', equip: true, emoji: '🥥', cond: 'Equipável', ability: 'A carta equipada ignora o próximo debuff que receber (inclui ser transformada em Larva).' },
-  casuloReal: { name: 'Casulo Real', cost: 4, type: 'effect', equip: true, emoji: '🥚', cond: 'Equipável', ability: '+4 HP na carta equipada.' },
-  fumaça: { name: 'Fumaça', cost: 3, type: 'effect', emoji: '💨', cond: 'Ativado', ability: 'Reduz o ATK de todas as cartas em campo, dos dois lados, em 1, por 2 turnos.' },
   propolis: { name: 'Própolis', cost: 3, type: 'effect', equip: true, emoji: '🍯', cond: 'Equipável', ability: 'Remove qualquer efeito de veneno (dano contínuo) da carta equipada.' },
   formigueiro: { name: 'Formigueiro', cost: 3, type: 'effect', emoji: '🏠', cond: 'Ativado', ability: 'As folhas de quem usou não podem ser roubadas por 3 rodadas.' }
 };
@@ -150,9 +147,6 @@ const CARD_IMAGES = {
   formigaVermelha: 'assets/cards/formigaVermelha.jpg',
   formigueiro: 'assets/cards/formigueiro.jpg',
   ninho: 'assets/cards/ninho.jpg',
-  casca: 'assets/cards/casca.jpg',
-  casuloReal: 'assets/cards/casuloReal.jpg',
-  fumaça: 'assets/cards/fumaca.jpg',
   gafanhoto: 'assets/cards/gafanhoto.jpg',
   grilo: 'assets/cards/grilo.jpg',
   inseticida: 'assets/cards/inseticida.jpg',
@@ -182,10 +176,10 @@ const DECK_KEYS = Object.keys(CARDS); // catálogo completo atual, uma cópia de
 // 2. ESTADO DA PARTIDA
 // Guarda jogadores, baralho, cemitério, turno e seleção do jogador.
 // ================================================================
-const APP_VERSION = '2.0.4'; // X=reforma, Y=adição, Z=correção de bug.
-const state = { started: false, over: false, round: 1, turn: 'player', deck: [], grave: [], players: [null, null], selected: null, selectedField: null, targetMode: null, log: [], skip: [false, false], tie: false, smokeTurns: 0 };
+const APP_VERSION = '2.0.8'; // versão cumulativa: catálogo, combate, efeitos e UX.
+const state = { started: false, over: false, round: 1, turn: 'player', deck: [], grave: [], players: [null, null], selected: null, selectedField: null, targetMode: null, log: [], skip: [false, false], tie: false };
 function P(name, bot = false) { return { name, bot, leaves: 5, hand: [], front: null, bank: [null, null, null], moves: 1, std: 1, passiveBuy: false, adubo: 0, antiSteal: 0, revealed: 0 }; }
-function card(key, owner) { let c = CARDS[key]; return { id: Math.random().toString(36).slice(2), key, owner, atk: c.atk ?? 0, hp: c.hp ?? 0, maxHp: c.hp ?? 0, baseAtk: c.atk ?? 0, baseHp: c.hp ?? 0, damage: 0, buffs: [], equipment: [], activeTurns: 0, poison: 0, poisonTurns: 0, root: 0, skipAttack: 0, reload: 0, protectedOnce: key === 'louva', barataUsed: false, mel: false, customAbility: null, copiedKey: null, debuffNext: false, bonusAtk: 0, bonusHp: 0, passiveAtkBonus: 0, passiveHpBonus: 0, debuffAtk: 0, cascaReady: false, lupa: 0, teia: 0, effectMarks: [] }; }
+function card(key, owner) { let c = CARDS[key]; return { id: Math.random().toString(36).slice(2), key, owner, atk: c.atk ?? 0, hp: c.hp ?? 0, maxHp: c.hp ?? 0, baseAtk: c.atk ?? 0, baseHp: c.hp ?? 0, damage: 0, buffs: [], equipment: [], activeTurns: 0, poison: 0, poisonTurns: 0, root: 0, skipAttack: 0, reload: 0, protectedOnce: key === 'louva', barataUsed: false, mel: false, customAbility: null, copiedKey: null, debuffNext: false, bonusAtk: 0, bonusHp: 0, passiveAtkBonus: 0, passiveHpBonus: 0, debuffAtk: 0, lupa: 0, teia: 0, effectMarks: [] }; }
 function insect(x) { return x && CARDS[x.key] && CARDS[x.key].type !== 'effect' }
 // ---------------------------------------------------------------
 // Utilitários de interface e registro da partida.
@@ -202,7 +196,7 @@ function blockAction(text) {
   blockAction.timer = setTimeout(() => popup.classList.remove('is-visible'), 1800);
 }
 function init() {
-  state.started = true; state.over = false; state.round = 1; state.turn = 'player'; state.grave = []; state.selected = null; state.selectedField = null; state.targetMode = null; state.skip = [false, false]; state.smokeTurns = 0; state.players = [P((document.getElementById('name').value || 'Jogador').trim() || 'Jogador'), P('BOT', true)]; state.deck = [...DECK_KEYS].sort(() => Math.random() - .5); for (let i = 0; i < 3; i++) { drawRaw(0); drawRaw(1) }; log('Partida iniciada. Mão inicial: 3 cartas.'); document.getElementById('enemyName').textContent = 'BOT';// ================================================================
+  state.started = true; state.over = false; state.round = 1; state.turn = 'player'; state.grave = []; state.selected = null; state.selectedField = null; state.targetMode = null; state.skip = [false, false]; state.players = [P((document.getElementById('name').value || 'Jogador').trim() || 'Jogador'), P('BOT', true)]; state.deck = [...DECK_KEYS].sort(() => Math.random() - .5); for (let i = 0; i < 3; i++) { drawRaw(0); drawRaw(1) }; log('Partida iniciada. Mão inicial: 3 cartas.'); document.getElementById('enemyName').textContent = 'BOT';// ================================================================
   // EVENTOS DA INTERFACE
   // ================================================================
   document.getElementById('start').disabled = true; startTurn(0); render()
@@ -279,15 +273,14 @@ function endTurnIfBlocked(pi) {
 }
 function fieldCards(pi) { const p = state.players[pi]; return p ? [p.front, ...p.bank].filter(Boolean) : []; }
 function refreshPassiveStats() {
-  const smoke = state.smokeTurns > 0 ? 1 : 0;
   for (let pi = 0; pi < 2; pi++) {
     const p = state.players[pi]; if (!p) continue;
     const bees = p.bank.filter(c => c && c.key === 'abelha').length;
     const bankCount = p.bank.filter(Boolean).length;
     for (const c of fieldCards(pi)) {
       const eqAtk = (c.equipment || []).reduce((n, e) => n + (e.key === 'mel' ? 1 : 0), 0);
-      const eqHp = (c.equipment || []).reduce((n, e) => n + (e.key === 'mel' ? 1 : e.key === 'casulo' ? 2 : e.key === 'casuloReal' ? 4 : 0), 0);
-      const passiveAtk = (c.key === 'formiga' && p.front === c ? bankCount : 0) + (p.front === c ? bees : 0) - smoke + (c.debuffAtk || 0);
+      const eqHp = (c.equipment || []).reduce((n, e) => n + (e.key === 'mel' ? 1 : e.key === 'casulo' ? 2 : 0), 0);
+      const passiveAtk = (c.key === 'formiga' && p.front === c ? bankCount : 0) + (p.front === c ? bees : 0) + (c.debuffAtk || 0);
       const passiveHp = (c.key === 'formiga' && p.front === c ? bankCount : 0) + (p.front === c ? bees : 0);
       const desiredAtk = c.baseAtk + (c.bonusAtk || 0) + eqAtk + passiveAtk;
       const desiredMax = c.baseHp + (c.bonusHp || 0) + eqHp + passiveHp;
@@ -299,54 +292,6 @@ function refreshPassiveStats() {
       c.passiveAtkBonus = passiveAtk; c.passiveHpBonus = passiveHp;
     }
   }
-}
-function consumeCasca(c) { if (c?.cascaReady) { c.cascaReady = false; const i = (c.effectMarks || []).indexOf('casca'); if (i >= 0) c.effectMarks.splice(i, 1); log(`${CARDS[c.key].name} ignorou um debuff graças à Casca.`); return true; } return false; }
-
-function startTurn(pi) {
-  if (state.over) return;
-  state.turn = pi;
-  const p = state.players[pi];
-  p.moves = 1; p.std = 1;
-  if (state.skip[pi]) {
-    state.skip[pi] = false; p.moves = 0; p.std = 0;
-    log(`${p.name} perdeu este turno.`);
-    setTimeout(() => endTurnIfBlocked(pi), pi === 1 ? 700 : 0);
-    return;
-  }
-  if (state.round > 1) p.leaves = Math.min(15, p.leaves + 1);
-  for (const x of fieldCards(pi)) {
-    if (x.root > 0) x.root--;
-    if (x.root === 0) x.effectMarks = (x.effectMarks || []).filter(mark => !['aranha','centopeia'].includes(mark));
-    // Teia deve bloquear o próximo turno inteiro do alvo. Mantemos skipAttack
-    // durante esse turno e só o liberamos no turno seguinte.
-    if (x.teia > 0) { x.teia--; x.skipAttack = 1; }
-    else if (x.skipAttack > 0) x.skipAttack--;
-    if (x.reload > 0) x.reload--;
-    if (x.poisonTurns > 0) { if (x.key !== 'bichoPau') x.hp -= 1; x.poisonTurns--; log(`${CARDS[x.key].name} sofreu 1 de Veneno.`); }
-    else x.poison = 0;
-    if (x.lupa > 0) {
-      x.hp -= 2;
-      x.lupa--;
-      log(`${CARDS[x.key].name} sofreu 2 dano da Lupa.`);
-      if (x.lupa === 0) x.effectMarks = (x.effectMarks || []).filter(mark => mark !== 'lupa');
-      if (x.hp <= 0) defeat(p, x, 1 - pi);
-    }
-    if (x.activeTurns > 0) {
-      x.activeTurns--;
-      if (x.activeTurns === 0) {
-        const ix = p.bank.indexOf(x); if (ix >= 0) p.bank[ix] = null;
-        if (p.front === x) p.front = null;
-        state.grave.push(x);
-        log(`${CARDS[x.key].name} acabou e foi para o Cemitério.`);
-      }
-    }
-  }
-  if (p.adubo > 0) p.adubo--;
-  if (p.antiSteal > 0) p.antiSteal--;
-  if (state.smokeTurns > 0) { state.smokeTurns--; if (state.smokeTurns === 0) log('A Fumaça se dissipou.'); }
-  refreshPassiveStats();
-  if (pi === 0) msg('Seu turno. Escolha uma ação.'); else botTurn();
-  setTimeout(() => endTurnIfBlocked(pi), 900);
 }
 function endTurn(pi) { if (state.over) return; if (pi === 0) startTurn(1); else { state.round++; startTurn(0) }; render(); winCheck() }
 // ---------------------------------------------------------------
@@ -445,7 +390,19 @@ function returnToHand(pi, zone, slot) {
   render(); endTurnIfBlocked(pi); return true;
 }
 // ---------------------------------------------------------------
-function chooseAttack(pi) { let p = state.players[pi], o = state.players[1 - pi]; let a = p.front; if (!a || a.root > 0 || a.skipAttack > 0 || a.reload > 0) return false; let targets = []; if (CARDS[a.key].key === 'meganeura' || a.key === 'meganeura') targets = [o.front, ...o.bank].filter(Boolean); else if (o.front) targets = [o.front]; else targets = o.bank.filter(Boolean); if (!targets.length) return false; let t = targets[0]; return attack(pi, a, t) }
+function getAttackTargets(pi, attacker) {
+  const o = state.players[1 - pi];
+  if (!o || !attacker) return [];
+  if (attacker.key === 'meganeura') return [o.front, ...o.bank].filter(Boolean);
+  return o.front ? [o.front] : o.bank.filter(Boolean);
+}
+function chooseAttack(pi) {
+  const p = state.players[pi], a = p?.front;
+  if (!a || a.root > 0 || a.skipAttack > 0 || a.reload > 0) return false;
+  const targets = getAttackTargets(pi, a);
+  if (!targets.length) return false;
+  return attack(pi, a, targets[0]);
+}
 // ---------------------------------------------------------------
 // Sistema de combate e resolução de dano.
 // ---------------------------------------------------------------
@@ -472,8 +429,8 @@ function attack(pi, a, t) {
   // Cada Grilo aliado ganha 1 folha sempre que QUALQUER aliado atacar.
   fieldCards(pi).filter(x => x.key === 'grilo').forEach(() => { p.leaves = Math.min(15, p.leaves + 1); });
   if (a.key === 'escorpiao') { t.poisonTurns = Math.max(t.poisonTurns, 2); t.poison = 1 }
-  if (a.key === 'aranha' && !isImmuneRoot(t) && !consumeCasca(t)) { t.root = Math.max(t.root, 1); t.effectMarks ||= []; if (!t.effectMarks.includes('aranha')) t.effectMarks.push('aranha'); }
-  if (a.key === 'centopeia' && t.hp <= (t.maxHp / 2) && !isImmuneRoot(t) && !consumeCasca(t)) { t.root = Math.max(t.root, 2); t.effectMarks ||= []; if (!t.effectMarks.includes('centopeia')) t.effectMarks.push('centopeia'); }
+  if (a.key === 'aranha' && !isImmuneRoot(t)) { t.root = Math.max(t.root, 1); t.effectMarks ||= []; if (!t.effectMarks.includes('aranha')) t.effectMarks.push('aranha'); }
+  if (a.key === 'centopeia' && t.hp <= (t.maxHp / 2) && !isImmuneRoot(t)) { t.root = Math.max(t.root, 2); t.effectMarks ||= []; if (!t.effectMarks.includes('centopeia')) t.effectMarks.push('centopeia'); }
   if (a.key === 'meganeura') a.reload = 1;
 
   let dealt = damage;
@@ -507,7 +464,6 @@ function attack(pi, a, t) {
 function isImmuneRoot(c) { return c && c.key === 'libelula' }
 function clearBuffs(c) {
   if (!c) return false;
-  if (consumeCasca(c)) return false;
   c.bonusAtk = 0; c.bonusHp = 0; c.debuffAtk = 0;
   c.poison = 0; c.poisonTurns = 0; c.root = 0; c.skipAttack = 0; c.reload = 0; c.lupa = 0; c.teia = 0;
   c.effectMarks = (c.effectMarks || []).filter(mark => !['lupa','teia','aranha','centopeia'].includes(mark));
@@ -565,7 +521,7 @@ function defeat(owner, c, killer) {
   refreshPassiveStats();
 }
 function steal(pi, n) { let p = state.players[pi], o = state.players[1 - pi]; if (o.antiSteal > 0) { log('Roubo bloqueado pelo Formigueiro.'); return } let a = Math.min(n, o.leaves); o.leaves -= a; p.leaves = Math.min(15, p.leaves + a); if (a) log(`${p.name} roubou ${a} folha(s).`) }
-function playEffect(pi, idx) { let c = state.players[pi]?.hand[idx]; return activateEffect(pi, idx, c?.key === 'propolis' ? 'front' : 'bank', c?.key === 'propolis' ? 0 : -1) }
+function playEffect(pi, idx) { return activateEffect(pi, idx, 'bank', -1); }
 function activateEffect(pi, idx, zone, slot) {
   const p = state.players[pi], c = p?.hand[idx], d = c && CARDS[c.key];
   if (!c || !d || d.type !== 'effect') { if (pi === 0) blockAction('Carta de efeito inválida.'); return false; }
@@ -573,7 +529,8 @@ function activateEffect(pi, idx, zone, slot) {
   if (p.leaves < d.cost) { if (pi === 0) blockAction(`Folhas insuficientes para ${d.name}.`); return false; }
   if (d.equip) { state.targetMode = { type: 'equip', pi, idx }; msg(`Selecione um inseto próprio para equipar ${d.name}.`); return false; }
   if (['inseticida','lupa','teia'].includes(c.key)) { state.targetMode = { type: 'effectTarget', pi, idx }; msg(`Selecione o alvo de ${d.name}.`); return false; }
-  const bankSlot = p.bank.findIndex(x => !x);
+  const requestedSlot = Number.isInteger(slot) && slot >= 0 && slot < p.bank.length && !p.bank[slot] ? slot : -1;
+  const bankSlot = requestedSlot >= 0 ? requestedSlot : p.bank.findIndex(x => !x);
   if (bankSlot < 0) { if (pi === 0) blockAction(`Não há espaço no Banco para ${d.name}.`); return false; }
   p.leaves -= d.cost; p.hand.splice(idx, 1); state.targetMode = null;
   if (c.key === 'ninho') {
@@ -581,16 +538,18 @@ function activateEffect(pi, idx, zone, slot) {
     log(`${p.name} usou Ninho e colocou uma Larva grátis no Banco.`);
     state.grave.push(c); p.std--; refreshPassiveStats(); render(); endTurnIfBlocked(pi); return true;
   }
-  c.activeTurns = c.key === 'adubo' ? 4 : c.key === 'fumaça' ? 2 : c.key === 'formigueiro' ? 3 : 0;
+  c.activeTurns = c.key === 'adubo' ? 4 : c.key === 'formigueiro' ? 3 : 0;
   p.bank[bankSlot] = c;
   if (c.key === 'adubo') p.adubo = 4;
   if (c.key === 'formigueiro') p.antiSteal = 3;
-  if (c.key === 'fumaça') state.smokeTurns = 2;
   p.std--;
   log(`${p.name} ativou ${d.name}${c.activeTurns ? ` por ${c.activeTurns} rodadas` : ''}.`);
   refreshPassiveStats(); render(); endTurnIfBlocked(pi); return true;
 }
-function isBankProtected(pi) { let p = state.players[pi]; return !!(p && p.front && p.front.key === 'propolis' && p.front.activeTurns > 0) }
+function isBankProtected(pi) {
+  const p = state.players[pi];
+  return !!(p && p.front && p.front.equipment && p.front.equipment.some(e => e.key === 'propolis'));
+}
 function equip(pi, idx, target) {
   const p = state.players[pi], c = p?.hand[idx], d = c && CARDS[c.key];
   if (!c || !d || !d.equip) { if (pi === 0) blockAction('Esta carta não pode ser equipada.'); return false; }
@@ -598,7 +557,6 @@ function equip(pi, idx, target) {
   if (p.std <= 0) { if (pi === 0) blockAction('Você já gastou sua ação padrão.'); return false; }
   if (p.leaves < d.cost) { if (pi === 0) blockAction('Folhas insuficientes.'); return false; }
   p.leaves -= d.cost; p.hand.splice(idx, 1); target.equipment ||= []; target.equipment.push(c);
-  if (c.key === 'casca') { target.cascaReady = true; target.effectMarks ||= []; if (!target.effectMarks.includes('casca')) target.effectMarks.push('casca'); }
   if (c.key === 'veneno') { target.poison = 1; target.poisonTurns = 2; }
   if (c.key === 'propolis') { target.poison = 0; target.poisonTurns = 0; }
   p.std--; state.targetMode = null; refreshPassiveStats();
@@ -649,10 +607,7 @@ function attackPlayer() {
   if (state.players[0].std <= 0) { blockAction('Você já gastou sua ação padrão.'); return; }
   let a = state.players[0].front; if (!a) { blockAction('Você não tem inseto no Fronte.'); return }
   if (a.root > 0 || a.skipAttack > 0 || a.reload > 0) { blockAction('Esta carta está impedida de atacar agora.'); return }
-  let o = state.players[1];
-  let targets = a.key === 'meganeura'
-    ? [o.front, ...o.bank].filter(Boolean)
-    : o.front ? [o.front] : o.bank.filter(Boolean);
+  const targets = getAttackTargets(0, a);
   if (!targets.length) {
     if (state.round > 1 && directAttack(0)) render();
     else blockAction(state.round > 1 ? 'O inimigo não tem cartas na mão para descartar.' : 'Não há alvo inimigo disponível.');
@@ -679,7 +634,7 @@ function resolveAttackTarget(target) {
   if (!isValidAttackTarget(a, target)) { blockAction('Alvo inválido para este ataque.'); return; }
   state.targetMode = null; attack(0, a, target); render(); endTurnIfBlocked(0);
 }
-function isValidAttackTarget(a, t) { let o = state.players[1]; if (!t) return false; if (a.key === 'meganeura') return !!([o.front, ...o.bank].filter(Boolean).includes(t)); if (o.front) return t === o.front; return o.bank.includes(t) }
+function isValidAttackTarget(a, t) { if (!t) return false; return getAttackTargets(0, a).includes(t); }
 function resolveTargetEffect(pi, idx, target) {
   const p = state.players[pi], c = p?.hand[idx], d = c && CARDS[c.key], o = state.players[1-pi];
   if (!c || !d || d.type !== 'effect') { blockAction('Carta de efeito inválida.'); return false; }
@@ -722,6 +677,22 @@ function sellSelected() {
   const p = state.players[0];
   if (!validMove(0)) { blockAction('Não é o seu turno.'); return; }
   if (p.std <= 0) { blockAction('Você já gastou sua ação padrão.'); return; }
+
+  const cleanupActiveEffect = (c) => {
+    if (!c || CARDS[c.key]?.type !== 'effect' || c.activeTurns <= 0) return;
+    if (c.key === 'adubo') p.adubo = 0;
+    if (c.key === 'formigueiro') p.antiSteal = 0;
+    if (c.key === 'lupa' || c.key === 'teia') {
+      const enemy = state.players[1];
+      for (const target of fieldCards(1)) {
+        if (!target.effectMarks?.includes(c.key)) continue;
+        if (c.key === 'lupa') target.lupa = 0;
+        if (c.key === 'teia') { target.teia = 0; target.skipAttack = 0; }
+        target.effectMarks = target.effectMarks.filter(mark => mark !== c.key);
+      }
+    }
+  };
+
   if (state.selected !== null) {
     const c = p.hand[state.selected];
     if (!c) { blockAction('A carta selecionada não existe mais.'); return; }
@@ -730,10 +701,12 @@ function sellSelected() {
     log(`${p.name} vendeu ${CARDS[c.key].name} por 1 folha.`);
     render(); winCheck(); endTurnIfBlocked(0); return;
   }
+
   const c = getSelectedField();
   if (!c) { blockAction('Selecione uma carta da mão ou do campo para vender.'); return; }
   const s = state.selectedField;
   if (c.root > 0) { blockAction(`${CARDS[c.key].name} está presa e não pode ser vendida agora.`); return; }
+  cleanupActiveEffect(c);
   if (s.zone === 'front') p.front = null; else p.bank[s.slot] = null;
   state.grave.push(c); p.leaves = Math.min(15, p.leaves + 1); p.std--; state.selectedField = null;
   log(`${p.name} vendeu ${CARDS[c.key].name} por 1 folha.`);
@@ -786,29 +759,67 @@ function clearDropTargets() { document.querySelectorAll('.slot').forEach(s => s.
 function findPlayerCardById(id) { let p = state.players[0]; if (!p) return null; let hi = p.hand.findIndex(c => c.id === id); if (hi >= 0) return { c: p.hand[hi], zone: 'hand', slot: hi }; if (p.front && p.front.id === id) return { c: p.front, zone: 'front', slot: 0 }; for (let i = 0; i < 3; i++)if (p.bank[i] && p.bank[i].id === id) return { c: p.bank[i], zone: 'bank', slot: i }; return null }
 function handleDropOnHand(e) { e.preventDefault(); let found = findPlayerCardById(e.dataTransfer.getData('text/plain')); if (!found || found.zone === 'hand' || state.turn !== 0 || state.over) return; if (returnToHand(0, found.zone, found.slot)) { state.selectedField = null; clearDropTargets(); render(); winCheck() } }
 function handleDropOnSlot(slotEl, e) {
-  e.preventDefault(); slotEl.classList.remove('drag-over'); let id = e.dataTransfer.getData('text/plain'); let found = findPlayerCardById(id); if (!found || state.turn !== 0 || state.over) return; let target = slotEl.id; let enemyTarget = target === 'ef0' || target.startsWith('eb'); let p = state.players[0];
+  e.preventDefault();
+  slotEl.classList.remove('drag-over');
+  const id = e.dataTransfer.getData('text/plain');
+  const found = findPlayerCardById(id);
+  if (!found || state.turn !== 0 || state.over) return;
+
+  const target = slotEl.id;
+  const enemyTarget = target === 'ef0' || target.startsWith('eb');
+  const p = state.players[0];
+
   if (enemyTarget) {
-    if (found.zone === 'hand' || p.std <= 0) return;
-    let o = state.players[1], targetCard = o.front || o.bank.find(Boolean);
-    if (!targetCard || !isValidAttackTarget(found.c, targetCard)) { msg('Não há alvo válido para atacar.'); return }
-    attack(0, found.c, targetCard); clearDropTargets(); render(); winCheck(); return;
+    if (found.zone !== 'hand' && p.std > 0) {
+      const o = state.players[1];
+      const targetCard = target === 'ef0' ? o.front : o.bank[Number(target.slice(-1))];
+      if (!targetCard || !isValidAttackTarget(found.c, targetCard)) {
+        msg('Alvo inválido para este ataque.');
+        return;
+      }
+      attack(0, found.c, targetCard);
+      clearDropTargets(); render(); winCheck();
+      return;
+    }
+    if (found.zone === 'hand' && CARDS[found.c.key].type === 'effect') {
+      const targetCard = target === 'ef0' ? state.players[1].front : state.players[1].bank[Number(target.slice(-1))];
+      if (['inseticida', 'lupa', 'teia'].includes(found.c.key)) {
+        if (resolveTargetEffect(0, found.slot, targetCard)) { clearDropTargets(); render(); }
+      } else {
+        msg('Esse efeito não usa uma carta inimiga como alvo.');
+      }
+      return;
+    }
+    return;
   }
-  let zone = target === 'pf0' ? 'front' : 'bank'; let slot = zone === 'bank' ? Number(target.slice(-1)) : 0; let destCard = zone === 'front' ? p.front : p.bank[slot];
+
+  const zone = target === 'pf0' ? 'front' : 'bank';
+  const slot = zone === 'bank' ? Number(target.slice(-1)) : 0;
+  const destCard = zone === 'front' ? p.front : p.bank[slot];
+
   if (found.zone === 'hand' && CARDS[found.c.key].equip) {
-    if (!destCard || !insect(destCard)) { msg('Arraste o equipável sobre um inseto próprio.'); return }
-    if (equip(0, found.slot, destCard)) { clearDropTargets(); render() }
+    if (!destCard || !insect(destCard)) { msg('Arraste o equipável sobre um inseto próprio.'); return; }
+    if (equip(0, found.slot, destCard)) { clearDropTargets(); render(); }
     return;
   }
   if (found.zone === 'hand' && CARDS[found.c.key].type === 'effect') {
-    let effectZone = zone === 'front' ? 'front' : 'bank';
-    if (activateEffect(0, found.slot, effectZone, slot)) { clearDropTargets(); render() }
+    if (activateEffect(0, found.slot, 'bank', zone === 'bank' ? slot : -1)) { clearDropTargets(); render(); }
     return;
   }
-  let destOccupied = !!destCard; if (destOccupied) { msg('Esse slot já está ocupado.'); return }
-  if (found.zone === 'hand') { if (CARDS[found.c.key].type === 'effect') { msg('Cartas de efeito não são invocadas no Banco/Fronte. Use a ação apropriada.'); return } if (summonFromHand(0, found.slot, zone, slot)) { state.selected = null; state.selectedField = null; } }
-  else if (found.zone === 'front' && zone === 'bank') { moveCard(0, 'front', slot) }
-  else if (found.zone === 'bank' && zone === 'front') { if (p.moves <= 0 || p.front) { msg(p.front ? 'O Fronte já está ocupado.' : 'Sem movimento disponível.'); return } let c = p.bank[found.slot]; p.bank[found.slot] = null; p.front = c; c.root = 0; p.moves--; log(`${p.name} moveu ${CARDS[c.key].name} para o Fronte.`); state.selectedField = null; render(); }
-  else msg('Arraste a carta para outro espaço válido.');
+
+  if (destCard) { msg('Esse slot já está ocupado.'); return; }
+  if (found.zone === 'hand') {
+    if (CARDS[found.c.key].type === 'effect') { msg('Cartas de efeito não são invocadas no Banco/Fronte. Use a ação apropriada.'); return; }
+    if (summonFromHand(0, found.slot, zone, slot)) { state.selected = null; state.selectedField = null; }
+  } else if (found.zone === 'front' && zone === 'bank') {
+    moveCard(0, 'front', slot);
+  } else if (found.zone === 'bank' && zone === 'front') {
+    if (p.moves <= 0 || p.front) { msg(p.front ? 'O Fronte já está ocupado.' : 'Sem movimento disponível.'); return; }
+    const c = p.bank[found.slot]; p.bank[found.slot] = null; p.front = c; c.root = 0; p.moves--;
+    log(`${p.name} moveu ${CARDS[c.key].name} para o Fronte.`); state.selectedField = null; render();
+  } else {
+    msg('Arraste a carta para outro espaço válido.');
+  }
   clearDropTargets(); render(); winCheck();
 }
 function installDropTargets() { document.querySelectorAll('#pf0,#pb0,#pb1,#pb2,#ef0,#eb0,#eb1,#eb2').forEach(slot => { slot.addEventListener('dragover', e => { if (!e.dataTransfer.types.includes('text/plain')) return; e.preventDefault(); if (state.turn === 0 && !state.over) slot.classList.add('drag-over') }); slot.addEventListener('dragleave', () => slot.classList.remove('drag-over')); slot.addEventListener('drop', e => handleDropOnSlot(slot, e)); }); let hand = document.getElementById('hand'); hand.addEventListener('dragover', e => { if (!e.dataTransfer.types.includes('text/plain')) return; e.preventDefault(); if (state.turn === 0 && !state.over) hand.classList.add('drag-over') }); hand.addEventListener('dragleave', () => hand.classList.remove('drag-over')); hand.addEventListener('drop', handleDropOnHand); }
@@ -887,11 +898,26 @@ function renderGrave() {
     ? `<img class="grave-art" src="${art}" alt="${d.name}"><span class="grave-name">${d.name}</span>`
     : `<span class="grave-emoji">${d.emoji}</span><span class="grave-name">${d.name}</span>`;
 }
+function renderLeafTokens(id, count) {
+  const host = document.getElementById(id);
+  if (!host) return;
+  const total = Math.max(0, Math.min(15, Number(count) || 0));
+  host.innerHTML = '';
+  for (let i = 0; i < total; i++) {
+    const token = document.createElement('img');
+    token.className = 'leaf-token';
+    token.src = 'assets/ui/ficha-folha.png';
+    token.alt = 'Ficha de folha';
+    token.draggable = false;
+    token.title = `Ficha ${i + 1}`;
+    host.appendChild(token);
+  }
+}
 // ================================================================
 // RENDERIZAÇÃO
 // Atualiza o tabuleiro inteiro a partir do estado atual.
 // ================================================================
-function render() { refreshPassiveStats(); let p = state.players[0], o = state.players[1]; if (!p) return; document.getElementById('round').textContent = state.round; document.getElementById('turn').textContent = state.turn === 0 ? 'VOCÊ' : 'BOT'; document.getElementById('turnNo').textContent = state.round; document.getElementById('deckCount').textContent = state.deck.length; document.getElementById('deckCount2').textContent = state.deck.length; document.getElementById('graveCount').textContent = state.grave.length; document.getElementById('graveCount2').textContent = state.grave.length; document.getElementById('playerLeaves').textContent = p.leaves; document.getElementById('enemyLeaves').textContent = o.leaves; document.getElementById('playerName').textContent = p.name.toUpperCase(); document.getElementById('moves').textContent = p.moves; document.getElementById('std').textContent = p.std; document.getElementById('draw').disabled = state.turn !== 0 || p.std <= 0 || p.leaves < 3 || !state.deck.length; document.getElementById('harvest').disabled = state.turn !== 0 || p.std <= 0; document.getElementById('attackBtn').disabled = state.turn !== 0 || state.over || p.std <= 0 || !p.front; document.getElementById('secondMove').disabled = state.turn !== 0 || state.over || p.moves <= 0 || p.std <= 0; document.getElementById('returnBtn').disabled = state.turn !== 0 || state.over || p.moves <= 0 || !state.selectedField; document.getElementById('sell').disabled = state.turn !== 0 || p.std <= 0 || state.selected === null && !state.selectedField; document.getElementById('end').disabled = state.turn !== 0 || state.over; document.getElementById('attackBtn').classList.toggle('waiting', !!(state.targetMode && state.targetMode.type === 'attack')); document.getElementById('returnBtn').classList.toggle('waiting', !!state.selectedField); document.getElementById('sell').classList.toggle('waiting', !!(state.selected !== null || state.selectedField)); renderSlot('ef0', o.front, true, true); for (let i = 0; i < 3; i++) { renderSlot('eb' + i, o.bank[i], true, false); renderSlot('pb' + i, p.bank[i], false, false) } renderSlot('pf0', p.front, false, true); let h = document.getElementById('hand'); h.innerHTML = ''; p.hand.forEach((c, i) => { let el = makeCard(c, false); if (state.selected === i) el.classList.add('selected'); el.onclick = () => clickCard(0, 'hand', i); h.appendChild(el) }); document.getElementById('log').innerHTML = state.log.map(x => `<div>› ${x}</div>`).join('') }
+function render() { refreshPassiveStats(); let p = state.players[0], o = state.players[1]; if (!p) return; document.getElementById('round').textContent = state.round; document.getElementById('turn').textContent = state.turn === 0 ? 'VOCÊ' : 'BOT'; document.getElementById('turnNo').textContent = state.round; document.getElementById('deckCount').textContent = state.deck.length; document.getElementById('deckCount2').textContent = state.deck.length; document.getElementById('graveCount').textContent = state.grave.length; document.getElementById('graveCount2').textContent = state.grave.length; document.getElementById('playerLeaves').textContent = p.leaves; document.getElementById('enemyLeaves').textContent = o.leaves; renderLeafTokens('playerLeafTokens', p.leaves); renderLeafTokens('enemyLeafTokens', o.leaves); document.getElementById('playerName').textContent = p.name.toUpperCase(); document.getElementById('moves').textContent = p.moves; document.getElementById('std').textContent = p.std; document.getElementById('draw').disabled = state.turn !== 0 || p.std <= 0 || p.leaves < 3 || !state.deck.length; document.getElementById('harvest').disabled = state.turn !== 0 || p.std <= 0; document.getElementById('attackBtn').disabled = state.turn !== 0 || state.over || p.std <= 0 || !p.front; document.getElementById('secondMove').disabled = state.turn !== 0 || state.over || p.moves <= 0 || p.std <= 0; document.getElementById('returnBtn').disabled = state.turn !== 0 || state.over || p.moves <= 0 || !state.selectedField; document.getElementById('sell').disabled = state.turn !== 0 || p.std <= 0 || state.selected === null && !state.selectedField; document.getElementById('end').disabled = state.turn !== 0 || state.over; document.getElementById('attackBtn').classList.toggle('waiting', !!(state.targetMode && state.targetMode.type === 'attack')); document.getElementById('returnBtn').classList.toggle('waiting', !!state.selectedField); document.getElementById('sell').classList.toggle('waiting', !!(state.selected !== null || state.selectedField)); renderSlot('ef0', o.front, true, true); for (let i = 0; i < 3; i++) { renderSlot('eb' + i, o.bank[i], true, false); renderSlot('pb' + i, p.bank[i], false, false) } renderSlot('pf0', p.front, false, true); let h = document.getElementById('hand'); h.innerHTML = ''; p.hand.forEach((c, i) => { let el = makeCard(c, false); if (state.selected === i) el.classList.add('selected'); el.onclick = () => clickCard(0, 'hand', i); h.appendChild(el) }); document.getElementById('log').innerHTML = state.log.map(x => `<div>› ${x}</div>`).join('') }
 function renderSlot(id, c, enemy, front) { let s = document.getElementById(id); s.innerHTML = ''; if (!c) { s.textContent = front ? 'FRONTE' : 'BANCO'; return } let el = makeCard(c, enemy); el.draggable = false; el.dataset.enemy = enemy ? 'true' : 'false'; el.dataset.cardId = c.id; if (front) el.classList.add('fronte-card'); if (c.equipment && c.equipment.length) { el.classList.add('equipped-card'); c.equipment.forEach(item => { let badge = document.createElement('span'); badge.className = 'equipment-preview'; badge.textContent = CARDS[item.key].emoji; el.appendChild(badge) }) } if (c.activeTurns > 0) { let counter = document.createElement('span'); counter.className = 'effect-counter'; counter.textContent = `${c.activeTurns} turnos`; el.appendChild(counter) } s.appendChild(el); el.onclick = () => clickCard(enemy ? 1 : 0, front ? 'front' : 'bank', front ? 0 : Number(id.slice(-1))); if (!enemy) el.title = 'Clique para mover'; }
 // Cria o elemento visual de uma carta e liga eventos de interação.
 function makeCard(c, enemy) {
@@ -908,8 +934,8 @@ function makeCard(c, enemy) {
   if (marks.length) {
     const badge = document.createElement('span');
     badge.className = 'card-effects';
-    badge.textContent = marks.map(mark => ({lupa:'🔎', teia:'🕸️', aranha:'🕷️', centopeia:'🐛', casca:'🥥'}[mark] || '•')).join(' ');
-    badge.title = marks.map(mark => ({lupa:'Lupa', teia:'Teia', aranha:'Aranha', centopeia:'Centopeia', casca:'Casca'}[mark] || mark)).join(' · ');
+    badge.textContent = marks.map(mark => ({lupa:'🔎', teia:'🕸️', aranha:'🕷️', centopeia:'🐛'}[mark] || '•')).join(' ');
+    badge.title = marks.map(mark => ({lupa:'Lupa', teia:'Teia', aranha:'Aranha', centopeia:'Centopeia'}[mark] || mark)).join(' · ');
     el.appendChild(badge);
   }
   el.addEventListener('mouseenter', e => showTip(e, c));
@@ -927,6 +953,7 @@ function showTip(e, c) { let d = CARDS[c.key], t = document.getElementById('tip'
 function showModal(html) { document.getElementById('modalContent').innerHTML = html; document.getElementById('overlay').style.display = 'flex' } function rules() { showModal(`<h2>INSETO CARDS — REGRAS</h2><ul><li>2 jogadores; cada um tem 1 Fronte, 3 Banco e mão própria. Natureza e Cemitério são compartilhados.</li><li>Cada turno: 1 Movimento + 1 Ação Padrão. Você pode abrir mão da Padrão para ganhar um segundo Movimento.</li><li>Movimento: invocar carta, mover campo ou devolver carta sem dano à mão.</li><li>Padrão: atacar, colher +1, vender, ou comprar da Natureza por 3 folhas.</li><li>Começo: 5 folhas e 3 cartas. A partir da rodada 2: +1 folha automática. Limite 15.</li><li>Combate é mútuo. O Fronte só pode atacar Banco se o Fronte inimigo estiver vazio, exceto Meganeura.</li><li>Vitória: eliminar todos os insetos da mão e do campo inimigo; efeitos não contam.</li></ul><h3 style="color:var(--amber);margin:10px 0 5px">Decisões necessárias para a implementação</h3><p>Venda = +1 folha; Vaga-lume revela 2 cartas da mão do inimigo apenas no log; empate técnico = se ambos zerarem na mesma resolução, a partida termina empatada. A mão inicial foi fixada em 3, conforme as simulações mencionadas no GDD.</p><p class="small" style="margin-top:10px">O baralho usa as 41 cartas atualmente disponíveis, uma cópia de cada.</p>`) }
 document.getElementById('start').onclick = init; document.getElementById('restart').onclick = () => { document.getElementById('start').disabled = false; init() }; document.getElementById('rules').onclick = rules; document.getElementById('draw').onclick = playerDraw; document.getElementById('harvest').onclick = () => harvest(0); document.getElementById('attackBtn').onclick = attackPlayer; document.getElementById('secondMove').onclick = secondMove; document.getElementById('returnBtn').onclick = returnSelected; document.getElementById('sell').onclick = sellSelected; document.getElementById('end').onclick = () => { if (validMove(0)) endTurn(0) }; document.getElementById('modalClose').onclick = () => document.getElementById('overlay').style.display = 'none';
 document.addEventListener('click', hideEnemyActions); document.addEventListener('keydown', hideEnemyActions);
+renderLeafTokens('playerLeafTokens', 5); renderLeafTokens('enemyLeafTokens', 5);
 document.querySelector('.version-badge').textContent = `v${APP_VERSION}`;
 const renderWithActionControls = render;
 render = function() {

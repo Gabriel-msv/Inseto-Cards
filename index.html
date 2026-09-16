@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Inseto Cards — Battle Edition</title>
 <meta name="theme-color" content="#040906">
-<!-- Projeto organizado em HTML + CSS + JS + assets/cards. -->
-<!-- Estrutura/lógica do jogo mantida (js/game.js inalterado); visual reestilizado no padrão "Battle UI V2". -->
+<!-- Projeto organizado em HTML + CSS + JS + assets/cards + assets/ui. -->
+<!-- Interface e motor separados; a camada visual não altera a estrutura mobile. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-<!-- CSS separado: todo o visual do jogo fica em css/style.css -->
+<!-- CSS separado: todo o visual do jogo fica em css/style.css. -->
 <link rel="stylesheet" href="css/style.css">
 <!-- GSAP: timelines, FLIP, springs/easing e microinterações de alta performance -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js" defer></script>
@@ -22,7 +22,7 @@
 <link rel="apple-touch-icon" sizes="512x512" href="/assets/cards/icon.png?v=1.8.3">
 </head>
 <body>
-<div class="version-badge" aria-label="Versão atual">v2.0.2</div>
+<div class="version-badge" aria-label="Versão atual">v2.0.8</div>
 <div class="grain"></div>
 <div class="vignette"></div>
 <canvas id="fxCanvas" class="fx-canvas" aria-hidden="true"></canvas>
@@ -35,6 +35,7 @@
     <div class="hud enemy-hud glass-panel">
       <span id="enemyName" class="enemy-name">BOT — aguardando</span>
       <span class="leaf">🍃 <span id="enemyLeaves">5</span></span>
+      <div id="enemyLeafTokens" class="token-row" aria-label="Fichas de folhas do oponente"></div>
     </div>
 
     <div class="field-row"><span class="row-label">BANCO</span><div class="slot" id="eb0"></div><div class="slot" id="eb1"></div><div class="slot" id="eb2"></div></div>
@@ -97,6 +98,7 @@
       <div class="hud player-hud">
         <span id="playerName" class="player-name">VOCÊ</span>
         <span class="leaf">🍃 <span id="playerLeaves">5</span></span>
+        <div id="playerLeafTokens" class="token-row" aria-label="Fichas de folhas do jogador"></div>
         <span class="small">MOV: <b id="moves">1</b> · PADRÃO: <b id="std">1</b></span>
       </div>
     </section>
