@@ -189,7 +189,7 @@ const DECK_KEYS = Object.keys(CARDS); // catálogo completo atual, uma cópia de
 // 2. ESTADO DA PARTIDA
 // Guarda jogadores, baralho, cemitério, turno e seleção do jogador.
 // ================================================================
-const APP_VERSION = '3.2.20'; // versão cumulativa: catálogo, combate, efeitos e UX.
+const APP_VERSION = '3.2.23'; // versão cumulativa: catálogo, combate, efeitos e UX.
 const state = { started: false, over: false, round: 1, turn: 'player', deck: [], grave: [], players: [null, null], selected: null, selectedField: null, targetMode: null, log: [], skip: [false, false], tie: false, vagaReveal: null };
 function P(name, bot = false) { return { name, bot, leaves: 5, hand: [], front: null, bank: [null, null, null], moves: 1, std: 1, passiveBuy: false, adubo: 0, antiSteal: 0, revealed: 0 }; }
 function card(key, owner) { let c = CARDS[key]; return { id: Math.random().toString(36).slice(2), key, owner, atk: c.atk ?? 0, hp: c.hp ?? 0, maxHp: c.hp ?? 0, baseAtk: c.atk ?? 0, baseHp: c.hp ?? 0, damage: 0, buffs: [], equipment: [], activeTurns: 0, poison: 0, poisonTurns: 0, root: 0, skipAttack: 0, reload: 0, protectedOnce: key === 'louva', barataUsed: false, mel: false, customAbility: null, copiedKey: null, debuffNext: false, bonusAtk: 0, bonusHp: 0, passiveAtkBonus: 0, passiveHpBonus: 0, debuffAtk: 0, lupa: 0, teia: 0, effectMarks: [] }; }
@@ -615,36 +615,6 @@ function triggerCopied(killerCard, event, pi, target) {
     if (k === 'libelula') killerCard.root = 0;
   }
 }
-function animateCardDeathToGrave(cardObj) {
-  try {
-    const el = document.querySelector(`.battle-main .card[data-card-id="${cardObj.id}"]`);
-    const target = document.getElementById('graveTop');
-    if (!el || !target || typeof el.getBoundingClientRect !== 'function') return;
-    const a = el.getBoundingClientRect();
-    const b = target.getBoundingClientRect();
-    const clone = el.cloneNode(true);
-    clone.classList.add('editor-death-flight');
-    clone.classList.remove('selected','dragging','editor-dragging','editor-field-selected');
-    clone.draggable = false;
-    clone.style.left = `${a.left}px`;
-    clone.style.top = `${a.top}px`;
-    clone.style.width = `${a.width}px`;
-    clone.style.height = `${a.height}px`;
-    clone.style.opacity = '1';
-    document.body.appendChild(clone);
-    const dx = (b.left + b.width / 2) - (a.left + a.width / 2);
-    const dy = (b.top + b.height / 2) - (a.top + a.height / 2);
-    const arc = Math.max(24, Math.abs(dy) * 0.22);
-    const animation = clone.animate([
-      { transform:'translate(0,0) rotate(0deg) scale(1)', opacity:0.98, filter:'brightness(1)' },
-      { transform:`translate(${dx * .25}px,${dy * .25 - arc}px) rotate(-7deg) scale(.94)`, opacity:0.95, filter:'brightness(1.08)' },
-      { transform:`translate(${dx * .68}px,${dy * .68 + arc * .2}px) rotate(11deg) scale(.58)`, opacity:0.72, filter:'brightness(.92)' },
-      { transform:`translate(${dx}px,${dy}px) rotate(18deg) scale(.18)`, opacity:0, filter:'brightness(.65)' }
-    ], { duration:620, easing:'cubic-bezier(.2,.75,.22,1)', fill:'forwards' });
-    animation.finished.then(() => clone.remove()).catch(() => clone.remove());
-  } catch (_) {}
-}
-
 function defeat(owner, c, killer) {
   const p = owner; let idx = -1;
   if (p.front === c) p.front = null; else idx = p.bank.indexOf(c);
@@ -654,9 +624,8 @@ function defeat(owner, c, killer) {
     c.barataUsed = true; c.bonusAtk += c.baseAtk; c.bonusHp += c.baseHp;
     c.hp = c.maxHp = c.baseHp + c.bonusHp;
     if (canReceiveHand(p === state.players[0] ? 0 : 1)) { p.hand.push(c); log('Barata voltou para a mão com os atributos dobrados.'); }
-    else { animateCardDeathToGrave(c); state.grave.push(c); log('A Barata não pôde voltar: a mão estava cheia.'); }
+    else { state.grave.push(c); log('A Barata não pôde voltar: a mão estava cheia.'); }
   } else {
-    animateCardDeathToGrave(c);
     state.grave.push(c);
     if (c.key === 'cigarra') { const defeatedPi = p === state.players[0] ? 0 : 1; state.skip[1 - defeatedPi] = true; }
     if (c.key === 'ovos') drawFree(p === state.players[0] ? 0 : 1, 2);
@@ -975,7 +944,6 @@ function updateMobileHandVisibility() {
 function installTouchDrag() {
   let drag = null;
   document.addEventListener('pointerdown', e => {
-    if (document.body?.classList.contains('editor-mode')) return;
     let cardEl = e.target.closest('.card');
     if (!cardEl || cardEl.dataset.enemy === 'true' || !cardEl.dataset.cardId) return;
     e.preventDefault();
@@ -990,7 +958,6 @@ function installTouchDrag() {
     moveGhost(e);
   }, { passive: true });
   document.addEventListener('pointermove', e => {
-    if (document.body?.classList.contains('editor-mode')) return;
     if (!drag) return;
     e.preventDefault();
     moveGhost(e);
@@ -1040,31 +1007,16 @@ function renderLeafTokens(id, count) {
   const host = document.getElementById(id);
   if (!host) return;
   const total = Math.max(0, Math.min(15, Number(count) || 0));
-  const current = host.querySelectorAll('.leaf-token').length;
-  const initialized = host.dataset.tokensInitialized === '1';
-
-  if (current < total) {
-    for (let i = current; i < total; i++) {
-      const token = document.createElement('img');
-      token.className = `leaf-token${initialized ? ' leaf-token--enter' : ''}`;
-      token.src = 'assets/ui/ficha-folha.png';
-      token.alt = 'Ficha de folha';
-      token.draggable = false;
-      token.title = `Ficha ${i + 1}`;
-      host.appendChild(token);
-    }
-  } else if (current > total) {
-    const removeCount = current - total;
-    const tokens = [...host.querySelectorAll('.leaf-token')];
-    tokens.slice(-removeCount).forEach(token => {
-      token.classList.add('leaf-token--exit');
-      setTimeout(() => token.remove(), 290);
-    });
+  host.innerHTML = '';
+  for (let i = 0; i < total; i++) {
+    const token = document.createElement('img');
+    token.className = 'leaf-token';
+    token.src = 'assets/ui/ficha-folha.png';
+    token.alt = 'Ficha de folha';
+    token.draggable = false;
+    token.title = `Ficha ${i + 1}`;
+    host.appendChild(token);
   }
-
-  host.dataset.tokensInitialized = '1';
-  host.dataset.tokenCount = String(total);
-  [...host.querySelectorAll('.leaf-token')].forEach((token, i) => { token.title = `Ficha ${i + 1}`; });
 }
 // ================================================================
 // RENDERIZAÇÃO
@@ -1088,7 +1040,7 @@ function render() {
   const hc=document.getElementById('handCount'); if(hc) hc.textContent=`${p.hand.length}/${handLimit(0)}`; const hs=document.getElementById('handStatus'); if(hs) hs.textContent=p.hand.length>=handLimit(0)?'MÃO CHEIA':`${handLimit(0)-p.hand.length} ESPAÇOS`;
   document.getElementById('log').innerHTML=state.log.map(x=>`<div>› ${x}</div>`).join(''); renderGrave(); updateCardInspector();
 }
-function renderSlot(id, c, enemy, front) { let s = document.getElementById(id); s.innerHTML = ''; if (!c) { s.textContent = front ? 'FRONTE' : 'BANCO'; return } let el = makeCard(c, enemy); el.draggable = !!document.body?.classList.contains('editor-mode') && !enemy; el.dataset.enemy = enemy ? 'true' : 'false'; el.dataset.cardId = c.id; if (front) el.classList.add('fronte-card'); if (!enemy && state.selectedField && state.selectedField.zone === (front ? 'front' : 'bank') && state.selectedField.slot === (front ? 0 : Number(id.slice(-1)))) el.classList.add('selected'); if (c.equipment && c.equipment.length) { el.classList.add('equipped-card'); c.equipment.forEach(item => { let badge = document.createElement('span'); badge.className = 'equipment-preview'; badge.textContent = CARDS[item.key].emoji; el.appendChild(badge) }) } if (c.activeTurns > 0) { let counter = document.createElement('span'); counter.className = 'effect-counter'; counter.textContent = `${c.activeTurns} turnos`; el.appendChild(counter) } s.appendChild(el); el.onclick = () => clickCard(enemy ? 1 : 0, front ? 'front' : 'bank', front ? 0 : Number(id.slice(-1))); if (!enemy) el.title = 'Clique para selecionar'; }
+function renderSlot(id, c, enemy, front) { let s = document.getElementById(id); s.innerHTML = ''; if (!c) { s.textContent = front ? 'FRONTE' : 'BANCO'; return } let el = makeCard(c, enemy); el.draggable = false; el.dataset.enemy = enemy ? 'true' : 'false'; el.dataset.cardId = c.id; if (front) el.classList.add('fronte-card'); if (!enemy && state.selectedField && state.selectedField.zone === (front ? 'front' : 'bank') && state.selectedField.slot === (front ? 0 : Number(id.slice(-1)))) el.classList.add('selected'); if (c.equipment && c.equipment.length) { el.classList.add('equipped-card'); c.equipment.forEach(item => { let badge = document.createElement('span'); badge.className = 'equipment-preview'; badge.textContent = CARDS[item.key].emoji; el.appendChild(badge) }) } if (c.activeTurns > 0) { let counter = document.createElement('span'); counter.className = 'effect-counter'; counter.textContent = `${c.activeTurns} turnos`; el.appendChild(counter) } s.appendChild(el); el.onclick = () => clickCard(enemy ? 1 : 0, front ? 'front' : 'bank', front ? 0 : Number(id.slice(-1))); if (!enemy) el.title = 'Clique para selecionar'; }
 // Cria o elemento visual de uma carta e liga eventos de interação.
 function makeCard(c, enemy) {
   const d = CARDS[c.key], el = document.createElement('div');
@@ -1147,7 +1099,7 @@ function showVagalumeReveal(reveal) {
 }
 
 function showModal(html) { document.getElementById('modalContent').innerHTML = html; document.getElementById('overlay').style.display = 'flex' } function rules() { showModal(`<h2>INSETO CARDS — REGRAS</h2><ul><li>2 jogadores; cada um tem 1 Fronte, 3 Banco e mão própria. Natureza e Cemitério são compartilhados.</li><li>Cada turno: 1 Movimento + 1 Ação Padrão. Você pode abrir mão da Padrão para ganhar um segundo Movimento.</li><li>Movimento: invocar carta, mover campo, trocar a posição de dois insetos aliados por arraste ou devolver carta sem dano à mão.</li><li>Padrão: atacar, colher +1, vender, ou comprar da Natureza por 3 folhas.</li><li>Começo: 5 folhas e 3 cartas. A partir da rodada 2: +1 folha automática. Limite de 15 folhas e 6 cartas na mão.</li><li>Combate é mútuo. O Fronte só pode atacar Banco se o Fronte inimigo estiver vazio, exceto Meganeura.</li><li>Vitória: eliminar todos os insetos da mão e do campo inimigo; efeitos não contam.</li></ul><h3 style="color:var(--amber);margin:10px 0 5px">Decisões necessárias para a implementação</h3><p>Venda = +1 folha; Vaga-lume revela 2 cartas aleatórias da mão do inimigo em um pop-up; empate técnico = se ambos zerarem na mesma resolução, a partida termina empatada. A mão inicial foi fixada em 3, conforme as simulações mencionadas no GDD.</p><p class="small" style="margin-top:10px">O baralho usa as 41 cartas atualmente disponíveis, uma cópia de cada.</p>`) }
-document.getElementById('start').onclick = init; document.getElementById('restart').onclick = () => { window.location.reload(); }; document.getElementById('rules').onclick = rules; document.getElementById('draw').onclick = playerDraw; document.getElementById('harvest').onclick = () => harvest(0); document.getElementById('attackBtn').onclick = attackPlayer; document.getElementById('secondMove').onclick = secondMove; document.getElementById('returnBtn').onclick = returnSelected; document.getElementById('sell').onclick = sellSelected; document.getElementById('end').onclick = () => { if (validMove(0)) endTurn(0) }; document.getElementById('modalClose').onclick = () => document.getElementById('overlay').style.display = 'none';
+document.getElementById('start').onclick = init; document.getElementById('restart').onclick = () => { document.getElementById('start').disabled = false; init() }; document.getElementById('rules').onclick = rules; document.getElementById('draw').onclick = playerDraw; document.getElementById('harvest').onclick = () => harvest(0); document.getElementById('attackBtn').onclick = attackPlayer; document.getElementById('secondMove').onclick = secondMove; document.getElementById('returnBtn').onclick = returnSelected; document.getElementById('sell').onclick = sellSelected; document.getElementById('end').onclick = () => { if (validMove(0)) endTurn(0) }; document.getElementById('modalClose').onclick = () => document.getElementById('overlay').style.display = 'none';
 document.addEventListener('click', e => { hideEnemyActions(); if(e.target.closest('.card,button,input,.action,.start-menu,.card-inspector')) return; state.selected=null; state.selectedField=null; state.targetMode=null; hideTip(); if(state.started) render(); }); document.addEventListener('keydown', e => { hideEnemyActions(); if(e.key==='Escape'){ state.selected=null; state.selectedField=null; state.targetMode=null; hideTip(); if(state.started) render(); } });
 renderLeafTokens('playerLeafTokens', 5); renderLeafTokens('enemyLeafTokens', 5);
 document.querySelector('.version-badge').textContent = `v${APP_VERSION}`;

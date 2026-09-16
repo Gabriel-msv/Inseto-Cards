@@ -62,12 +62,12 @@
 }
 
 /* ========================================================================
-   3.2.22 — Aproximação do BANCO do FRONTE do jogador
+   3.2.23 — Aproximação do BANCO do FRONTE do jogador
    Somente desktop: reduz o espaço vertical percebido entre as duas linhas.
    O mobile permanece intacto.
    ======================================================================== */
 @media (min-width: 901px) {
   body:not(.editor-mode) .battle-main .player-bank-row {
-    margin-top: -28px !important;
+    margin-top: -34px !important;
   }
 }
