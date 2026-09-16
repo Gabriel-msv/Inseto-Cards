@@ -1769,3 +1769,42 @@ body { background-color:#08110c; background-image:radial-gradient(circle at 20% 
   .right-sidebar .hand-carousel { height: 116px; flex-basis: 116px; }
   .right-sidebar .hand .card { width: 15vw; min-width: 15vw; }
 }
+
+
+/* ========================================================================
+   3.2.14 — AJUSTE FINAL DO CAMPO DESKTOP
+   Somente >= 901px. Mobile permanece com a composição da 3.2.13.
+   ======================================================================== */
+@media (min-width: 901px) {
+  .battle-main .field-row { gap: clamp(24px, 3vw, 42px); }
+
+  .battle-main .slot,
+  .battle-main .slot.fronte,
+  .battle-main .shared-zone {
+    width: calc(clamp(72px, 6.1vw, 88px) + 15px);
+    height: calc(clamp(92px, 8.1vw, 112px) + 15px);
+    flex-basis: calc(clamp(72px, 6.1vw, 88px) + 15px);
+  }
+
+  .battle-main .slot > .card,
+  .battle-main .slot .fronte-card {
+    width: calc(100% - 6px);
+    height: calc(100% - 6px);
+  }
+
+  /* Mantém o Banco inferior preso à linha inferior do campo,
+     fazendo o crescimento visual acontecer para cima. */
+  .battle-main .player-bank-row { align-items: flex-end; }
+  .battle-main .field-row:nth-child(2) { align-items: flex-start; }
+
+  /* Mais ar vertical entre os Frontes e Natureza/Cemitério. */
+  .battle-main .center-zone {
+    width: min(330px, 54%);
+    height: 42px;
+    min-height: 42px;
+  }
+
+  /* Bancos mais próximos dos Frontes sem encostar no painel inferior. */
+  .battle-main .field-row:nth-child(2),
+  .battle-main .field-row:nth-child(6) { transform: translateY(-2px); }
+}

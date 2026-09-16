@@ -1,10 +1,19 @@
-https://gabriel-msv.github.io/Inseto-Cards/
-
 # Inseto Cards - Battle Edition
 
 Jogo de cartas em HTML, CSS e JavaScript, jogável contra um BOT ou outro jogador pela rede.
 
-**Versão atual:** `3.2.13`
+**Versão atual:** `3.2.14`
+
+## 3.2.14 — Modo Editor e ajuste final do campo desktop
+
+- Adicionado modo Editor local com catálogo completo de cartas.
+- Qualquer carta pode ser colocada diretamente em qualquer Banco/Fronte.
+- Adicionados CURAR, MATAR, UNDO, LIMPAR CAMPO, RESETAR e SAIR.
+- UNDO restaura o snapshot completo da ação anterior.
+- Resetar limpa o cenário e o histórico do Editor.
+- No desktop, cartas/slots do campo aumentam 15px, Bancos ficam mais espaçados e o Banco inferior cresce para cima.
+- Natureza/Cemitério recebem uma faixa central mais espaçada.
+- Ajustes acima não alteram a composição mobile.
 
 ## 3.2.13 — Controles ao lado do tabuleiro no celular
 
