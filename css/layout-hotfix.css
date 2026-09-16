@@ -1,0 +1,62 @@
+/* ========================================================================
+   INSETO CARDS — 3.2.20 LAYOUT HOTFIX
+   O layout normal do jogo usa exatamente 3 colunas:
+   sidebar esquerda | campo | sidebar direita.
+   O painel de status e o painel de ações pertencem às respectivas sidebars.
+   Mobile não é alterado aqui.
+   ======================================================================== */
+
+@media (min-width: 901px) {
+  body:not(.editor-mode) .root {
+    display: grid !important;
+    grid-template-columns: minmax(210px, 17vw) minmax(0, 1fr) minmax(250px, 21vw) !important;
+    grid-template-rows: minmax(0, 1fr) !important;
+    grid-auto-rows: unset !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    padding: 12px !important;
+    overflow: hidden !important;
+  }
+
+  body:not(.editor-mode) .battle-main {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+  }
+
+  body:not(.editor-mode) .left-sidebar {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+  }
+
+  body:not(.editor-mode) .right-sidebar {
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+  }
+
+  /* O painel de status volta para baixo do console esquerdo. */
+  body:not(.editor-mode) .left-sidebar .turn-status {
+    flex: 0 0 auto !important;
+  }
+
+  /* O painel de ações fica acima do inspetor/mão no lado direito. */
+  body:not(.editor-mode) .right-sidebar .action-panel {
+    flex: 0 0 auto !important;
+  }
+
+  /* Garante que a mão ocupe o espaço restante da coluna direita. */
+  body:not(.editor-mode) .right-sidebar .hand-panel {
+    min-height: 0 !important;
+    flex: 1 1 auto !important;
+  }
+}

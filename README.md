@@ -2,186 +2,27 @@
 
 Jogo de cartas em HTML, CSS e JavaScript, jogável contra um BOT ou outro jogador pela rede.
 
-**Versão atual:** `3.2.20`
+**Versão atual:** `3.2.21`
 
+## 3.2.21 — Restauração estrutural do campo de batalha desktop
 
-## 3.2.20 — Correção definitiva do tabuleiro desktop e isolamento do Editor
-
-- Corrigido o verdadeiro conflito de layout: `js/editor.js` injetava CSS global com `!important` mesmo fora do modo Editor, sobrescrevendo o tabuleiro normal.
-- O CSS de geometria do Editor agora só é aplicado quando `body.editor-mode` está ativo.
-- O tabuleiro desktop normal foi reorganizado conforme o diagrama de referência: três Bancos no topo, Fronte inimigo central, Natureza/Cemitério nas laterais, Fronte do jogador central e três Bancos na base.
-- Natureza e Cemitério passam a ocupar o mesmo envelope visual dos demais slots, evitando o aspecto de pilhas pequenas soltas no centro.
-- Adicionadas classes semânticas `enemy-bank-row`, `enemy-front-row` e `player-front-row` para eliminar dependência de `nth-child`.
-- Atualizados `APP_VERSION`, badge, título da página e parâmetros `?v=` para `3.2.20`, forçando o navegador/GitHub Pages a descartar o CSS/JS antigo em cache.
-- README atualizado junto com a correção.
-- Mecânicas, combate, BOT e multiplayer não foram alterados.
-
-## 3.2.18 — Modo Editor e ajuste final do campo desktop
-
-- Adicionado modo Editor local com catálogo completo de cartas.
-- Qualquer carta pode ser colocada diretamente em qualquer Banco/Fronte.
-- Adicionados CURAR, MATAR, UNDO, LIMPAR CAMPO, RESETAR e SAIR.
-- UNDO restaura o snapshot completo da ação anterior.
-- Resetar limpa o cenário e o histórico do Editor.
-- No desktop, cartas/slots do campo aumentam 15px, Bancos ficam mais espaçados e o Banco inferior cresce para cima.
-- Natureza/Cemitério recebem uma faixa central mais espaçada.
-- Ajustes acima não alteram a composição mobile.
-
-## 3.2.18 — Controles ao lado do tabuleiro no celular
-
-- No celular, o painel de status e ações fica ao lado direito do tabuleiro.
-- A mão de cartas continua abaixo do tabuleiro, ocupando a largura disponível.
-- A alteração é exclusiva para telas de até 900px; o layout desktop não é alterado.
-
-## 3.2.12 — Correção do multiplayer
-
-- Restauradas as funções de criação e entrada em sala no cliente multiplayer.
-- Validado o código de sala com 4 caracteres alfanuméricos.
-- Corrigidos estados de carregamento, erros de conexão e reativação dos controles.
-- Corrigida a aba exibida quando a criação ou entrada falha.
-- Mantido o relay do servidor existente.
-
-## 3.2.12 — Ajuste das folhas
-
-- Removida a linha de texto solta do `<head>` que aparecia no topo da página.
-- Restaurado o visual anterior das fichas de folha no status do jogador, em fileira horizontal.
-- Mantido o limite de 15 folhas e as animações existentes.
-
-## 3.2.10 — Rack de folhas 5×3
-
-- Adicionados 15 espaços fixos para fichas de folha no status do jogador.
-- Rack organizado em 5 colunas × 3 linhas, no canto esquerdo do painel de status.
-- Os espaços vazios permanecem visíveis; as fichas ocupam os espaços de cima para baixo.
-- Mantidas as animações de entrada/saída sem alterar as regras da partida.
-
-## 3.2.9 — Abandonar partida volta ao menu inicial
-
-- O botão `ABANDONAR PARTIDA` agora reinicia a página e retorna diretamente ao menu inicial.
-- O estado da partida é descartado ao sair, sem alterar as regras do jogo.
-
-## 3.2.5 — Turno compacto
-
-- Reduzido o indicador de turno entre os dois Frontes.
-- "TURNO" e o número ficam na mesma linha, ocupando menos espaço vertical.
-- Mantidas as mecânicas e os botões horizontais da 3.2.4.
-
-## 3.2.4 — Botões horizontais
-
-- Reorganizados os controles centrais para manter COMPRAR, COLHER, ENCERRAR TURNO e 2º MOVIMENTO na mesma linha.
-- Ações dependentes de seleção permanecem em uma segunda linha compacta.
-- Correção somente visual; regras, combate, BOT e multiplayer não foram alterados.
-
-## 3.2.8 — Frontes ainda mais próximos
-
-- Reduzido o espaço vertical entre os dois Frontes.
-- Removido o espaçamento extra do indicador de turno.
-- Mantidos os slots e cartas do Fronte na mesma dimensão dos slots do Banco.
-
-## 3.2.7 — Ajuste final dos Frontes
-
-- Slots do Fronte com a mesma escala dos slots do Banco.
-- Cartas no Fronte passam a ocupar exatamente o próprio slot.
-- Espaço central entre os Frontes reduzido.
-- Indicador `TURNO 1` permanece em uma única linha com espaçamento.
-
-## 3.2.3 — Ajuste fino do campo e controles
-
-- Reduzida a faixa inferior de status/ações sem alterar a lógica da partida.
-- Botões de ações reorganizados horizontalmente para economizar espaço vertical.
-- Ajustado o dimensionamento do tabuleiro, slots e mão para preservar proporções e área útil.
-- Mantido o motor de jogo e as mecânicas da 3.2.2.
-
-## 3.2.2 — Correções de layout
-
-- Corrigida a distribuição do campo central para evitar esticamento vertical excessivo.
-- Reorganizados slots, zona central, status e ações para preservar a área útil do tabuleiro.
-- Corrigida a ocupação da coluna direita pela mão do jogador.
-- Ajustadas proporções do menu esquerdo, diário e controles inferiores.
-- Atualizada a identificação visual da versão para `3.2.2`.
-- Sem alteração nas regras, combate, BOT ou multiplayer.
-
-## 3.1.1 — Menu principal corrigido
-
-- Corrigido o menu duplicado: `multiplayer.js` não recria mais a interface que já está definida no `index.html`.
-- Corrigidos IDs e eventos do menu Solo, Criar Sala, Entrar em Sala e sala em espera.
-- Corrigida a navegação por abas e os atalhos `Enter` dos campos de criação/entrada.
-- Corrigido o código da sala para aceitar somente 4 caracteres alfanuméricos em maiúsculas.
-- Corrigido o texto `DUELO BOTÂNICO`.
-- Mantida a estrutura mobile da 3.1.0; esta versão é uma correção de fluxo/menu.
-
-## 3.1.1 — Forest Glass UX
-
-- Novo menu principal com BOT, criação de sala e entrada em sala no mesmo fluxo.
-- Interface redesenhada com verde-musgo, verde-caçador e marrom-terra; dourado usado apenas em contornos/detalhes.
-- Glassmorphism aplicado aos painéis e controles, mantendo a leitura das informações.
-- Novo sistema visual de fichas de folha usando `assets/ui/ficha-folha.png`, com fileira horizontal e feedback de ganho/gasto.
-- Limite de 15 folhas por jogador.
-- Limite de 6 cartas na mão; compras, retornos e efeitos que geram cartas respeitam o limite.
-- Cartas no campo continuam podendo existir além do limite da mão, mas não podem retornar se a mão estiver cheia.
-- Arrastar um inseto sobre outro inseto aliado troca as posições e consome 1 movimento.
-- Sistema de seleção unificado para cartas da mão, Fronte e Banco.
-- Clique seleciona; hover não abre mais informação.
-- Área neutra ou `Esc` cancela seleção.
-- VENDER funciona diretamente para carta selecionada na mão ou no campo.
-- Novo inspetor de carta mostra arte, ATK, HP, custo, tipo, condição, habilidade e equipamentos.
-- ATK/HP receberam contorno e fundo para melhorar a leitura sobre a arte.
-- Cartas com equipamento recebem detalhes dourados discretos.
-- Mobile mantém a estrutura de interação existente; o redesign de ações é focado no desktop.
-- Correções de fluxo multiplayer preservadas da série 2.1.x: BOT não joga em partidas online, socket reconecta de forma segura e ações do guest são enviadas ao host.
+- Restaurada a estrutura original do desktop em três colunas: sidebar esquerda, campo central e sidebar direita.
+- O status da partida voltou para a sidebar esquerda.
+- O painel de ações voltou para a sidebar direita, acima do inspetor e da mão.
+- Removido o `center-controls` do layout principal, que estava criando uma quarta área no CSS Grid e empurrando o tabuleiro para uma linha implícita.
+- Criado `css/layout-hotfix.css` para reforçar a geometria normal do desktop sem alterar o layout mobile.
+- Modo Editor continua isolado por `body.editor-mode`.
+- Mecânicas, BOT, multiplayer e catálogo de cartas não foram alterados.
+- Cache busting atualizado para `3.2.21`.
 
 ## Estrutura
 
-- `index.html` — interface, menu principal, campo, ações, mão, inspetor e pop-ups.
-- `css/style.css` — tema visual, glassmorphism, layout, cartas, fichas e responsividade.
-- `js/game.js` — regras, BOT, combate, efeitos, seleção, drag & drop e renderização.
-- `js/multiplayer.js` — salas multiplayer, sincronização host/guest, timer e fluxo de sessão.
-- `js/battle-fx.js` — efeitos visuais adicionais.
+- `index.html` — interface e composição do campo/sidebar.
+- `css/style.css` — tema e componentes visuais existentes.
+- `css/layout-hotfix.css` — correção estrutural específica do desktop.
+- `js/game.js` — regras, BOT, combate, efeitos e renderização.
+- `js/multiplayer.js` — salas e sincronização multiplayer.
+- `js/battle-fx.js` — efeitos visuais.
+- `js/editor.js` — modo Editor local.
+- `assets/cards/` — artes das cartas.
 - `assets/ui/ficha-folha.png` — ficha visual de folha.
-- `assets/cards/` — artes das cartas referenciadas por `CARD_IMAGES`.
-
-## Regras de interação 3.1
-
-- A mão possui no máximo 6 cartas.
-- Folhas possuem no máximo 15 unidades.
-- Invocação e movimentação usam movimentos; ações padrão continuam separadas.
-- Arrastar um inseto sobre outro aliado troca as posições.
-- Clique em uma carta da mão seleciona e libera `VENDER`; cartas de efeito podem ser usadas pelo botão no inspetor ou por arraste.
-- Clique em uma carta do campo seleciona para `ATACAR`, `PUXAR DE VOLTA` ou `VENDER`, conforme a ação disponível.
-- Informações completas são exibidas por seleção, não por hover.
-
-## Multiplayer
-
-- `CRIAR SALA` gera um código de quatro letras.
-- `ENTRAR EM SALA` usa código e senha opcional.
-- O host inicia a partida quando o segundo jogador entra.
-- O host mantém o estado autoritativo; o guest envia ações.
-- Em partidas online, o player 1 é humano e não executa `botTurn()`.
-- O Vaga-lume mantém a revelação de duas cartas como informação temporária para o jogador correto.
-
-## Versionamento
-
-A versão segue `X.Y.Z`: `X` para reformas grandes/estruturais, `Y` para novas funções/mecânicas e `Z` para correções de bugs. O valor exibido no badge do jogo acompanha `APP_VERSION`.
-
-
-### 3.2.6
-- Frontes compactos e turno em linha.
-
-### 3.2.3
-- Ajuste fino do campo e controles compactos.
-
-### 3.2.2
-- Corrigido o bloqueio de renderização causado pela remoção dos IDs de compatibilidade usados pelo motor.
-- Corrigido o selo de versão para 3.2.2.
-- Mantido o tabuleiro e a mão sem novas mudanças de estrutura.
-- Reduzida apenas a altura da faixa inferior de status e ações.
-
-
-### v3.2.18
-- Corrige a versão exibida pelo motor para 3.2.18.
-- Modo Editor agora suporta arrastar cartas do catálogo para qualquer slot.
-- Cartas já posicionadas no Editor também podem ser arrastadas entre slots, com troca quando o destino estiver ocupado.
-
-
-### 3.2.18
-- Ajuste geométrico final do campo desktop: bancos com 10vw entre slots, 10vh entre Banco e Fronte, Natureza/Cemitério alinhados às extremidades externas dos Bancos e eixo Y central do campo.
-- Editor: ataque por arraste do Fronte para carta inimiga.
