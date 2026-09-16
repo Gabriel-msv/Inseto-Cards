@@ -2,9 +2,9 @@
 
 Jogo de cartas em HTML, CSS e JavaScript, jogável contra um BOT ou outro jogador pela rede.
 
-**Versão atual:** `3.2.15`
+**Versão atual:** `3.2.14`
 
-## 3.2.15 — Modo Editor e ajuste final do campo desktop
+## 3.2.14 — Modo Editor e ajuste final do campo desktop
 
 - Adicionado modo Editor local com catálogo completo de cartas.
 - Qualquer carta pode ser colocada diretamente em qualquer Banco/Fronte.

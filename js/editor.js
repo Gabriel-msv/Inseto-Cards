@@ -1,5 +1,5 @@
 /* ========================================================================
-   INSETO CARDS — MODO EDITOR 3.2.15
+   INSETO CARDS — MODO EDITOR 3.2.14
    Ferramenta local de testes. Não usa BOT, rede, custo ou ações normais.
    ======================================================================== */
 (() => {
@@ -43,23 +43,6 @@
            natureza/cemitério paralelos aos Frontes e banco inferior ancorado. */
         @media (min-width:901px) {
           .battle-main .field-row { gap: clamp(24px, 3vw, 42px); }
-          .battle-main .field-row:nth-child(2) { align-items: flex-end; }
-          .battle-main .field-row:nth-child(3) { align-items: flex-start; }
-          .battle-main .field-row:nth-child(5) { align-items: flex-end; }
-          .battle-main .player-bank-row { align-items: flex-start; }
-          .battle-main .center-zone {
-            display:grid;
-            grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
-            align-items:center;
-            justify-items:center;
-            column-gap:clamp(18px,2.2vw,34px);
-            width:min(560px,72%);
-            height:42px;
-            min-height:42px;
-          }
-          .battle-main .center-zone .natureza { grid-column:1; justify-self:center; }
-          .battle-main .center-zone .turn { grid-column:2; justify-self:center; }
-          .battle-main .center-zone .cemiterio { grid-column:3; justify-self:center; }
           .battle-main .slot,
           .battle-main .slot.fronte,
           .battle-main .shared-zone {
@@ -200,8 +183,8 @@
       this.setEditorState();
       this.renderCatalog();
       this.bindFieldInteraction();
-      document.querySelector('.version-badge')?.replaceChildren(document.createTextNode('v3.2.15 · Editor'));
-      document.title = 'Inseto Cards — Editor · v3.2.15';
+      document.querySelector('.version-badge')?.replaceChildren(document.createTextNode('v3.2.14 · Editor'));
+      document.title = 'Inseto Cards — Editor · v3.2.14';
       this.setStatus('Editor ativo. Selecione uma carta e clique em qualquer slot.');
       if (typeof render === 'function') render();
       this.highlightField();
