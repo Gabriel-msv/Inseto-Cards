@@ -1445,3 +1445,55 @@ body { background-color:#08110c; background-image:radial-gradient(circle at 20% 
     font-size: 7px;
   }
 }
+
+
+/* ================================================================
+   3.2.6 — FRONTES COMPACTOS E TURNO EM LINHA
+   Mesma dimensão do Banco; reduz o espaço central entre os Frontes.
+   ================================================================ */
+@media (min-width: 901px) {
+  .battle-main {
+    grid-template-rows: 30px minmax(0,1fr) minmax(0,1fr) 38px minmax(0,1fr) minmax(0,1fr);
+  }
+
+  .battle-main .slot,
+  .battle-main .slot.fronte {
+    width: clamp(72px, 6.1vw, 88px);
+    height: clamp(92px, 8.1vw, 112px);
+    flex-basis: clamp(72px, 6.1vw, 88px);
+    border-radius: 8px;
+  }
+
+  .battle-main .center-zone {
+    width: min(360px, 62%);
+    height: 36px;
+    min-height: 36px;
+  }
+
+  .battle-main .turn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 62px;
+    color: var(--brass-light);
+    font: 700 8px/1 var(--display);
+    letter-spacing: .05em;
+    white-space: nowrap;
+  }
+
+  .battle-main .turn span,
+  .battle-main .turn b {
+    display: inline-block;
+    font-size: inherit;
+    line-height: 1;
+  }
+}
+
+@media (max-width: 1050px) and (min-width: 901px) {
+  .battle-main {
+    grid-template-rows: 30px minmax(0,1fr) minmax(0,1fr) 34px minmax(0,1fr) minmax(0,1fr);
+  }
+  .battle-main .center-zone { width: min(320px, 60%); height: 32px; min-height: 32px; }
+  .battle-main .turn { gap: 6px; font-size: 7px; }
+}

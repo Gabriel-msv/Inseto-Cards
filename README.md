@@ -95,6 +95,9 @@ Jogo de cartas em HTML, CSS e JavaScript, jogável contra um BOT ou outro jogado
 A versão segue `X.Y.Z`: `X` para reformas grandes/estruturais, `Y` para novas funções/mecânicas e `Z` para correções de bugs. O valor exibido no badge do jogo acompanha `APP_VERSION`.
 
 
+### 3.2.6
+- Frontes compactos e turno em linha.
+
 ### 3.2.3
 - Ajuste fino do campo e controles compactos.
 
