@@ -2,7 +2,14 @@
 
 Jogo de cartas em HTML, CSS e JavaScript, jogável contra um BOT ou outro jogador pela rede.
 
-**Versão atual:** `3.2.9`
+**Versão atual:** `3.2.10`
+
+## 3.2.10 — Rack de folhas 5×3
+
+- Adicionados 15 espaços fixos para fichas de folha no status do jogador.
+- Rack organizado em 5 colunas × 3 linhas, no canto esquerdo do painel de status.
+- Os espaços vazios permanecem visíveis; as fichas ocupam os espaços de cima para baixo.
+- Mantidas as animações de entrada/saída sem alterar as regras da partida.
 
 ## 3.2.9 — Abandonar partida volta ao menu inicial
 
