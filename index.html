@@ -3,14 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Inseto Cards — Battle Edition</title>
-<meta name="theme-color" content="#040906">
-<!-- Projeto organizado em HTML + CSS + JS + assets/cards. -->
-<!-- Estrutura/lógica do jogo mantida (js/game.js inalterado); visual reestilizado no padrão "Battle UI V2". -->
+<title>Inseto Cards — Crônicas Botânicas</title>
+<meta name="theme-color" content="#0d0a06">
+<!-- Projeto organizado em HTML + CSS + JS + assets/cards + assets/ui. -->
+<!-- Interface e motor separados; a camada visual não altera a estrutura mobile. -->
+<!-- v2.1 — Edição "Naturalista / Manuscrito Botânico": paleta madeira/latão/pergaminho -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-<!-- CSS separado: todo o visual do jogo fica em css/style.css -->
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cinzel+Decorative:wght@700;900&family=Spectral:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<!-- CSS separado: todo o visual do jogo fica em css/style.css. -->
 <link rel="stylesheet" href="css/style.css">
 <!-- GSAP: timelines, FLIP, springs/easing e microinterações de alta performance -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js" defer></script>
@@ -22,19 +23,34 @@
 <link rel="apple-touch-icon" sizes="512x512" href="/assets/cards/icon.png?v=1.8.3">
 </head>
 <body>
-<div class="version-badge" aria-label="Versão atual">v2.1.1</div>
+<div class="version-badge" aria-label="Versão atual">v2.1.1 · Battle Core</div>
 <div class="grain"></div>
 <div class="vignette"></div>
 <canvas id="fxCanvas" class="fx-canvas" aria-hidden="true"></canvas>
 <div id="antTrail" class="ant-trail" aria-hidden="true"></div>
 <div id="fxLayer" class="fx-layer" aria-hidden="true"></div>
 <!-- Container principal: painel lateral + campo de batalha -->
+<div id="startMenu" class="start-menu" aria-modal="true" role="dialog">
+  <div class="start-menu-card">
+    <div class="start-kicker">NATURALISTA / COMANDANTE · ED. 1996</div>
+    <div class="start-logo"><span class="logo-mark"></span><div><strong>INSETO<br>CARDS</strong><small>CRÔNICAS BOTÂNICAS</small></div></div>
+    <p class="start-copy">MESA DE BATALHA DE HISTÓRIA NATURAL</p>
+    <label class="start-label" for="startName">COMANDANTE</label>
+    <input id="startName" class="field-input start-input" maxlength="18" value="Jogador" autocomplete="off">
+    <div class="start-grid">
+      <div><b>41</b><span>Grimório</span></div><div><b>0</b><span>Ossuário</span></div><div><b>3</b><span>Banco</span></div><div><b>1</b><span>Fronte</span></div>
+    </div>
+    <button id="startMenuBtn" class="btn btn-primary start-cta">⚔ INICIAR PARTIDA DE DUELO</button>
+    <div class="start-menu-actions"><button id="startRulesBtn" class="start-rules">VER REGRAS</button><button id="onlineMenuBtn" class="start-rules online-menu-btn">JOGAR ONLINE</button></div>
+  </div>
+</div>
 <div class="root">
   <!-- ÁREA PRINCIPAL: o campo ocupa o máximo de espaço útil no desktop -->
   <main class="battle-main board">
     <div class="hud enemy-hud glass-panel">
       <span id="enemyName" class="enemy-name">BOT — aguardando</span>
       <span class="leaf">🍃 <span id="enemyLeaves">5</span></span>
+      <div id="enemyLeafTokens" class="token-row" aria-label="Fichas de folhas do oponente"></div>
     </div>
 
     <div class="field-row"><span class="row-label">BANCO</span><div class="slot" id="eb0"></div><div class="slot" id="eb1"></div><div class="slot" id="eb2"></div></div>
@@ -68,28 +84,33 @@
 
   <!-- PAINÉIS LATERAIS: no desktop ficam em lados opostos; no mobile viram fluxo vertical. -->
   <aside class="battle-sidebar left-sidebar" aria-label="Informações da partida">
-    <section class="control-panel glass-panel">
+    <section class="control-panel glass-panel match-console">
       <div class="logo botanical-title" aria-label="Inseto Cards">
         <span class="logo-mark" role="img" aria-label="Isotipo Inseto Cards"></span>
         <span class="logo-name">INSETO<br>CARDS</span>
-        <span>BOT EDITION</span>
+        <span>BATTLE CORE · BOT</span>
       </div>
-      <div>
-        <div class="field-label">seu nome</div>
-        <input id="name" class="field-input" maxlength="18" value="Jogador">
+      <div class="match-title"><span>ARENA</span><strong>CRÔNICAS BOTÂNICAS</strong></div>
+      <div class="name-editor">
+        <div class="field-label">COMANDANTE</div>
+        <input id="name" class="field-input" maxlength="18" value="Jogador" autocomplete="off">
+      </div>
+      <div class="match-preview">
+        <div><span>VOCÊ</span><b>VS</b><span>BOT</span></div>
+        <small>41 espécimes · 1 cópia de cada carta</small>
       </div>
       <div class="control-actions">
-        <button id="start" class="btn btn-primary">INICIAR PARTIDA</button>
-        <button id="restart" class="btn btn-secondary">REINICIAR</button>
-        <button id="rules" class="btn btn-secondary">REGRAS</button>
+        <button id="start" class="btn btn-primary">ENTRAR NA ARENA</button>
+        <button id="restart" class="btn btn-secondary">NOVA PARTIDA</button>
+        <button id="rules" class="btn btn-secondary">REGRAS & MECÂNICAS</button>
       </div>
       <div class="stats compact-stats">
         <div>RODADA <b id="round">1</b></div>
         <div>TURNO <b id="turn">VOCÊ</b></div>
-        <div>BARALHO <b id="deckCount">41</b></div>
+        <div>NATUREZA <b id="deckCount">41</b></div>
         <div>CEMITÉRIO <b id="graveCount">0</b></div>
       </div>
-      <div class="hint">Versão jogável contra bot. A mão inicial usa 3 cartas.</div>
+      <div class="hint">1 movimento + 1 ação padrão por turno. Arraste, selecione ou clique nas ações.</div>
     </section>
 
     <section class="turn-status glass-panel">
@@ -97,12 +118,13 @@
       <div class="hud player-hud">
         <span id="playerName" class="player-name">VOCÊ</span>
         <span class="leaf">🍃 <span id="playerLeaves">5</span></span>
+        <div id="playerLeafTokens" class="token-row" aria-label="Fichas de folhas do jogador"></div>
         <span class="small">MOV: <b id="moves">1</b> · PADRÃO: <b id="std">1</b></span>
       </div>
     </section>
 
     <section class="action-history glass-panel">
-      <div class="action-header">HISTÓRICO DE AÇÕES</div>
+      <div class="action-header">DIÁRIO DA EXPEDIÇÃO</div>
       <div id="log" class="log"></div>
     </section>
   </aside>
@@ -141,8 +163,8 @@
     <section class="hand-panel glass-panel">
       <div class="hand-panel-head">
         <div>
-          <div class="action-header">SUA MÃO</div>
-          <div class="hand-subtitle">Arraste uma carta para o Banco ou Fronte</div>
+          <div class="action-header">ESPÉCIMES NA MÃO</div>
+          <div class="hand-subtitle">Posicione arrastando ao Fronte ou Banco</div>
         </div>
         <div class="mobile-hand-status" aria-live="polite">
           <span>FOLHAS <b id="handLeaves">5</b></span>
@@ -166,7 +188,7 @@
 <div id="tip" class="tip"><b id="tipName"></b><span id="tipCond" class="cond"></span><br><span id="tipAbility"></span></div>
 <!-- Modal de regras / fim de partida -->
 <div id="overlay" class="overlay"><div class="modal glass-panel"><div id="modalContent"></div><button id="modalClose" class="btn btn-primary">FECHAR</button></div></div>
-  <!-- JavaScript separado: regras, BOT, renderização e multiplayer -->
+  <!-- JavaScript separado: regras, BOT, renderização e interações (inalterado) -->
   <script src="js/game.js"></script>
   <script src="js/multiplayer.js"></script>
 <script src="js/battle-fx.js"></script>
@@ -180,4 +202,27 @@
       });
     });
   </script>
+<script>
+  // Menu inicial 2.1.0: usa o mesmo fluxo de inicialização do jogo, sem duplicar a mecânica.
+  (() => {
+    const menu = document.getElementById('startMenu');
+    const menuName = document.getElementById('startName');
+    const gameName = document.getElementById('name');
+    const startBtn = document.getElementById('start');
+    const launch = () => {
+      const name = (menuName.value || 'Jogador').trim().slice(0,18) || 'Jogador';
+      gameName.value = name;
+      menu.classList.add('is-hidden');
+      startBtn.click();
+    };
+    document.getElementById('startMenuBtn').addEventListener('click', launch);
+    document.getElementById('startRulesBtn').addEventListener('click', () => document.getElementById('rules').click());
+    menuName.addEventListener('keydown', e => { if (e.key === 'Enter') launch(); });
+    menu.addEventListener('transitionend', () => { if (menu.classList.contains('is-hidden')) menu.remove(); });
+    // O CSS não precisa esconder com display:none abruptamente: a classe abaixo anima a saída.
+    const style = document.createElement('style');
+    style.textContent = '#startMenu{transition:opacity .28s ease,visibility .28s ease}#startMenu.is-hidden{opacity:0;visibility:hidden;pointer-events:none}';
+    document.head.appendChild(style);
+  })();
+</script>
 </body></html>

@@ -544,5 +544,7 @@ button { cursor: pointer; }
 .start-grid b { display:block; color:var(--brass-light); font:900 15px var(--display); }
 .start-grid span { color:var(--muted); font-size:7px; text-transform:uppercase; letter-spacing:.08em; }
 .start-cta { width:100%; min-height:44px; }
-.start-rules { display:block; margin:11px auto 0; border:0; background:none; color:var(--muted); font:700 9px var(--sans); text-decoration:underline; cursor:pointer; }
+.start-menu-actions { display:flex; justify-content:center; gap:18px; margin-top:11px; }
+.start-rules { display:block; margin:0; border:0; background:none; color:var(--muted); font:700 9px var(--sans); text-decoration:underline; cursor:pointer; }
+.online-menu-btn { color:var(--brass-light); }
 @media (max-width:600px) { .start-menu { padding:10px; } .start-menu-card { padding:21px; } .start-logo strong { font-size:20px; } .start-grid { grid-template-columns:repeat(2,1fr); } }
