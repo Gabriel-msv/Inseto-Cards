@@ -2,7 +2,13 @@
 
 Jogo de cartas em HTML, CSS e JavaScript, jogável contra um BOT ou outro jogador pela rede.
 
-**Versão atual:** `3.2.12`
+**Versão atual:** `3.2.13`
+
+## 3.2.13 — Controles ao lado do tabuleiro no celular
+
+- No celular, o painel de status e ações fica ao lado direito do tabuleiro.
+- A mão de cartas continua abaixo do tabuleiro, ocupando a largura disponível.
+- A alteração é exclusiva para telas de até 900px; o layout desktop não é alterado.
 
 ## 3.2.12 — Correção do multiplayer
 

@@ -1555,3 +1555,217 @@ body { background-color:#08110c; background-image:radial-gradient(circle at 20% 
     font-size: 7px;
   }
 }
+
+/* ================================================================
+   3.2.13 — MOBILE: CONTROLES AO LADO DO TABULEIRO
+   Somente telas de até 900px. Desktop permanece inalterado.
+   ================================================================ */
+@media (max-width: 900px) {
+  .root {
+    grid-template-columns: minmax(0, 1fr) clamp(128px, 34vw, 168px);
+    grid-template-rows: auto auto auto;
+    gap: 7px;
+    width: 100%;
+    min-height: 100vh;
+    height: auto;
+    overflow: visible;
+    padding: 7px;
+  }
+
+  /* Menu continua no topo. */
+  .left-sidebar {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  /* Tabuleiro à esquerda. O grande padding inferior anterior
+     existia apenas para reservar espaço para a mão fixa; agora a mão
+     volta para um painel próprio abaixo do tabuleiro. */
+  .battle-main {
+    grid-column: 1;
+    grid-row: 2;
+    height: auto;
+    min-width: 0;
+    overflow: visible;
+    justify-content: flex-start;
+    padding: 8px 2px 6px;
+  }
+
+  /* Status + ações ocupam a coluna direita, alinhados à altura do tabuleiro. */
+  .center-controls {
+    grid-column: 2;
+    grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    align-self: stretch;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    gap: 6px;
+    overflow: hidden;
+  }
+
+  .center-controls .center-status,
+  .center-controls .center-actions {
+    min-width: 0;
+    width: 100%;
+    flex: 0 0 auto;
+    overflow: hidden;
+  }
+
+  .center-controls .center-status {
+    padding: 6px 5px;
+    gap: 4px;
+  }
+
+  .center-controls .center-status .message {
+    min-height: 0;
+    padding: 2px 1px;
+    font-size: 7px;
+    line-height: 1.2;
+    white-space: normal;
+  }
+
+  .center-controls .center-status .player-hud {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    padding: 3px;
+  }
+
+  .center-controls .center-status .player-name,
+  .center-controls .center-status .small {
+    font-size: 7px;
+  }
+
+  .center-controls .center-status .token-row {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 2px;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .center-controls .center-status .leaf-token {
+    width: 17px;
+    height: 17px;
+    flex-basis: 17px;
+  }
+
+  .center-controls .center-actions {
+    padding: 5px 4px;
+    gap: 4px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .center-controls .center-actions .action-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-height: 0;
+    padding: 0 0 3px;
+    font-size: 6px;
+  }
+
+  .center-controls .center-actions .action-summary b { font-size: 7px; }
+  .center-controls .center-actions .action-group { gap: 2px; }
+  .center-controls .center-actions .action-header {
+    font-size: 6px;
+    line-height: 1.1;
+  }
+  .center-controls .center-actions .actions,
+  .center-controls .center-actions .target-actions {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+  .center-controls .center-actions .action {
+    width: 100%;
+    min-height: 29px;
+    height: 29px;
+    padding: 4px 3px;
+    font-size: 7px;
+    line-height: 1.05;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Mão/cartas: painel separado embaixo, ocupando toda a largura. */
+  .right-sidebar {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    height: auto;
+    min-width: 0;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  .right-sidebar .card-inspector {
+    position: relative;
+    top: auto;
+    margin: 0;
+  }
+
+  .right-sidebar .hand-panel {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: 174px;
+    min-height: 174px;
+    padding: 7px;
+    border-radius: 8px;
+    box-shadow: 0 -2px 10px rgba(0,0,0,.2);
+    transform: none;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .right-sidebar .hand-carousel {
+    height: 135px;
+    flex: 0 0 135px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    touch-action: pan-x;
+  }
+
+  .right-sidebar .hand {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 6px;
+    width: max-content;
+    min-width: 100%;
+    height: 100%;
+    padding: 3px;
+  }
+
+  .right-sidebar .hand .card {
+    width: 15vw;
+    min-width: 15vw;
+    height: auto;
+    aspect-ratio: 84 / 118;
+    touch-action: none;
+  }
+
+  .battle-main .card { touch-action: none; }
+}
+
+@media (max-width: 520px) {
+  .root {
+    grid-template-columns: minmax(0, 1fr) 118px;
+    gap: 5px;
+  }
+
+  .battle-main { padding: 7px 1px 5px; }
+
+  .center-controls { gap: 4px; }
+  .center-controls .center-status { padding: 5px 4px; }
+  .center-controls .center-actions { padding: 4px 3px; }
+  .center-controls .center-actions .action { min-height: 27px; height: 27px; font-size: 6.5px; }
+
+  .right-sidebar .hand-panel { height: 155px; min-height: 155px; }
+  .right-sidebar .hand-carousel { height: 116px; flex-basis: 116px; }
+  .right-sidebar .hand .card { width: 15vw; min-width: 15vw; }
+}
