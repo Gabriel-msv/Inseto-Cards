@@ -3,13 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Inseto Cards — Battle Edition</title>
-<meta name="theme-color" content="#040906">
+<title>Inseto Cards — Crônicas Botânicas</title>
+<meta name="theme-color" content="#0d0a06">
 <!-- Projeto organizado em HTML + CSS + JS + assets/cards + assets/ui. -->
 <!-- Interface e motor separados; a camada visual não altera a estrutura mobile. -->
+<!-- v2.1 — Edição "Naturalista / Manuscrito Botânico": paleta madeira/latão/pergaminho -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cinzel+Decorative:wght@700;900&family=Spectral:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <!-- CSS separado: todo o visual do jogo fica em css/style.css. -->
 <link rel="stylesheet" href="css/style.css">
 <!-- GSAP: timelines, FLIP, springs/easing e microinterações de alta performance -->
@@ -22,7 +23,7 @@
 <link rel="apple-touch-icon" sizes="512x512" href="/assets/cards/icon.png?v=1.8.3">
 </head>
 <body>
-<div class="version-badge" aria-label="Versão atual">v2.0.8</div>
+<div class="version-badge" aria-label="Versão atual">v2.1.0 · Ed. Naturalista</div>
 <div class="grain"></div>
 <div class="vignette"></div>
 <canvas id="fxCanvas" class="fx-canvas" aria-hidden="true"></canvas>
@@ -73,10 +74,10 @@
       <div class="logo botanical-title" aria-label="Inseto Cards">
         <span class="logo-mark" role="img" aria-label="Isotipo Inseto Cards"></span>
         <span class="logo-name">INSETO<br>CARDS</span>
-        <span>BOT EDITION</span>
+        <span>CRÔNICAS BOTÂNICAS</span>
       </div>
       <div>
-        <div class="field-label">seu nome</div>
+        <div class="field-label">naturalista / comandante</div>
         <input id="name" class="field-input" maxlength="18" value="Jogador">
       </div>
       <div class="control-actions">
@@ -87,10 +88,10 @@
       <div class="stats compact-stats">
         <div>RODADA <b id="round">1</b></div>
         <div>TURNO <b id="turn">VOCÊ</b></div>
-        <div>BARALHO <b id="deckCount">41</b></div>
-        <div>CEMITÉRIO <b id="graveCount">0</b></div>
+        <div>GRIMÓRIO <b id="deckCount">41</b></div>
+        <div>OSSUÁRIO <b id="graveCount">0</b></div>
       </div>
-      <div class="hint">Versão jogável contra bot. A mão inicial usa 3 cartas.</div>
+      <div class="hint">Diário de expedição contra o bot. A mão inicial usa 3 cartas.</div>
     </section>
 
     <section class="turn-status glass-panel">
@@ -104,7 +105,7 @@
     </section>
 
     <section class="action-history glass-panel">
-      <div class="action-header">HISTÓRICO DE AÇÕES</div>
+      <div class="action-header">DIÁRIO DA EXPEDIÇÃO</div>
       <div id="log" class="log"></div>
     </section>
   </aside>
@@ -143,8 +144,8 @@
     <section class="hand-panel glass-panel">
       <div class="hand-panel-head">
         <div>
-          <div class="action-header">SUA MÃO</div>
-          <div class="hand-subtitle">Arraste uma carta para o Banco ou Fronte</div>
+          <div class="action-header">ESPÉCIMES NA MÃO</div>
+          <div class="hand-subtitle">Posicione arrastando ao Fronte ou Banco</div>
         </div>
         <div class="mobile-hand-status" aria-live="polite">
           <span>FOLHAS <b id="handLeaves">5</b></span>
