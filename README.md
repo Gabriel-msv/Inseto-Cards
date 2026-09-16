@@ -1,3 +1,5 @@
+https://gabriel-msv.github.io/Inseto-Cards/
+
 # Inseto Cards - Battle Edition
 
 Jogo de cartas em HTML, CSS e JavaScript, jogável contra um BOT ou outro jogador pela rede.
