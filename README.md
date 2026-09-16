@@ -2,7 +2,16 @@
 
 Jogo de cartas em HTML, CSS e JavaScript, jogável contra um BOT ou outro jogador pela rede.
 
-**Versão atual:** `3.1.1`
+**Versão atual:** `3.2.1`
+
+## 3.2.1 — Correções de layout
+
+- Corrigida a distribuição do campo central para evitar esticamento vertical excessivo.
+- Reorganizados slots, zona central, status e ações para preservar a área útil do tabuleiro.
+- Corrigida a ocupação da coluna direita pela mão do jogador.
+- Ajustadas proporções do menu esquerdo, diário e controles inferiores.
+- Atualizada a identificação visual da versão para `3.2.1`.
+- Sem alteração nas regras, combate, BOT ou multiplayer.
 
 ## 3.1.1 — Menu principal corrigido
 
