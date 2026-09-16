@@ -931,3 +931,259 @@ body { background-color:#08110c; background-image:radial-gradient(circle at 20% 
     max-width: 108px;
   }
 }
+
+/* ========================================================================
+   3.2.26 — RESTAURAÇÃO DO MODELO COM STATUS/AÇÕES ABAIXO DO CAMPO
+   O modelo anterior usava uma segunda linha no grid principal para os
+   controles. Este bloco anula o hotfix absoluto posterior sem mexer no JS.
+   ======================================================================== */
+@media (min-width:901px) {
+  html, body { width:100%; height:100%; min-height:0; }
+  body { overflow:hidden; }
+
+  .root {
+    position:relative;
+    grid-template-columns:248px minmax(0,1fr) 332px;
+    grid-template-rows:minmax(0,1fr) 82px;
+    gap:8px;
+    width:100vw;
+    height:100vh;
+    min-height:0;
+    padding:8px;
+    overflow:hidden;
+  }
+
+  .left-sidebar { grid-column:1; grid-row:1 / 3; min-height:0; gap:10px; }
+  .right-sidebar { grid-column:3; grid-row:1 / 3; min-height:0; gap:8px; overflow:hidden; }
+
+  .battle-main {
+    grid-column:2;
+    grid-row:1;
+    min-width:0;
+    min-height:0;
+    width:100%;
+    height:100%;
+    padding:6px 14px;
+    overflow:hidden;
+    justify-content:space-around;
+  }
+
+  .center-controls {
+    grid-column:2;
+    grid-row:2;
+    position:static;
+    left:auto;
+    right:auto;
+    bottom:auto;
+    z-index:auto;
+    display:grid;
+    grid-template-columns:minmax(205px,.72fr) minmax(0,1.9fr);
+    gap:7px;
+    width:100%;
+    height:82px;
+    min-width:0;
+    min-height:0;
+    overflow:hidden;
+    pointer-events:auto;
+  }
+
+  .center-status {
+    min-width:0;
+    min-height:0;
+    padding:4px 8px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:3px;
+    overflow:hidden;
+  }
+
+  .center-status .message {
+    min-height:13px;
+    padding:0 2px;
+    font-size:8px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .center-status .player-hud {
+    display:grid;
+    grid-template-columns:auto auto minmax(0,1fr) auto;
+    gap:4px;
+    min-width:0;
+    padding:2px 3px;
+  }
+
+  .center-status .player-name { font-size:9px; white-space:nowrap; }
+  .center-status .small { font-size:7px; white-space:nowrap; }
+  .center-status .token-row {
+    display:flex;
+    flex-wrap:nowrap;
+    gap:2px;
+    min-width:0;
+    max-width:100%;
+    overflow:hidden;
+    margin:0;
+  }
+  .center-status .leaf-token { width:18px; height:18px; flex-basis:18px; }
+
+  .center-actions {
+    min-width:0;
+    min-height:0;
+    padding:4px 8px;
+    display:grid !important;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    grid-template-rows:12px 1fr;
+    align-items:center;
+    gap:3px 6px;
+    overflow:hidden;
+  }
+  .center-actions .action-summary {
+    grid-column:1 / -1;
+    grid-row:1;
+    min-height:12px;
+    padding:0 0 1px;
+    align-items:center;
+    border-bottom:1px solid rgba(141,176,139,.12);
+    font-size:7px;
+  }
+  .center-actions .action-summary b { font-size:8px; }
+  .center-actions .action-group { display:contents; }
+  .center-actions .action-header { display:none; }
+  .center-actions .actions,
+  .center-actions .target-actions { display:contents !important; }
+  .center-actions .action {
+    min-width:0;
+    width:100%;
+    min-height:28px;
+    height:28px;
+    padding:3px 4px;
+    font-size:7px;
+    line-height:1.05;
+    white-space:normal;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  /* Os seis espaços continuam ocupando o campo sem depender de
+     larguras fixas. O Banco inferior continua separado do Fronte. */
+  .battle-main .field-row {
+    gap:clamp(24px,3vw,42px);
+    flex:0 0 auto;
+    min-height:0;
+  }
+  .battle-main .field-row:nth-child(2) { align-items:flex-end; }
+  .battle-main .field-row:nth-child(3) { align-items:flex-start; }
+  .battle-main .field-row:nth-child(5) { align-items:flex-end; }
+  .battle-main .field-row:nth-child(6) { align-items:flex-start; }
+
+  .battle-main .slot {
+    width:clamp(88px,8vw,118px);
+    height:clamp(118px,11vw,154px);
+    flex-basis:clamp(88px,8vw,118px);
+  }
+  .battle-main .slot.fronte {
+    width:clamp(96px,8.7vw,128px);
+    height:clamp(128px,12.1vw,168px);
+    flex-basis:clamp(96px,8.7vw,128px);
+  }
+  .battle-main .slot > .card {
+    width:calc(100% - 6px);
+    height:calc(100% - 6px);
+  }
+  .battle-main .card.fronte-card {
+    width:100%;
+    height:100%;
+    box-sizing:border-box;
+  }
+
+  /* Natureza/Cemitério realmente respondem ao tamanho da área central. */
+  .battle-main .center-zone {
+    display:grid;
+    grid-template-columns:minmax(64px,1fr) auto minmax(64px,1fr);
+    align-items:center;
+    justify-items:center;
+    column-gap:clamp(18px,2.2vw,34px);
+    width:min(560px,72%);
+    height:38px;
+    min-height:38px;
+    margin:0;
+    padding:0;
+    overflow:visible;
+  }
+  .battle-main .center-zone .natureza,
+  .battle-main .center-zone .cemiterio {
+    width:clamp(64px,7vw,98px);
+    height:clamp(86px,10vw,128px);
+    min-width:64px;
+    flex:none;
+  }
+  .battle-main .center-zone .natureza { grid-column:1; }
+  .battle-main .center-zone .turn { grid-column:2; }
+  .battle-main .center-zone .cemiterio { grid-column:3; }
+  .battle-main .center-zone .pile {
+    width:clamp(44px,4.3vw,62px);
+    height:clamp(60px,5.9vw,84px);
+  }
+  .battle-main .center-zone .pile-card {
+    width:clamp(40px,3.85vw,56px);
+    height:clamp(55px,5.15vw,74px);
+  }
+
+  @media (max-width:1050px) {
+    .root { grid-template-columns:205px minmax(0,1fr) 270px; grid-template-rows:minmax(0,1fr) 82px; gap:8px; padding:8px; }
+    .center-controls { grid-template-columns:minmax(175px,.72fr) minmax(0,1.85fr); }
+    .battle-main { padding-left:8px; padding-right:8px; }
+    .battle-main .field-row { gap:clamp(14px,2vw,28px); }
+    .battle-main .slot { width:clamp(78px,8vw,100px); height:clamp(104px,10vw,132px); flex-basis:clamp(78px,8vw,100px); }
+    .battle-main .slot.fronte { width:clamp(86px,8.6vw,108px); height:clamp(114px,11vw,142px); flex-basis:clamp(86px,8.6vw,108px); }
+    .battle-main .center-zone { width:min(470px,76%); }
+    .battle-main .center-zone .natureza,
+    .battle-main .center-zone .cemiterio { width:clamp(58px,7vw,82px); height:clamp(78px,9vw,108px); }
+  }
+}
+
+/* Mobile preservado no fluxo anterior: tabuleiro + controles ao lado, mão abaixo. */
+@media (max-width:900px) {
+  .root {
+    position:relative;
+    grid-template-columns:minmax(0,1fr) clamp(128px,34vw,168px);
+    grid-template-rows:auto auto auto;
+    gap:7px;
+    width:100%;
+    min-height:100vh;
+    height:auto;
+    overflow:visible;
+    padding:7px;
+  }
+  .left-sidebar { grid-column:1 / -1; grid-row:1; }
+  .battle-main { grid-column:1; grid-row:2; height:auto; overflow:visible; justify-content:flex-start; padding:8px 2px 6px; }
+  .center-controls {
+    grid-column:2;
+    grid-row:2;
+    position:static;
+    display:flex;
+    flex-direction:column;
+    align-self:stretch;
+    width:100%;
+    height:100%;
+    min-width:0;
+    min-height:0;
+    gap:6px;
+    overflow:hidden;
+  }
+  .center-controls .center-status,
+  .center-controls .center-actions { width:100%; min-width:0; flex:0 0 auto; overflow:hidden; }
+  .center-controls .center-status { padding:6px 5px; }
+  .center-controls .center-actions { padding:5px 4px; }
+  .right-sidebar { grid-column:1 / -1; grid-row:3; height:auto; overflow:visible; padding-bottom:0; }
+  .right-sidebar .card-inspector { position:relative; top:auto; }
+  .right-sidebar .hand-panel { position:relative; inset:auto; width:100%; height:174px; min-height:174px; padding:7px; transform:none; opacity:1; pointer-events:auto; }
+}
+@media (max-width:520px) {
+  .root { grid-template-columns:minmax(0,1fr) 118px; gap:5px; }
+  .battle-main { padding:7px 1px 5px; }
+  .center-controls { gap:4px; }
+  .right-sidebar .hand-panel { height:155px; min-height:155px; }
+}
