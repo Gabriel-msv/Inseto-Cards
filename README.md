@@ -2,7 +2,12 @@
 
 Jogo de cartas em HTML, CSS e JavaScript, jogável contra um BOT ou outro jogador pela rede.
 
-**Versão atual:** `3.2.8`
+**Versão atual:** `3.2.9`
+
+## 3.2.9 — Abandonar partida volta ao menu inicial
+
+- O botão `ABANDONAR PARTIDA` agora reinicia a página e retorna diretamente ao menu inicial.
+- O estado da partida é descartado ao sair, sem alterar as regras do jogo.
 
 ## 3.2.5 — Turno compacto
 
