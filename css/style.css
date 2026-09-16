@@ -517,3 +517,32 @@ button { cursor: pointer; }
     flex-basis: 30px;
   }
 }
+
+/* ========================= 2.1.0 — MENU DE PARTIDA ========================= */
+.match-console { position: relative; overflow: hidden; }
+.match-console::after { content:''; position:absolute; inset:auto -30% -55% -30%; height:170px; background:radial-gradient(ellipse, rgba(198,154,67,.12), transparent 68%); pointer-events:none; }
+.match-title { display:flex; flex-direction:column; gap:2px; padding:5px 0 1px; border-top:1px solid rgba(198,154,67,.25); border-bottom:1px solid rgba(198,154,67,.18); }
+.match-title span { font-size:8px; letter-spacing:.22em; color:var(--muted); }
+.match-title strong { font:700 15px var(--display); color:var(--brass-light); letter-spacing:.05em; }
+.name-editor { position:relative; z-index:1; }
+.match-preview { position:relative; z-index:1; padding:10px; border:1px solid rgba(198,154,67,.28); border-radius:7px; background:rgba(0,0,0,.16); text-align:center; }
+.match-preview div { display:flex; align-items:center; justify-content:space-between; gap:7px; font:700 10px var(--display); letter-spacing:.08em; }
+.match-preview b { color:var(--brass); font-size:9px; }
+.match-preview small { display:block; margin-top:5px; color:var(--muted); font-size:8px; }
+.start-menu { position:fixed; inset:0; z-index:450; display:flex; align-items:center; justify-content:center; padding:20px; background:radial-gradient(ellipse at center, rgba(31,51,34,.96), rgba(7,10,7,.99) 78%); backdrop-filter:blur(10px); }
+.start-menu-card { width:min(470px,94vw); padding:28px; border:2px solid var(--line); border-radius:12px; background:linear-gradient(160deg,rgba(42,32,20,.98),rgba(13,18,12,.98)); box-shadow:0 28px 90px rgba(0,0,0,.68), inset 0 1px 0 rgba(255,235,170,.08); }
+.start-kicker { color:var(--brass); font:700 9px var(--display); letter-spacing:.24em; text-align:center; }
+.start-logo { display:flex; align-items:center; justify-content:center; gap:12px; margin:12px 0 14px; }
+.start-logo .logo-mark { width:54px; height:54px; }
+.start-logo strong { display:block; color:var(--brass-light); font:900 24px/1 var(--display); letter-spacing:.08em; }
+.start-logo small { display:block; margin-top:5px; color:var(--muted); font:700 8px var(--display); letter-spacing:.18em; }
+.start-copy { max-width:360px; margin:0 auto 20px; color:var(--parchment-300); font-size:12px; line-height:1.6; text-align:center; }
+.start-label { display:block; margin-bottom:5px; color:var(--muted); font-size:8px; font-weight:700; letter-spacing:.14em; }
+.start-input { width:100%; }
+.start-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:12px 0 16px; }
+.start-grid div { padding:8px 4px; border:1px solid rgba(198,154,67,.2); border-radius:6px; text-align:center; background:rgba(0,0,0,.13); }
+.start-grid b { display:block; color:var(--brass-light); font:900 15px var(--display); }
+.start-grid span { color:var(--muted); font-size:7px; text-transform:uppercase; letter-spacing:.08em; }
+.start-cta { width:100%; min-height:44px; }
+.start-rules { display:block; margin:11px auto 0; border:0; background:none; color:var(--muted); font:700 9px var(--sans); text-decoration:underline; cursor:pointer; }
+@media (max-width:600px) { .start-menu { padding:10px; } .start-menu-card { padding:21px; } .start-logo strong { font-size:20px; } .start-grid { grid-template-columns:repeat(2,1fr); } }

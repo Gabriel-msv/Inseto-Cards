@@ -176,7 +176,7 @@ const DECK_KEYS = Object.keys(CARDS); // catálogo completo atual, uma cópia de
 // 2. ESTADO DA PARTIDA
 // Guarda jogadores, baralho, cemitério, turno e seleção do jogador.
 // ================================================================
-const APP_VERSION = '2.0.8'; // versão cumulativa: catálogo, combate, efeitos e UX.
+const APP_VERSION = '2.1.0'; // versão cumulativa: catálogo, combate, efeitos e UX.
 const state = { started: false, over: false, round: 1, turn: 'player', deck: [], grave: [], players: [null, null], selected: null, selectedField: null, targetMode: null, log: [], skip: [false, false], tie: false };
 function P(name, bot = false) { return { name, bot, leaves: 5, hand: [], front: null, bank: [null, null, null], moves: 1, std: 1, passiveBuy: false, adubo: 0, antiSteal: 0, revealed: 0 }; }
 function card(key, owner) { let c = CARDS[key]; return { id: Math.random().toString(36).slice(2), key, owner, atk: c.atk ?? 0, hp: c.hp ?? 0, maxHp: c.hp ?? 0, baseAtk: c.atk ?? 0, baseHp: c.hp ?? 0, damage: 0, buffs: [], equipment: [], activeTurns: 0, poison: 0, poisonTurns: 0, root: 0, skipAttack: 0, reload: 0, protectedOnce: key === 'louva', barataUsed: false, mel: false, customAbility: null, copiedKey: null, debuffNext: false, bonusAtk: 0, bonusHp: 0, passiveAtkBonus: 0, passiveHpBonus: 0, debuffAtk: 0, lupa: 0, teia: 0, effectMarks: [] }; }
@@ -293,7 +293,68 @@ function refreshPassiveStats() {
     }
   }
 }
-function endTurn(pi) { if (state.over) return; if (pi === 0) startTurn(1); else { state.round++; startTurn(0) }; render(); winCheck() }
+function startTurn(pi) {
+  const p = state.players[pi];
+  if (!p || state.over) return;
+  state.turn = pi;
+  state.targetMode = null;
+  state.selected = null;
+  state.selectedField = null;
+  p.std = 1;
+  p.moves = 1;
+
+  // A partir da rodada 2, cada jogador recebe 1 folha no início do próprio turno.
+  if (state.round > 1) p.leaves = Math.min(15, p.leaves + 1);
+
+  // Cooldowns/impedimentos pertencem ao inseto e avançam somente no turno do dono.
+  for (const c of fieldCards(pi)) {
+    if (c.reload > 0) c.reload--;
+    if (c.root > 0) c.root--;
+    if (c.skipAttack > 0) c.skipAttack--;
+
+    // Veneno causa 1 dano no começo do turno do inseto afetado.
+    if (c.poisonTurns > 0 && c.poison > 0) {
+      c.hp -= 1;
+      c.poisonTurns--;
+      log(`${CARDS[c.key].name} sofreu 1 dano de Veneno.`);
+      if (c.hp <= 0) defeat(p, c, 1 - pi);
+    }
+
+    // Lupa aplica 2 de dano no início do turno do alvo.
+    if (c.lupa > 0) {
+      c.hp -= 2;
+      c.lupa--;
+      log(`${CARDS[c.key].name} sofreu 2 dano da Lupa.`);
+      if (c.hp <= 0) defeat(p, c, 1 - pi);
+    }
+
+    // Teia vale apenas para o próximo turno do alvo.
+    if (c.teia > 0) {
+      c.skipAttack = 1;
+      c.teia--;
+    }
+  }
+
+  // Duração dos efeitos globais é contada nos turnos do proprietário.
+  if (p.adubo > 0) p.adubo--;
+  if (p.antiSteal > 0) p.antiSteal--;
+
+  // Efeitos visuais e estado após resolver efeitos de início de turno.
+  refreshPassiveStats();
+  log(pi === 0 ? 'Seu turno começou.' : 'Turno do BOT começou.');
+  render();
+  winCheck();
+}
+function endTurn(pi) {
+  if (state.over || state.turn !== pi) return;
+  state.targetMode = null;
+  state.selected = null;
+  state.selectedField = null;
+  if (pi === 0) startTurn(1);
+  else { state.round++; startTurn(0); }
+  render();
+  winCheck();
+}
 // ---------------------------------------------------------------
 // Validação de ações e recursos.
 // ---------------------------------------------------------------
@@ -392,9 +453,10 @@ function returnToHand(pi, zone, slot) {
 // ---------------------------------------------------------------
 function getAttackTargets(pi, attacker) {
   const o = state.players[1 - pi];
-  if (!o || !attacker) return [];
-  if (attacker.key === 'meganeura') return [o.front, ...o.bank].filter(Boolean);
-  return o.front ? [o.front] : o.bank.filter(Boolean);
+  if (!o || !attacker || !insect(attacker)) return [];
+  const all = [o.front, ...o.bank].filter(Boolean).filter(insect);
+  if (attacker.key === 'meganeura') return all;
+  return o.front ? [o.front] : o.bank.filter(Boolean).filter(insect);
 }
 function chooseAttack(pi) {
   const p = state.players[pi], a = p?.front;
@@ -407,44 +469,42 @@ function chooseAttack(pi) {
 // Sistema de combate e resolução de dano.
 // ---------------------------------------------------------------
 function attack(pi, a, t) {
-  let p = state.players[pi], o = state.players[1 - pi];
+  const p = state.players[pi], o = state.players[1 - pi];
   if (!validMove(pi)) { if (pi === 0) blockAction('Não é o seu turno.'); return false; }
   if (p.std <= 0) { if (pi === 0) blockAction('Você já gastou sua ação padrão.'); return false; }
-  if (!a) { if (pi === 0) blockAction('Não há inseto no Fronte para atacar.'); return false; }
-  if (a.root > 0) { if (pi === 0) blockAction(`${CARDS[a.key].name} está presa e não pode se mover ou atacar agora.`); return false; }
+  if (!a || !insect(a) || p.front !== a) { if (pi === 0) blockAction('O atacante precisa estar no Fronte.'); return false; }
+  if (a.root > 0) { if (pi === 0) blockAction(`${CARDS[a.key].name} está presa e não pode atacar.`); return false; }
   if (a.skipAttack > 0) { if (pi === 0) blockAction(`${CARDS[a.key].name} não pode atacar neste turno.`); return false; }
-  if (a.reload > 0) { if (pi === 0) blockAction(`${CARDS[a.key].name} está recarregando e ainda não pode atacar.`); return false; }
-  if (!t) { if (pi === 0) blockAction('Não há alvo válido para atacar.'); return false; }
-  let targetOwner = t === o.front ? 1 - pi : o.bank.includes(t) ? 1 - pi : -1;
-  if (targetOwner >= 0 && o.bank.includes(t) && isBankProtected(targetOwner)) { if (pi === 0) blockAction('O Banco está protegido pelo Própolis.'); return false }
-  let d = CARDS[a.key];
+  if (a.reload > 0) { if (pi === 0) blockAction(`${CARDS[a.key].name} está recarregando.`); return false; }
+  if (!t || !insect(t) || !fieldCards(1 - pi).includes(t)) { if (pi === 0) blockAction('Alvo inválido.'); return false; }
+
+  const targets = getAttackTargets(pi, a);
+  if (!targets.includes(t)) { if (pi === 0) blockAction('Esse inseto está protegido pelo Fronte.'); return false; }
+  const isBankTarget = o.bank.includes(t);
+  if (isBankTarget && isBankProtected(1 - pi)) { if (pi === 0) blockAction('O Banco está protegido pelo Própolis.'); return false; }
+
+  const d = CARDS[a.key];
   p.std--;
-  FX.boardState('fx-attack',700);
-  FX.slash(document.querySelector('.fronte .card:not(.enemy-card)') || document.querySelector('.player-hud'), document.querySelector('.enemy-card'));
-  FX.burst(document.querySelector('.enemy-card'), 16);
+  FX.boardState('fx-attack', 700);
+  FX.slash(document.querySelector('#pf0 .card'), document.querySelector('#ef0 .card') || document.querySelector('#eb0 .card'));
+
   let damage = Math.max(0, a.atk);
   if (a.key === 'besouro' && a.hp <= Math.ceil(a.maxHp / 2)) damage *= 2;
   if (a.key === 'cupim') clearBuffs(t);
   if (a.key === 'gafanhoto') steal(pi, 1);
-  // Cada Grilo aliado ganha 1 folha sempre que QUALQUER aliado atacar.
   fieldCards(pi).filter(x => x.key === 'grilo').forEach(() => { p.leaves = Math.min(15, p.leaves + 1); });
-  if (a.key === 'escorpiao') { t.poisonTurns = Math.max(t.poisonTurns, 2); t.poison = 1 }
+  if (a.key === 'escorpiao') { t.poison = 1; t.poisonTurns = Math.max(t.poisonTurns, 2); }
   if (a.key === 'aranha' && !isImmuneRoot(t)) { t.root = Math.max(t.root, 1); t.effectMarks ||= []; if (!t.effectMarks.includes('aranha')) t.effectMarks.push('aranha'); }
-  if (a.key === 'centopeia' && t.hp <= (t.maxHp / 2) && !isImmuneRoot(t)) { t.root = Math.max(t.root, 2); t.effectMarks ||= []; if (!t.effectMarks.includes('centopeia')) t.effectMarks.push('centopeia'); }
-  if (a.key === 'meganeura') a.reload = 1;
+  if (a.key === 'centopeia' && t.hp <= t.maxHp / 2 && !isImmuneRoot(t)) { t.root = Math.max(t.root, 2); t.effectMarks ||= []; if (!t.effectMarks.includes('centopeia')) t.effectMarks.push('centopeia'); }
+  if (a.key === 'meganeura') a.reload = 2; // bloqueia o próximo turno do próprio inseto
 
   let dealt = damage;
-  if (a.poisonTurns > 0 && a.poison > 0) dealt += 1;
   if (t.key === 'escaravelho') dealt = Math.max(0, dealt - 1);
   if (t.key === 'bichoPau') dealt = 0;
-  if (t.key === 'louva' && t.protectedOnce) {
-    dealt = 0;
-    t.protectedOnce = false;
-    log('Louva-Deus anulou o primeiro ataque recebido.');
-  }
+  if (t.key === 'louva' && t.protectedOnce) { dealt = 0; t.protectedOnce = false; log('Louva-Deus anulou o primeiro ataque recebido.'); }
 
-  // O defensor devolve o dano mesmo quando o golpe inicial o derrota.
-  let back = insect(t) && t.key !== 'bichoPau' ? Math.max(0, t.atk) : 0;
+  // Combate mútuo: o defensor devolve ATK mesmo se for derrotado pelo golpe.
+  const back = insect(t) && t.key !== 'bichoPau' ? Math.max(0, t.atk) : 0;
   t.hp -= dealt;
   a.hp -= back;
   log(`${p.name}: ${d.name} causou ${dealt} dano em ${CARDS[t.key].name}.`);
@@ -456,7 +516,8 @@ function attack(pi, a, t) {
   } else {
     triggerCopied(a, 'attack', pi, t);
   }
-  if (a.hp <= 0) defeat(p, a, 1 - pi);
+  if (a.hp <= 0 && o.front !== a && p.front === a) defeat(p, a, 1 - pi);
+
   render();
   winCheck();
   return true;
@@ -636,35 +697,52 @@ function resolveAttackTarget(target) {
 }
 function isValidAttackTarget(a, t) { if (!t) return false; return getAttackTargets(0, a).includes(t); }
 function resolveTargetEffect(pi, idx, target) {
-  const p = state.players[pi], c = p?.hand[idx], d = c && CARDS[c.key], o = state.players[1-pi];
+  const p = state.players[pi], c = p?.hand[idx], d = c && CARDS[c.key], o = state.players[1 - pi];
   if (!c || !d || d.type !== 'effect') { blockAction('Carta de efeito inválida.'); return false; }
   if (p.std <= 0) { blockAction('Você já gastou sua ação padrão.'); return false; }
   if (p.leaves < d.cost) { blockAction(`Folhas insuficientes para ${d.name}.`); return false; }
-  const enemies = fieldCards(1-pi);
-  if (!target || !enemies.includes(target)) { blockAction(`Alvo inválido para ${d.name}.`); return false; }
-  if (o.bank.includes(target) && isBankProtected(1-pi)) { blockAction('O Banco está protegido pelo Própolis.'); return false; }
+  if (!target || !fieldCards(1 - pi).includes(target)) { blockAction(`Alvo inválido para ${d.name}.`); return false; }
+  if (o.bank.includes(target) && isBankProtected(1 - pi)) { blockAction('O Banco está protegido pelo Própolis.'); return false; }
   if (c.key === 'inseticida' && !o.bank.includes(target)) { blockAction('Inseticida só atinge cartas do Banco.'); return false; }
   if ((c.key === 'lupa' || c.key === 'teia') && target !== o.front) { blockAction(`${d.name} só pode atingir o Fronte inimigo.`); return false; }
   if (c.key === 'teia' && isImmuneRoot(target)) { blockAction('Libélula é imune à Teia.'); return false; }
+
   let bankSlot = -1;
   if (c.key === 'lupa' || c.key === 'teia') {
     bankSlot = p.bank.findIndex(x => !x);
     if (bankSlot < 0) { blockAction(`Não há espaço no Banco para manter ${d.name}.`); return false; }
   }
-  p.leaves -= d.cost; p.hand.splice(idx, 1); state.targetMode = null; p.std--;
+
+  p.leaves -= d.cost;
+  p.hand.splice(idx, 1);
+  state.targetMode = null;
+  p.std--;
+
   if (c.key === 'inseticida') {
     target.hp -= 1;
     log(`${p.name} usou Inseticida em ${CARDS[target.key].name} (-1 HP).`);
     if (target.hp <= 0) defeat(o, target, pi);
     state.grave.push(c);
   } else if (c.key === 'lupa') {
-    c.activeTurns = 3; p.bank[bankSlot] = c; target.lupa = 3; target.effectMarks ||= []; if (!target.effectMarks.includes('lupa')) target.effectMarks.push('lupa');
-    log(`${p.name} colocou Lupa em ${CARDS[target.key].name} por 3 rodadas.`);
+    c.activeTurns = 3;
+    p.bank[bankSlot] = c;
+    target.lupa = 3;
+    target.effectMarks ||= [];
+    if (!target.effectMarks.includes('lupa')) target.effectMarks.push('lupa');
+    log(`${p.name} colocou Lupa em ${CARDS[target.key].name} por 3 turnos do alvo.`);
   } else if (c.key === 'teia') {
-    c.activeTurns = 1; p.bank[bankSlot] = c; target.teia = 1; target.skipAttack = 1; target.effectMarks ||= []; if (!target.effectMarks.includes('teia')) target.effectMarks.push('teia');
-    log(`${p.name} prendeu ${CARDS[target.key].name} com Teia para o próximo turno.`);
+    c.activeTurns = 1;
+    p.bank[bankSlot] = c;
+    target.teia = 1;
+    target.effectMarks ||= [];
+    if (!target.effectMarks.includes('teia')) target.effectMarks.push('teia');
+    log(`${p.name} colocou Teia em ${CARDS[target.key].name} para o próximo turno.`);
   }
-  render(); winCheck(); endTurnIfBlocked(pi); return true;
+
+  render();
+  winCheck();
+  endTurnIfBlocked(pi);
+  return true;
 }
 function returnSelected() {
   if (!validMove(0)) { blockAction('Não é o seu turno.'); return; }
@@ -679,7 +757,7 @@ function sellSelected() {
   if (p.std <= 0) { blockAction('Você já gastou sua ação padrão.'); return; }
 
   const cleanupActiveEffect = (c) => {
-    if (!c || CARDS[c.key]?.type !== 'effect' || c.activeTurns <= 0) return;
+    if (!c || CARDS[c.key]?.type !== 'effect') return;
     if (c.key === 'adubo') p.adubo = 0;
     if (c.key === 'formigueiro') p.antiSteal = 0;
     if (c.key === 'lupa' || c.key === 'teia') {
@@ -765,62 +843,74 @@ function handleDropOnSlot(slotEl, e) {
   const found = findPlayerCardById(id);
   if (!found || state.turn !== 0 || state.over) return;
 
-  const target = slotEl.id;
-  const enemyTarget = target === 'ef0' || target.startsWith('eb');
+  const targetId = slotEl.id;
   const p = state.players[0];
+  const o = state.players[1];
+  const enemyTarget = targetId === 'ef0' || targetId.startsWith('eb');
 
   if (enemyTarget) {
-    if (found.zone !== 'hand' && p.std > 0) {
-      const o = state.players[1];
-      const targetCard = target === 'ef0' ? o.front : o.bank[Number(target.slice(-1))];
-      if (!targetCard || !isValidAttackTarget(found.c, targetCard)) {
-        msg('Alvo inválido para este ataque.');
-        return;
-      }
-      attack(0, found.c, targetCard);
-      clearDropTargets(); render(); winCheck();
-      return;
-    }
-    if (found.zone === 'hand' && CARDS[found.c.key].type === 'effect') {
-      const targetCard = target === 'ef0' ? state.players[1].front : state.players[1].bank[Number(target.slice(-1))];
+    const targetCard = targetId === 'ef0' ? o.front : o.bank[Number(targetId.slice(-1))];
+    if (!targetCard) { blockAction('Esse espaço está vazio.'); return; }
+
+    if (found.zone === 'hand' && CARDS[found.c.key]?.type === 'effect') {
       if (['inseticida', 'lupa', 'teia'].includes(found.c.key)) {
-        if (resolveTargetEffect(0, found.slot, targetCard)) { clearDropTargets(); render(); }
-      } else {
-        msg('Esse efeito não usa uma carta inimiga como alvo.');
-      }
+        resolveTargetEffect(0, found.slot, targetCard);
+      } else blockAction('Esse efeito não usa uma carta inimiga como alvo.');
+      clearDropTargets();
       return;
     }
+
+    if (found.zone === 'front' || found.zone === 'bank') {
+      if (found.zone !== 'front') { blockAction('Somente o inseto no Fronte pode atacar.'); return; }
+      if (!isValidAttackTarget(found.c, targetCard)) { blockAction('Esse alvo está protegido pelo Fronte.'); return; }
+      attack(0, found.c, targetCard);
+      clearDropTargets();
+      return;
+    }
+    blockAction('Arraste um inseto do Fronte para atacar.');
     return;
   }
 
-  const zone = target === 'pf0' ? 'front' : 'bank';
-  const slot = zone === 'bank' ? Number(target.slice(-1)) : 0;
+  const zone = targetId === 'pf0' ? 'front' : 'bank';
+  const slot = zone === 'bank' ? Number(targetId.slice(-1)) : 0;
   const destCard = zone === 'front' ? p.front : p.bank[slot];
 
-  if (found.zone === 'hand' && CARDS[found.c.key].equip) {
-    if (!destCard || !insect(destCard)) { msg('Arraste o equipável sobre um inseto próprio.'); return; }
-    if (equip(0, found.slot, destCard)) { clearDropTargets(); render(); }
-    return;
-  }
-  if (found.zone === 'hand' && CARDS[found.c.key].type === 'effect') {
-    if (activateEffect(0, found.slot, 'bank', zone === 'bank' ? slot : -1)) { clearDropTargets(); render(); }
+  if (found.zone === 'hand' && CARDS[found.c.key]?.equip) {
+    if (!destCard || !insect(destCard)) { blockAction('Arraste o equipamento sobre um inseto próprio.'); return; }
+    equip(0, found.slot, destCard);
+    clearDropTargets();
     return;
   }
 
-  if (destCard) { msg('Esse slot já está ocupado.'); return; }
+  if (found.zone === 'hand' && CARDS[found.c.key]?.type === 'effect') {
+    activateEffect(0, found.slot, 'bank', zone === 'bank' ? slot : -1);
+    clearDropTargets();
+    return;
+  }
+
+  if (destCard) { blockAction('Esse espaço já está ocupado.'); return; }
+
   if (found.zone === 'hand') {
-    if (CARDS[found.c.key].type === 'effect') { msg('Cartas de efeito não são invocadas no Banco/Fronte. Use a ação apropriada.'); return; }
-    if (summonFromHand(0, found.slot, zone, slot)) { state.selected = null; state.selectedField = null; }
+    summonFromHand(0, found.slot, zone, slot);
   } else if (found.zone === 'front' && zone === 'bank') {
     moveCard(0, 'front', slot);
   } else if (found.zone === 'bank' && zone === 'front') {
-    if (p.moves <= 0 || p.front) { msg(p.front ? 'O Fronte já está ocupado.' : 'Sem movimento disponível.'); return; }
-    const c = p.bank[found.slot]; p.bank[found.slot] = null; p.front = c; c.root = 0; p.moves--;
-    log(`${p.name} moveu ${CARDS[c.key].name} para o Fronte.`); state.selectedField = null; render();
-  } else {
-    msg('Arraste a carta para outro espaço válido.');
+    if (p.moves <= 0) { blockAction('Você não tem movimento disponível.'); return; }
+    if (p.front) { blockAction('O Fronte já está ocupado.'); return; }
+    const c = p.bank[found.slot];
+    if (!c || !insect(c)) { blockAction('Somente insetos podem ocupar o Fronte.'); return; }
+    if (c.root > 0) { blockAction(`${CARDS[c.key].name} está presa e não pode se mover.`); return; }
+    p.bank[found.slot] = null;
+    p.front = c;
+    p.moves--;
+    log(`${p.name} moveu ${CARDS[c.key].name} para o Fronte.`);
+    render();
+    endTurnIfBlocked(0);
   }
-  clearDropTargets(); render(); winCheck();
+
+  clearDropTargets();
+  render();
+  winCheck();
 }
 function installDropTargets() { document.querySelectorAll('#pf0,#pb0,#pb1,#pb2,#ef0,#eb0,#eb1,#eb2').forEach(slot => { slot.addEventListener('dragover', e => { if (!e.dataTransfer.types.includes('text/plain')) return; e.preventDefault(); if (state.turn === 0 && !state.over) slot.classList.add('drag-over') }); slot.addEventListener('dragleave', () => slot.classList.remove('drag-over')); slot.addEventListener('drop', e => handleDropOnSlot(slot, e)); }); let hand = document.getElementById('hand'); hand.addEventListener('dragover', e => { if (!e.dataTransfer.types.includes('text/plain')) return; e.preventDefault(); if (state.turn === 0 && !state.over) hand.classList.add('drag-over') }); hand.addEventListener('dragleave', () => hand.classList.remove('drag-over')); hand.addEventListener('drop', handleDropOnHand); }
 function syncTouchCardIds() {
@@ -968,7 +1058,6 @@ render = function() {
     document.getElementById('handStd').textContent = p.std;
     document.getElementById('handMoves').textContent = p.moves;
     syncTouchCardIds();
-    if (state.turn === 0 && !state.over) setTimeout(() => endTurnIfBlocked(0), 0);
   }
 };
 window.addEventListener('scroll', updateMobileHandVisibility, { passive: true });
