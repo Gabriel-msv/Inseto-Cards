@@ -2,9 +2,17 @@
 
 Jogo de cartas em HTML, CSS e JavaScript, jogável contra um BOT ou outro jogador pela rede.
 
-**Versão atual:** `3.2.11`
+**Versão atual:** `3.2.12`
 
-## 3.2.11 — Ajuste das folhas
+## 3.2.12 — Correção do multiplayer
+
+- Restauradas as funções de criação e entrada em sala no cliente multiplayer.
+- Validado o código de sala com 4 caracteres alfanuméricos.
+- Corrigidos estados de carregamento, erros de conexão e reativação dos controles.
+- Corrigida a aba exibida quando a criação ou entrada falha.
+- Mantido o relay do servidor existente.
+
+## 3.2.12 — Ajuste das folhas
 
 - Removida a linha de texto solta do `<head>` que aparecia no topo da página.
 - Restaurado o visual anterior das fichas de folha no status do jogador, em fileira horizontal.

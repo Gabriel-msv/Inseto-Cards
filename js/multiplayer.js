@@ -49,6 +49,8 @@ const MP = {
   lastHostSeq: 0,
   vagaRevealShown: null,
   connecting: false,
+  pendingMode: null,
+  connectTimeout: null,
 };
 
 // ======================================================================
@@ -91,6 +93,7 @@ function buildGate() {
     MP.ws = null;
     MP.connected = false;
     MP.connecting = false;
+    clearTimeout(MP.connectTimeout);
     const name = readLocalName();
     MP.localName = name;
     saveLocalName(name);
@@ -111,7 +114,9 @@ function buildGate() {
     MP.active = false;
     MP.role = null;
     MP.peerReady = false;
+    MP.pendingMode = null;
     document.getElementById('mpWaitCode')?.setAttribute('hidden', '');
+    setMultiplayerBusy(false);
     activate('mpSoloBtn', 'mpPanelSolo');
   });
 
@@ -132,6 +137,70 @@ function buildGate() {
 
   // Estado inicial limpo.
   activate('mpSoloBtn', 'mpPanelSolo');
+}
+
+
+function setMultiplayerBusy(busy, mode) {
+  const createBtn = document.getElementById('mpCreateBtn');
+  const joinBtn = document.getElementById('mpJoinBtn');
+  const createPass = document.getElementById('mpCreatePass');
+  const gateCode = document.getElementById('mpGateCode');
+  const joinPass = document.getElementById('mpJoinPass');
+  if (createBtn) { createBtn.disabled = busy && mode !== 'join'; createBtn.textContent = busy && mode === 'create' ? 'CONECTANDO...' : 'CRIAR SALA'; }
+  if (joinBtn) { joinBtn.disabled = busy && mode !== 'create'; joinBtn.textContent = busy && mode === 'join' ? 'CONECTANDO...' : 'ENTRAR NA SALA'; }
+  if (createPass) createPass.disabled = busy;
+  if (gateCode) gateCode.disabled = busy;
+  if (joinPass) joinPass.disabled = busy;
+}
+
+function normalizeRoomCode(value) {
+  return String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
+}
+
+function createRoom() {
+  const name = readLocalName();
+  const password = String(document.getElementById('mpCreatePass')?.value || '').trim().slice(0, 24);
+  setError('');
+  MP.active = false;
+  MP.role = null;
+  MP.room = null;
+  MP.peerReady = false;
+  MP.pendingMode = 'create';
+  MP.password = password;
+  MP.localName = name;
+  saveLocalName(name);
+  showWaitPanel('CONECTANDO...', 'Conectando ao servidor multiplayer...');
+  setMultiplayerBusy(true, 'create');
+  connect(() => {
+    send({ type: 'create', name: MP.localName, password: MP.password });
+  });
+}
+
+function joinRoom() {
+  const codeInput = document.getElementById('mpGateCode');
+  const code = normalizeRoomCode(codeInput?.value);
+  const password = String(document.getElementById('mpJoinPass')?.value || '').trim().slice(0, 24);
+  const name = readLocalName();
+  setError('');
+  if (code.length !== 4) {
+    setError('Digite o código da sala com 4 caracteres.');
+    codeInput?.focus();
+    return;
+  }
+  if (codeInput) codeInput.value = code;
+  MP.active = false;
+  MP.role = null;
+  MP.room = null;
+  MP.peerReady = false;
+  MP.pendingMode = 'join';
+  MP.password = password;
+  MP.localName = name;
+  saveLocalName(name);
+  showWaitPanel('CONECTANDO...', `Entrando na sala ${code}...`);
+  setMultiplayerBusy(true, 'join');
+  connect(() => {
+    send({ type: 'join', room: code, password, name: MP.localName });
+  });
 }
 
 function readLocalName() {
@@ -337,25 +406,39 @@ function connect(onOpen) {
     try { MP.ws.close(); } catch {}
   }
   MP.connecting = true;
+  clearTimeout(MP.connectTimeout);
   const ws = new WebSocket(SERVER_URL);
+  MP.connectTimeout = setTimeout(() => {
+    if (!MP.connecting || ws.readyState === WebSocket.OPEN) return;
+    try { ws.close(); } catch {}
+  }, 9000);
   MP.ws = ws;
   ws.onopen = () => {
     if (ws !== MP.ws) return;
     MP.connecting = false;
+    clearTimeout(MP.connectTimeout);
     MP.connected = true;
     onOpen();
   };
   ws.onclose = () => {
     if (ws !== MP.ws) return;
+    const wasConnecting = MP.connecting;
     MP.connected = false;
     MP.connecting = false;
-    if (MP.active) {
+    if (wasConnecting) {
+      setMultiplayerBusy(false);
+      showWaitPanel('NÃO FOI POSSÍVEL CONECTAR', 'Verifique sua conexão e tente novamente.');
+      setError('O servidor multiplayer não respondeu.');
+    } else if (MP.active) {
       setError('Conexão perdida com o servidor.');
       setBadge('conexão perdida');
     }
   };
   ws.onerror = () => {
-    if (ws === MP.ws) setError('Não foi possível conectar ao servidor.');
+    if (ws === MP.ws) {
+      setMultiplayerBusy(false);
+      setError('Não foi possível conectar ao servidor multiplayer.');
+    }
   };
   ws.onmessage = ev => {
     if (ws !== MP.ws) return;
@@ -374,26 +457,37 @@ function sendAction(action) { send({ type: 'action', action }); }
 function handleMessage(msg) {
   switch (msg.type) {
     case 'created':
-      MP.role = 'host'; MP.room = msg.room; MP.active = true;
+      setMultiplayerBusy(false);
+      MP.role = 'host'; MP.pendingMode = null; MP.room = msg.room; MP.active = true;
       MP.peerName = msg.peerName || MP.peerName;
       showRoomCode(msg.room);
       document.getElementById('mpWaitTitle').textContent = 'Sala criada — compartilhe o código:';
       document.getElementById('mpWaitText').textContent = 'Aguardando o outro jogador entrar...';
+      showWaitPanel('SALA CRIADA', 'Aguardando o outro jogador entrar...');
+      showRoomCode(msg.room);
       installHostHooks();
+      const startButton = document.getElementById('mpStartBtn'); if (startButton) startButton.hidden = true;
       send({ type: 'player-name', name: MP.localName });
       break;
     case 'joined':
-      MP.role = 'guest'; MP.room = msg.room; MP.active = true;
+      setMultiplayerBusy(false);
+      MP.role = 'guest'; MP.pendingMode = null; MP.room = msg.room; MP.active = true;
       MP.peerName = msg.hostName || MP.peerName;
       installGuestHooks();
-      showWaitPanel('Você entrou na sala.', 'Aguardando o host iniciar a partida...');
+      showRoomCode(msg.room);
+      showWaitPanel('VOCÊ ENTROU NA SALA', 'Aguardando o host iniciar a partida...');
       send({ type: 'player-name', name: MP.localName });
       sendAction({ kind: 'setName', name: MP.localName });
       break;
     case 'error':
-      setError(msg.message);
-      const errorJoin = MP.role === 'guest' || !!document.getElementById('mpGateCode');
+      setMultiplayerBusy(false);
+      MP.active = false;
+      MP.role = null;
+      MP.peerReady = false;
+      setError(msg.message || 'Não foi possível concluir a operação.');
+      const errorJoin = MP.pendingMode === 'join' || MP.role === 'guest';
       document.getElementById(errorJoin ? 'mpJoinTab' : 'mpCreateTab')?.click();
+      MP.pendingMode = null;
       break;
     case 'peer-joined':
       MP.peerReady = true;
