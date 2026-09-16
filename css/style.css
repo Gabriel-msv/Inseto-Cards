@@ -1497,3 +1497,27 @@ body { background-color:#08110c; background-image:radial-gradient(circle at 20% 
   .battle-main .center-zone { width: min(320px, 60%); height: 32px; min-height: 32px; }
   .battle-main .turn { gap: 6px; font-size: 7px; }
 }
+
+
+/* ================================================================
+   3.2.7 — FRONTES IDÊNTICOS AO BANCO
+   ================================================================ */
+@media (min-width: 901px) {
+  .battle-main .slot.fronte,
+  .battle-main .slot {
+    width: clamp(72px, 6.1vw, 88px);
+    height: clamp(92px, 8.1vw, 112px);
+    flex-basis: clamp(72px, 6.1vw, 88px);
+  }
+  .battle-main .card.fronte-card {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+  }
+  .battle-main .center-zone { width: min(320px, 55%); }
+  .battle-main .turn { gap: 8px; min-width: 68px; font-size: 8px; }
+}
+@media (max-width: 1050px) and (min-width: 901px) {
+  .battle-main .center-zone { width: min(285px, 52%); }
+  .battle-main .turn { gap: 7px; min-width: 64px; }
+}

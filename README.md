@@ -16,6 +16,13 @@ Jogo de cartas em HTML, CSS e JavaScript, jogável contra um BOT ou outro jogado
 - Ações dependentes de seleção permanecem em uma segunda linha compacta.
 - Correção somente visual; regras, combate, BOT e multiplayer não foram alterados.
 
+## 3.2.7 — Ajuste final dos Frontes
+
+- Slots do Fronte com a mesma escala dos slots do Banco.
+- Cartas no Fronte passam a ocupar exatamente o próprio slot.
+- Espaço central entre os Frontes reduzido.
+- Indicador `TURNO 1` permanece em uma única linha com espaçamento.
+
 ## 3.2.3 — Ajuste fino do campo e controles
 
 - Reduzida a faixa inferior de status/ações sem alterar a lógica da partida.
