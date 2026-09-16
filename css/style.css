@@ -1836,3 +1836,148 @@ body { background-color:#08110c; background-image:radial-gradient(circle at 20% 
   .battle-main .center-zone .turn { grid-column: 2; justify-self: center; }
   .battle-main .center-zone .cemiterio { grid-column: 3; justify-self: center; }
 }
+
+/* ========================================================================
+   3.2.19 — CORREÇÃO ESTRUTURAL DO TABULEIRO DESKTOP
+   Layout fixo conforme o diagrama de referência:
+
+      [ EB0 ] [ EB1 ] [ EB2 ]
+              [ EF0 ]
+      [NAT.]           [CEM.]
+              [ PF0 ]
+      [ PB0 ] [ PB1 ] [ PB2 ]
+
+   A correção usa os IDs reais das zonas, evitando que regras antigas de
+   flex/grid e nth-child desalinhem o campo em resoluções diferentes.
+   Mobile (< 901px) permanece inalterado.
+   ======================================================================== */
+@media (min-width: 901px) {
+  .battle-main {
+    position: relative;
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(86px, 112px));
+    grid-template-rows: 34px minmax(118px, 1fr) minmax(108px, .9fr) minmax(108px, .9fr) minmax(118px, 1fr);
+    column-gap: clamp(26px, 4vw, 70px);
+    row-gap: clamp(4px, .8vh, 10px);
+    justify-content: center !important;
+    align-content: stretch;
+    justify-items: center;
+    align-items: center;
+    padding: 8px clamp(18px, 2vw, 32px) 10px;
+    overflow: hidden;
+  }
+
+  .battle-main .enemy-hud {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    width: 100%;
+    height: 34px;
+    min-height: 34px;
+    align-self: start;
+  }
+
+  /* Os wrappers deixam de participar do layout; cada zona entra
+     diretamente na grade através do seu ID. */
+  .battle-main > .field-row,
+  .battle-main > .center-zone {
+    display: contents !important;
+  }
+
+  .battle-main .row-label {
+    display: none;
+  }
+
+  .battle-main .slot,
+  .battle-main .slot.fronte,
+  .battle-main .shared-zone {
+    box-sizing: border-box;
+    width: clamp(86px, 7vw, 112px) !important;
+    height: clamp(118px, 9.6vw, 154px) !important;
+    min-width: 0;
+    min-height: 0;
+    flex: none !important;
+    transform: none !important;
+    align-self: center;
+    justify-self: center;
+  }
+
+  /* Banco do BOT — linha superior. */
+  #eb0 { grid-column: 1; grid-row: 2; }
+  #eb1 { grid-column: 2; grid-row: 2; }
+  #eb2 { grid-column: 3; grid-row: 2; }
+
+  /* Frente do BOT — centro superior. */
+  #ef0 {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
+  /* Zonas compartilhadas ficam nas laterais e ocupam o centro visual
+     entre as duas Frontes. */
+  .battle-main .natureza {
+    grid-column: 1;
+    grid-row: 3 / 5;
+  }
+
+  .battle-main .cemiterio {
+    grid-column: 3;
+    grid-row: 3 / 5;
+  }
+
+  /* Frente do jogador — centro inferior. */
+  #pf0 {
+    grid-column: 2;
+    grid-row: 4;
+  }
+
+  /* Banco do jogador — linha inferior. */
+  #pb0 { grid-column: 1; grid-row: 5; }
+  #pb1 { grid-column: 2; grid-row: 5; }
+  #pb2 { grid-column: 3; grid-row: 5; }
+
+  /* TURNO no ponto central entre as duas Frontes sem criar uma linha extra. */
+  .battle-main .turn {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 8;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: max-content;
+    min-width: 0;
+    padding: 2px 6px;
+    font-size: 8px;
+    line-height: 1;
+    white-space: nowrap;
+    background: rgba(5, 14, 9, .72);
+    border-radius: 4px;
+  }
+
+  /* As pilhas devem preencher visualmente as zonas laterais, em vez de
+     parecerem pequenos ícones soltos dentro do tabuleiro. */
+  .battle-main .shared-zone .pile {
+    transform: none !important;
+    width: calc(100% - 12px);
+    height: calc(100% - 18px);
+  }
+
+  .battle-main .shared-zone .pile-card {
+    width: calc(100% - 6px);
+    height: calc(100% - 8px);
+  }
+
+  .battle-main .shared-zone .pile-label {
+    bottom: 4px;
+  }
+
+  .battle-main .slot > .card,
+  .battle-main .slot .fronte-card {
+    width: calc(100% - 6px);
+    height: calc(100% - 6px);
+    box-sizing: border-box;
+  }
+}
