@@ -1981,3 +1981,146 @@ body { background-color:#08110c; background-image:radial-gradient(circle at 20% 
     box-sizing: border-box;
   }
 }
+
+
+/* ========================================================================
+   3.2.20 — TABULEIRO DESKTOP DEFINITIVO
+   Corrige a arena normal sem depender do CSS runtime do Editor.
+   Disposição de referência:
+
+      [ BANCO ] [ BANCO ] [ BANCO ]
+                 [ FRENTE ]
+      [NATUREZA]          [CEMITÉRIO]
+                 [ FRENTE ]
+      [ BANCO ] [ BANCO ] [ BANCO ]
+
+   O modo Editor possui geometria própria e fica isolado em body.editor-mode.
+   ======================================================================== */
+@media (min-width: 901px) {
+  body:not(.editor-mode) .battle-main {
+    --board-card-w: clamp(86px, 6.4vw, 108px);
+    --board-card-h: clamp(116px, 8.7vw, 146px);
+    --board-bank-gap: clamp(30px, 6.2vw, 92px);
+    position: relative !important;
+    display: block !important;
+    padding: 8px 18px !important;
+    overflow: hidden !important;
+  }
+
+  body:not(.editor-mode) .battle-main .enemy-hud {
+    position: absolute !important;
+    top: 8px !important;
+    left: 50% !important;
+    width: min(290px, 36%) !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    transform: translateX(-50%) !important;
+    z-index: 12;
+  }
+
+  body:not(.editor-mode) .battle-main > .field-row,
+  body:not(.editor-mode) .battle-main > .center-zone {
+    position: absolute !important;
+    left: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    transform: none !important;
+  }
+
+  body:not(.editor-mode) .battle-main .row-label { display: none !important; }
+
+  body:not(.editor-mode) .battle-main .slot,
+  body:not(.editor-mode) .battle-main .slot.fronte,
+  body:not(.editor-mode) .battle-main .shared-zone {
+    width: var(--board-card-w) !important;
+    height: var(--board-card-h) !important;
+    min-width: var(--board-card-w) !important;
+    min-height: var(--board-card-h) !important;
+    flex: 0 0 var(--board-card-w) !important;
+    margin: 0 !important;
+    transform: none !important;
+  }
+
+  body:not(.editor-mode) .battle-main .enemy-bank-row,
+  body:not(.editor-mode) .battle-main .player-bank-row {
+    display: grid !important;
+    grid-template-columns: repeat(3, var(--board-card-w)) !important;
+    column-gap: var(--board-bank-gap) !important;
+    justify-content: center !important;
+    align-items: center !important;
+    height: var(--board-card-h) !important;
+  }
+
+  /* Faixas verticais inspiradas diretamente no desenho de referência. */
+  body:not(.editor-mode) .battle-main .enemy-bank-row { top: 9.5% !important; }
+  body:not(.editor-mode) .battle-main .enemy-front-row { top: 31.0% !important; }
+  body:not(.editor-mode) .battle-main .player-front-row { top: 57.0% !important; }
+  body:not(.editor-mode) .battle-main .player-bank-row { top: 77.0% !important; }
+
+  body:not(.editor-mode) .battle-main .enemy-front-row,
+  body:not(.editor-mode) .battle-main .player-front-row {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    height: var(--board-card-h) !important;
+  }
+
+  body:not(.editor-mode) .battle-main .center-zone {
+    top: 50% !important;
+    height: 1px !important;
+    min-height: 1px !important;
+    display: block !important;
+    z-index: 6;
+  }
+
+  body:not(.editor-mode) .battle-main .center-zone .natureza,
+  body:not(.editor-mode) .battle-main .center-zone .cemiterio {
+    position: absolute !important;
+    top: 0 !important;
+    width: var(--board-card-w) !important;
+    height: var(--board-card-h) !important;
+    transform: translate(-50%, -50%) !important;
+  }
+
+  body:not(.editor-mode) .battle-main .center-zone .natureza { left: 23% !important; }
+  body:not(.editor-mode) .battle-main .center-zone .cemiterio { left: 77% !important; }
+
+  body:not(.editor-mode) .battle-main .center-zone .turn {
+    position: absolute !important;
+    left: 50% !important;
+    top: 0 !important;
+    width: max-content !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 2px 6px !important;
+    transform: translate(-50%, -50%) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    white-space: nowrap !important;
+    z-index: 8;
+  }
+
+  body:not(.editor-mode) .battle-main .shared-zone .pile {
+    width: calc(100% - 12px) !important;
+    height: calc(100% - 20px) !important;
+    transform: none !important;
+  }
+
+  body:not(.editor-mode) .battle-main .shared-zone .pile-card {
+    width: calc(100% - 6px) !important;
+    height: calc(100% - 8px) !important;
+  }
+
+  body:not(.editor-mode) .battle-main .shared-zone .pile-label {
+    bottom: 3px !important;
+  }
+
+  body:not(.editor-mode) .battle-main .slot > .card,
+  body:not(.editor-mode) .battle-main .slot .fronte-card {
+    width: calc(100% - 6px) !important;
+    height: calc(100% - 6px) !important;
+    box-sizing: border-box !important;
+  }
+}

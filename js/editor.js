@@ -1,5 +1,5 @@
 /* ========================================================================
-   INSETO CARDS — MODO EDITOR 3.2.18
+   INSETO CARDS — MODO EDITOR 3.2.20
    Ferramenta local de testes. Não usa BOT, rede, custo ou ações normais.
    ======================================================================== */
 (() => {
@@ -44,7 +44,7 @@
            Bancos: 10vw entre slots. Banco↔Fronte: 10vh.
            Natureza/Cemitério: mesmos X dos bancos externos e Y=50% do campo. */
         @media (min-width:901px) {
-          .battle-main {
+          body.editor-mode .battle-main {
             position: relative !important;
             display: grid !important;
             grid-template-rows: 34px minmax(0,1fr) !important;
@@ -52,29 +52,29 @@
             padding: 8px 18px !important;
             overflow: hidden !important;
           }
-          .battle-main {
+          body.editor-mode .battle-main {
             --editor-slot-w: clamp(87px, calc(6.1vw + 15px), 103px);
             --editor-slot-h: clamp(107px, calc(8.1vw + 15px), 127px);
             --editor-bank-gap: 10vw;
             --editor-front-gap: 10vh;
           }
-          .battle-main .enemy-hud {
+          body.editor-mode .battle-main .enemy-hud {
             grid-row: 1 !important;
             width: 100% !important;
             height: 34px !important;
           }
-          .battle-main .field-row:nth-child(2),
-          .battle-main .field-row:nth-child(3),
-          .battle-main .center-zone,
-          .battle-main .field-row:nth-child(5),
-          .battle-main .field-row:nth-child(6) {
+          body.editor-mode .battle-main .field-row:nth-child(2),
+          body.editor-mode .battle-main .field-row:nth-child(3),
+          body.editor-mode .battle-main .center-zone,
+          body.editor-mode .battle-main .field-row:nth-child(5),
+          body.editor-mode .battle-main .field-row:nth-child(6) {
             position: absolute !important;
             left: 0 !important;
             width: 100% !important;
             margin: 0 !important;
           }
-          .battle-main .field-row:nth-child(2),
-          .battle-main .player-bank-row {
+          body.editor-mode .battle-main .field-row:nth-child(2),
+          body.editor-mode .battle-main .player-bank-row {
             display: grid !important;
             grid-template-columns: repeat(3, var(--editor-slot-w)) !important;
             column-gap: var(--editor-bank-gap) !important;
@@ -82,26 +82,26 @@
             align-items: center !important;
             height: var(--editor-slot-h) !important;
           }
-          .battle-main .field-row:nth-child(2) {
+          body.editor-mode .battle-main .field-row:nth-child(2) {
             top: calc(50% - var(--editor-front-gap) - var(--editor-slot-h) - var(--editor-slot-h) / 2) !important;
           }
-          .battle-main .field-row:nth-child(6) {
+          body.editor-mode .battle-main .field-row:nth-child(6) {
             bottom: calc(50% - var(--editor-front-gap) - var(--editor-slot-h) - var(--editor-slot-h) / 2) !important;
           }
-          .battle-main .field-row:nth-child(3),
-          .battle-main .field-row:nth-child(5) {
+          body.editor-mode .battle-main .field-row:nth-child(3),
+          body.editor-mode .battle-main .field-row:nth-child(5) {
             height: var(--editor-slot-h) !important;
             display: flex !important;
             justify-content: center !important;
             align-items: center !important;
           }
-          .battle-main .field-row:nth-child(3) {
+          body.editor-mode .battle-main .field-row:nth-child(3) {
             top: calc(50% - var(--editor-front-gap) / 2 - var(--editor-slot-h)) !important;
           }
-          .battle-main .field-row:nth-child(5) {
+          body.editor-mode .battle-main .field-row:nth-child(5) {
             top: calc(50% + var(--editor-front-gap) / 2) !important;
           }
-          .battle-main .center-zone {
+          body.editor-mode .battle-main .center-zone {
             top: 50% !important;
             transform: translateY(-50%) !important;
             height: 1px !important;
@@ -109,8 +109,8 @@
             display: block !important;
             z-index: 4 !important;
           }
-          .battle-main .center-zone .natureza,
-          .battle-main .center-zone .cemiterio {
+          body.editor-mode .battle-main .center-zone .natureza,
+          body.editor-mode .battle-main .center-zone .cemiterio {
             position: absolute !important;
             top: 50% !important;
             transform: translateY(-50%) !important;
@@ -118,15 +118,15 @@
             height: 78px !important;
             flex: none !important;
           }
-          .battle-main .center-zone .natureza {
+          body.editor-mode .battle-main .center-zone .natureza {
             left: calc(50% - var(--editor-slot-w) - var(--editor-bank-gap)) !important;
             transform: translate(-50%,-50%) !important;
           }
-          .battle-main .center-zone .cemiterio {
+          body.editor-mode .battle-main .center-zone .cemiterio {
             left: calc(50% + var(--editor-slot-w) + var(--editor-bank-gap)) !important;
             transform: translate(-50%,-50%) !important;
           }
-          .battle-main .center-zone .turn {
+          body.editor-mode .battle-main .center-zone .turn {
             position: absolute !important;
             left: 50% !important;
             top: 50% !important;
@@ -134,29 +134,29 @@
             margin: 0 !important;
             padding: 0 !important;
           }
-          .battle-main .slot,
-          .battle-main .slot.fronte {
+          body.editor-mode .battle-main .slot,
+          body.editor-mode .battle-main .slot.fronte {
             width: var(--editor-slot-w) !important;
             height: var(--editor-slot-h) !important;
             flex: 0 0 var(--editor-slot-w) !important;
           }
-          .battle-main .slot > .card,
-          .battle-main .slot .fronte-card {
+          body.editor-mode .battle-main .slot > .card,
+          body.editor-mode .battle-main .slot .fronte-card {
             width: calc(100% - 6px) !important;
             height: calc(100% - 6px) !important;
           }
-          .battle-main .row-label { left: 6px !important; }
+          body.editor-mode .battle-main .row-label { left: 6px !important; }
         }
 
                 /* 3.2.18 — campo desktop: cartas maiores, bancos mais espaçados,
            natureza/cemitério paralelos aos Frontes e banco inferior ancorado. */
         @media (min-width:901px) {
-          .battle-main .field-row { gap: clamp(24px, 3vw, 42px); }
-          .battle-main .field-row:nth-child(2) { align-items: flex-end; }
-          .battle-main .field-row:nth-child(3) { align-items: flex-start; }
-          .battle-main .field-row:nth-child(5) { align-items: flex-end; }
-          .battle-main .player-bank-row { align-items: flex-start; }
-          .battle-main .center-zone {
+          body.editor-mode .battle-main .field-row { gap: clamp(24px, 3vw, 42px); }
+          body.editor-mode .battle-main .field-row:nth-child(2) { align-items: flex-end; }
+          body.editor-mode .battle-main .field-row:nth-child(3) { align-items: flex-start; }
+          body.editor-mode .battle-main .field-row:nth-child(5) { align-items: flex-end; }
+          body.editor-mode .battle-main .player-bank-row { align-items: flex-start; }
+          body.editor-mode .battle-main .center-zone {
             display:grid;
             grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
             align-items:center;
@@ -166,33 +166,33 @@
             height:42px;
             min-height:42px;
           }
-          .battle-main .center-zone .natureza { grid-column:1; justify-self:center; }
-          .battle-main .center-zone .turn { grid-column:2; justify-self:center; }
-          .battle-main .center-zone .cemiterio { grid-column:3; justify-self:center; }
-          .battle-main .slot,
-          .battle-main .slot.fronte,
-          .battle-main .shared-zone {
+          body.editor-mode .battle-main .center-zone .natureza { grid-column:1; justify-self:center; }
+          body.editor-mode .battle-main .center-zone .turn { grid-column:2; justify-self:center; }
+          body.editor-mode .battle-main .center-zone .cemiterio { grid-column:3; justify-self:center; }
+          body.editor-mode .battle-main .slot,
+          body.editor-mode .battle-main .slot.fronte,
+          body.editor-mode .battle-main .shared-zone {
             width: calc(clamp(72px, 6.1vw, 88px) + 15px);
             height: calc(clamp(92px, 8.1vw, 112px) + 15px);
             flex-basis: calc(clamp(72px, 6.1vw, 88px) + 15px);
           }
-          .battle-main .slot > .card,
-          .battle-main .slot .fronte-card {
+          body.editor-mode .battle-main .slot > .card,
+          body.editor-mode .battle-main .slot .fronte-card {
             width: calc(100% - 6px);
             height: calc(100% - 6px);
           }
-          .battle-main .center-zone {
+          body.editor-mode .battle-main .center-zone {
             width: min(330px, 54%);
             height: 42px;
             min-height: 42px;
           }
-          .battle-main .battle-main .turn { gap: 8px; }
-          .battle-main .field-row:nth-child(3),
-          .battle-main .field-row:nth-child(5) { transform: translateY(0); }
-          .battle-main .field-row:nth-child(2) { align-items: flex-start; }
-          .battle-main .player-bank-row { align-items: flex-end; }
-          .battle-main .field-row:nth-child(2) .slot,
-          .battle-main .player-bank-row .slot { margin-bottom: 0; }
+          body.editor-mode .battle-main .turn { gap: 8px; }
+          body.editor-mode .battle-main .field-row:nth-child(3),
+          body.editor-mode .battle-main .field-row:nth-child(5) { transform: translateY(0); }
+          body.editor-mode .battle-main .field-row:nth-child(2) { align-items: flex-start; }
+          body.editor-mode .battle-main .player-bank-row { align-items: flex-end; }
+          body.editor-mode .battle-main .field-row:nth-child(2) .slot,
+          body.editor-mode .battle-main .player-bank-row .slot { margin-bottom: 0; }
 
           body.editor-mode .left-sidebar,
           body.editor-mode .right-sidebar,
@@ -214,7 +214,7 @@
            Banco ↔ Fronte: 10vh entre as bordas.
            Natureza/Cemitério: mesmo X das extremidades dos Bancos e Y=50% do campo. */
         @media (min-width:901px) {
-          .battle-main {
+          body.editor-mode .battle-main {
             --board-slot-w: clamp(87px, calc(6.1vw + 15px), 103px);
             --board-slot-h: clamp(107px, calc(8.1vw + 15px), 127px);
             --board-gap-x: 10vw;
@@ -225,31 +225,31 @@
             padding: 8px 18px !important;
             overflow: hidden !important;
           }
-          .battle-main .enemy-hud { grid-row:1 !important; width:100% !important; height:34px !important; }
-          .battle-main .field-row:nth-child(2),
-          .battle-main .field-row:nth-child(3),
-          .battle-main .center-zone,
-          .battle-main .field-row:nth-child(5),
-          .battle-main .field-row:nth-child(6) {
+          body.editor-mode .battle-main .enemy-hud { grid-row:1 !important; width:100% !important; height:34px !important; }
+          body.editor-mode .battle-main .field-row:nth-child(2),
+          body.editor-mode .battle-main .field-row:nth-child(3),
+          body.editor-mode .battle-main .center-zone,
+          body.editor-mode .battle-main .field-row:nth-child(5),
+          body.editor-mode .battle-main .field-row:nth-child(6) {
             position:absolute !important;
             left:0 !important;
             width:100% !important;
             margin:0 !important;
           }
-          .battle-main .slot,
-          .battle-main .slot.fronte {
+          body.editor-mode .battle-main .slot,
+          body.editor-mode .battle-main .slot.fronte {
             width:var(--board-slot-w) !important;
             height:var(--board-slot-h) !important;
             flex:0 0 var(--board-slot-w) !important;
           }
-          .battle-main .slot > .card,
-          .battle-main .slot .fronte-card {
+          body.editor-mode .battle-main .slot > .card,
+          body.editor-mode .battle-main .slot .fronte-card {
             width:calc(100% - 6px) !important;
             height:calc(100% - 6px) !important;
           }
           /* Bancos: 10vw entre centros */
-          .battle-main .field-row:nth-child(2),
-          .battle-main .player-bank-row {
+          body.editor-mode .battle-main .field-row:nth-child(2),
+          body.editor-mode .battle-main .player-bank-row {
             display:grid !important;
             grid-template-columns:repeat(3,var(--board-slot-w)) !important;
             column-gap:var(--board-gap-x) !important;
@@ -258,7 +258,7 @@
             height:var(--board-slot-h) !important;
           }
           /* Fronte superior: sua borda inferior fica 10vh acima do banco superior. */
-          .battle-main .field-row:nth-child(3) {
+          body.editor-mode .battle-main .field-row:nth-child(3) {
             height:var(--board-slot-h) !important;
             top:calc(50% - var(--board-gap-y) / 2 - var(--board-slot-h)) !important;
             display:flex !important;
@@ -266,11 +266,11 @@
             justify-content:center !important;
           }
           /* Banco superior: 10vh acima do Fronte. */
-          .battle-main .field-row:nth-child(2) {
+          body.editor-mode .battle-main .field-row:nth-child(2) {
             top:calc(50% - var(--board-gap-y) / 2 - var(--board-slot-h) - var(--board-slot-h) - var(--board-gap-y)) !important;
           }
           /* Fronte inferior */
-          .battle-main .field-row:nth-child(5) {
+          body.editor-mode .battle-main .field-row:nth-child(5) {
             height:var(--board-slot-h) !important;
             top:calc(50% + var(--board-gap-y) / 2) !important;
             display:flex !important;
@@ -278,11 +278,11 @@
             justify-content:center !important;
           }
           /* Banco inferior: 10vh abaixo do Fronte. */
-          .battle-main .field-row:nth-child(6) {
+          body.editor-mode .battle-main .field-row:nth-child(6) {
             bottom:calc(50% - var(--board-gap-y) / 2 - var(--board-slot-h) - var(--board-slot-h) - var(--board-gap-y)) !important;
           }
           /* Centro exato do campo: Y = 50%. */
-          .battle-main .center-zone {
+          body.editor-mode .battle-main .center-zone {
             top:50% !important;
             transform:translateY(-50%) !important;
             height:1px !important;
@@ -291,8 +291,8 @@
             z-index:4 !important;
           }
           /* Natureza/Cemitério nos mesmos X dos centros dos Bancos externos. */
-          .battle-main .center-zone .natureza,
-          .battle-main .center-zone .cemiterio {
+          body.editor-mode .battle-main .center-zone .natureza,
+          body.editor-mode .battle-main .center-zone .cemiterio {
             position:absolute !important;
             top:50% !important;
             width:58px !important;
@@ -300,9 +300,9 @@
             flex:none !important;
             transform:translate(-50%,-50%) !important;
           }
-          .battle-main .center-zone .natureza { left:calc(50% - var(--board-slot-w) - var(--board-gap-x)) !important; }
-          .battle-main .center-zone .cemiterio { left:calc(50% + var(--board-slot-w) + var(--board-gap-x)) !important; }
-          .battle-main .center-zone .turn {
+          body.editor-mode .battle-main .center-zone .natureza { left:calc(50% - var(--board-slot-w) - var(--board-gap-x)) !important; }
+          body.editor-mode .battle-main .center-zone .cemiterio { left:calc(50% + var(--board-slot-w) + var(--board-gap-x)) !important; }
+          body.editor-mode .battle-main .center-zone .turn {
             position:absolute !important;
             left:50% !important;
             top:50% !important;
@@ -435,8 +435,8 @@
       this.setEditorState();
       this.renderCatalog();
       this.bindFieldInteraction();
-      document.querySelector('.version-badge')?.replaceChildren(document.createTextNode('v3.2.18 · Editor'));
-      document.title = 'Inseto Cards — Editor · v3.2.18';
+      document.querySelector('.version-badge')?.replaceChildren(document.createTextNode('v3.2.20 · Editor'));
+      document.title = 'Inseto Cards — Editor · v3.2.20';
       this.setStatus('Editor ativo. Selecione uma carta e clique em qualquer slot.');
       if (typeof render === 'function') render();
       this.highlightField();

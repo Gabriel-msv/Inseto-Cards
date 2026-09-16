@@ -2,7 +2,19 @@
 
 Jogo de cartas em HTML, CSS e JavaScript, jogável contra um BOT ou outro jogador pela rede.
 
-**Versão atual:** `3.2.18`
+**Versão atual:** `3.2.20`
+
+
+## 3.2.20 — Correção definitiva do tabuleiro desktop e isolamento do Editor
+
+- Corrigido o verdadeiro conflito de layout: `js/editor.js` injetava CSS global com `!important` mesmo fora do modo Editor, sobrescrevendo o tabuleiro normal.
+- O CSS de geometria do Editor agora só é aplicado quando `body.editor-mode` está ativo.
+- O tabuleiro desktop normal foi reorganizado conforme o diagrama de referência: três Bancos no topo, Fronte inimigo central, Natureza/Cemitério nas laterais, Fronte do jogador central e três Bancos na base.
+- Natureza e Cemitério passam a ocupar o mesmo envelope visual dos demais slots, evitando o aspecto de pilhas pequenas soltas no centro.
+- Adicionadas classes semânticas `enemy-bank-row`, `enemy-front-row` e `player-front-row` para eliminar dependência de `nth-child`.
+- Atualizados `APP_VERSION`, badge, título da página e parâmetros `?v=` para `3.2.20`, forçando o navegador/GitHub Pages a descartar o CSS/JS antigo em cache.
+- README atualizado junto com a correção.
+- Mecânicas, combate, BOT e multiplayer não foram alterados.
 
 ## 3.2.18 — Modo Editor e ajuste final do campo desktop
 
