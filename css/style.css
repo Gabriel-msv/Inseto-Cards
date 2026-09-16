@@ -1256,3 +1256,157 @@ body { background-color:#08110c; background-image:radial-gradient(circle at 20% 
     align-self:center;
   }
 }
+
+/* ================================================================
+   3.2.29 — CENTRO ALINHADO + BANCOS SEM CORTE
+   O modelo 3.2.x permanece intacto; este bloco só corrige a geometria
+   do campo desktop. Mobile não recebe nenhuma alteração.
+   ================================================================ */
+@media (min-width:901px) {
+  :root {
+    --arena-slot-w: clamp(78px, 6.5vw, 94px);
+    --arena-slot-h: clamp(98px, 13vh, 122px);
+    --arena-card-w: calc(var(--arena-slot-w) * .95);
+    --arena-card-h: calc(var(--arena-slot-h) * .95);
+  }
+
+  /* O campo usa as cinco faixas com a mesma altura lógica:
+     Banco / Fronte / Centro / Fronte / Banco. */
+  .battle-main {
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:stretch;
+    gap:3px;
+    overflow:hidden;
+  }
+
+  .battle-main .enemy-hud {
+    flex:0 0 30px;
+    min-height:30px;
+  }
+
+  .battle-main .field-row {
+    position:relative;
+    width:100%;
+    height:var(--arena-slot-h);
+    min-height:var(--arena-slot-h);
+    flex:0 0 var(--arena-slot-h);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:clamp(16px,2.2vw,28px);
+    overflow:visible;
+  }
+
+  /* Banco e Fronte não entram mais um dentro do outro. */
+  .battle-main .enemy-bank-row,
+  .battle-main .enemy-front-row,
+  .battle-main .player-front-row,
+  .battle-main .player-bank-row {
+    transform:none !important;
+    align-items:center !important;
+    overflow:visible;
+  }
+
+  .battle-main .slot {
+    width:var(--arena-slot-w);
+    height:var(--arena-slot-h);
+    min-width:var(--arena-slot-w);
+    flex:0 0 var(--arena-slot-w);
+    overflow:visible;
+  }
+
+  /* Mantém o Fronte no mesmo padrão dimensional do Banco. */
+  .battle-main .slot.fronte {
+    width:var(--arena-slot-w);
+    height:var(--arena-slot-h);
+    min-width:var(--arena-slot-w);
+    flex-basis:var(--arena-slot-w);
+  }
+
+  .battle-main .slot > .card {
+    width:var(--arena-card-w);
+    height:var(--arena-card-h);
+    max-width:calc(100% - 6px);
+    max-height:calc(100% - 6px);
+    margin:auto;
+    align-self:center;
+    flex:0 0 auto;
+  }
+
+  .battle-main .card.fronte-card {
+    width:var(--arena-card-w);
+    height:var(--arena-card-h);
+    max-width:calc(100% - 6px);
+    max-height:calc(100% - 6px);
+  }
+
+  /* Natureza e Cemitério viram duas zonas do mesmo tamanho das cartas
+     do campo, no mesmo eixo vertical dos Bancos das extremidades. */
+  .battle-main .center-zone {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+    align-items:center;
+    justify-items:center;
+    width:min(520px,74%);
+    height:var(--arena-slot-h);
+    min-height:var(--arena-slot-h);
+    flex:0 0 var(--arena-slot-h);
+    margin:0 auto;
+    padding:0;
+    column-gap:clamp(24px,3vw,44px);
+    overflow:visible;
+  }
+
+  .battle-main .center-zone .natureza,
+  .battle-main .center-zone .cemiterio {
+    position:relative;
+    width:var(--arena-slot-w);
+    height:var(--arena-slot-h);
+    min-width:var(--arena-slot-w);
+    min-height:var(--arena-slot-h);
+    flex:none;
+    align-self:center;
+  }
+
+  .battle-main .center-zone .natureza { grid-column:1; }
+  .battle-main .center-zone .turn { grid-column:2; }
+  .battle-main .center-zone .cemiterio { grid-column:3; }
+
+  /* A carta sobre a pilha tem a mesma escala física das demais cartas. */
+  .battle-main .center-zone .pile {
+    width:var(--arena-card-w);
+    height:var(--arena-card-h);
+    transform:none !important;
+  }
+
+  .battle-main .center-zone .pile-card {
+    width:var(--arena-card-w);
+    height:var(--arena-card-h);
+  }
+
+  .battle-main .center-zone .pile-label {
+    bottom:-16px;
+  }
+
+  .battle-main .row-label {
+    left:0;
+  }
+}
+
+@media (max-width:1050px) and (min-width:901px) {
+  :root {
+    --arena-slot-w:clamp(74px,7.4vw,88px);
+    --arena-slot-h:clamp(94px,12.6vh,112px);
+  }
+
+  .battle-main .field-row {
+    gap:clamp(12px,1.8vw,20px);
+  }
+
+  .battle-main .center-zone {
+    width:min(440px,78%);
+    column-gap:clamp(18px,2vw,28px);
+  }
+}
