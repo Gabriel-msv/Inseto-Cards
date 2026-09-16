@@ -189,7 +189,7 @@ const DECK_KEYS = Object.keys(CARDS); // catálogo completo atual, uma cópia de
 // 2. ESTADO DA PARTIDA
 // Guarda jogadores, baralho, cemitério, turno e seleção do jogador.
 // ================================================================
-const APP_VERSION = '3.2.10'; // versão cumulativa: catálogo, combate, efeitos e UX.
+const APP_VERSION = '3.2.11'; // versão cumulativa: catálogo, combate, efeitos e UX.
 const state = { started: false, over: false, round: 1, turn: 'player', deck: [], grave: [], players: [null, null], selected: null, selectedField: null, targetMode: null, log: [], skip: [false, false], tie: false, vagaReveal: null };
 function P(name, bot = false) { return { name, bot, leaves: 5, hand: [], front: null, bank: [null, null, null], moves: 1, std: 1, passiveBuy: false, adubo: 0, antiSteal: 0, revealed: 0 }; }
 function card(key, owner) { let c = CARDS[key]; return { id: Math.random().toString(36).slice(2), key, owner, atk: c.atk ?? 0, hp: c.hp ?? 0, maxHp: c.hp ?? 0, baseAtk: c.atk ?? 0, baseHp: c.hp ?? 0, damage: 0, buffs: [], equipment: [], activeTurns: 0, poison: 0, poisonTurns: 0, root: 0, skipAttack: 0, reload: 0, protectedOnce: key === 'louva', barataUsed: false, mel: false, customAbility: null, copiedKey: null, debuffNext: false, bonusAtk: 0, bonusHp: 0, passiveAtkBonus: 0, passiveHpBonus: 0, debuffAtk: 0, lupa: 0, teia: 0, effectMarks: [] }; }
@@ -1007,52 +1007,32 @@ function renderLeafTokens(id, count) {
   const host = document.getElementById(id);
   if (!host) return;
   const total = Math.max(0, Math.min(15, Number(count) || 0));
+  const current = host.querySelectorAll('.leaf-token').length;
   const initialized = host.dataset.tokensInitialized === '1';
 
-  // Rack do jogador: 15 espaços fixos, em 5 colunas × 3 linhas.
-  if (host.children.length !== 15 || !host.querySelector('.leaf-slot')) {
-    host.innerHTML = '';
-    for (let i = 0; i < 15; i++) {
-      const slot = document.createElement('span');
-      slot.className = 'leaf-slot';
-      slot.dataset.slot = String(i);
-      host.appendChild(slot);
-    }
-  }
-
-  const slots = [...host.querySelectorAll('.leaf-slot')];
-  slots.forEach((slot, i) => {
-    const shouldFill = i < total;
-    let token = slot.querySelector('.leaf-token:not(.leaf-token--exit)');
-
-    if (shouldFill && !token) {
-      const exiting = slot.querySelector('.leaf-token--exit');
-      if (exiting) exiting.remove();
-      token = document.createElement('img');
+  if (current < total) {
+    for (let i = current; i < total; i++) {
+      const token = document.createElement('img');
       token.className = `leaf-token${initialized ? ' leaf-token--enter' : ''}`;
       token.src = 'assets/ui/ficha-folha.png';
       token.alt = 'Ficha de folha';
       token.draggable = false;
       token.title = `Ficha ${i + 1}`;
-      slot.appendChild(token);
-    } else if (!shouldFill && token) {
-      token.classList.add('leaf-token--exit');
-      clearTimeout(slot._leafExitTimer);
-      slot._leafExitTimer = setTimeout(() => {
-        if (!slot.querySelector('.leaf-token:not(.leaf-token--exit)')) {
-          slot.querySelectorAll('.leaf-token').forEach(el => el.remove());
-        }
-      }, 290);
+      host.appendChild(token);
     }
-
-    slot.classList.toggle('is-filled', shouldFill);
-    slot.setAttribute('aria-label', `Espaço ${i + 1}${shouldFill ? ': ocupado' : ': vazio'}`);
-  });
+  } else if (current > total) {
+    const removeCount = current - total;
+    const tokens = [...host.querySelectorAll('.leaf-token')];
+    tokens.slice(-removeCount).forEach(token => {
+      token.classList.add('leaf-token--exit');
+      setTimeout(() => token.remove(), 290);
+    });
+  }
 
   host.dataset.tokensInitialized = '1';
   host.dataset.tokenCount = String(total);
+  [...host.querySelectorAll('.leaf-token')].forEach((token, i) => { token.title = `Ficha ${i + 1}`; });
 }
-
 // ================================================================
 // RENDERIZAÇÃO
 // Atualiza o tabuleiro inteiro a partir do estado atual.

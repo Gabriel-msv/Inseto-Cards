@@ -4,11 +4,10 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
-<title>Inseto Cards — Crônicas Botânicas · v3.2.10</title>
+<title>Inseto Cards — Crônicas Botânicas · v3.2.11</title>
 <meta content="#0d0a06" name="theme-color"/>
 <!-- Projeto organizado em HTML + CSS + JS + assets/cards + assets/ui. -->
 <!-- Interface e motor separados; a camada visual não altera a estrutura mobile. -->
- v3.2.1 — Forest Glass: verde-musgo, verde-caçador, terra e acentos dourados. 
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&amp;family=Cinzel+Decorative:wght@700;900&amp;family=Spectral:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap" rel="stylesheet"/>
@@ -23,7 +22,7 @@
 <link href="/assets/cards/icon.png?v=1.8.3" rel="apple-touch-icon" sizes="512x512"/>
 </head>
 <body>
-<div aria-label="Versão atual" class="version-badge">v3.2.10 · Battle Core</div>
+<div aria-label="Versão atual" class="version-badge">v3.2.11 · Battle Core</div>
 <div class="grain"></div>
 <div class="vignette"></div>
 <canvas aria-hidden="true" class="fx-canvas" id="fxCanvas"></canvas>
@@ -182,12 +181,10 @@
 </aside>
 <section aria-label="Status e controles da partida" class="center-controls" data-layout="controls"><section class="turn-status glass-panel center-status"><span id="round" hidden></span><span id="turn" hidden></span><span id="deckCount" hidden></span><span id="graveCount" hidden></span>
 <div class="message" id="message">Clique em INICIAR PARTIDA.</div>
-<div class="status-leaf-rack" aria-label="Folhas do jogador">
-  <div class="status-leaf-title">FOLHAS <b id="playerLeaves">5</b></div>
-  <div aria-label="15 espaços para fichas de folha" class="leaf-slot-grid" id="playerLeafTokens"></div>
-</div>
 <div class="hud player-hud">
 <span class="player-name" id="playerName">VOCÊ</span>
+<span class="leaf">🍃 <span id="playerLeaves">5</span></span>
+<div aria-label="Fichas de folhas do jogador — até 15" class="token-row" id="playerLeafTokens"></div>
 <span class="small">MOV: <b id="moves">1</b> · PADRÃO: <b id="std">1</b></span>
 </div>
 </section><section class="action-panel glass-panel center-actions">

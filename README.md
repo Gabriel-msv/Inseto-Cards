@@ -2,7 +2,13 @@
 
 Jogo de cartas em HTML, CSS e JavaScript, jogável contra um BOT ou outro jogador pela rede.
 
-**Versão atual:** `3.2.10`
+**Versão atual:** `3.2.11`
+
+## 3.2.11 — Ajuste das folhas
+
+- Removida a linha de texto solta do `<head>` que aparecia no topo da página.
+- Restaurado o visual anterior das fichas de folha no status do jogador, em fileira horizontal.
+- Mantido o limite de 15 folhas e as animações existentes.
 
 ## 3.2.10 — Rack de folhas 5×3
 

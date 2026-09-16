@@ -1555,36 +1555,3 @@ body { background-color:#08110c; background-image:radial-gradient(circle at 20% 
     font-size: 7px;
   }
 }
-
-
-/* ================================================================
-   3.2.10 — RACK DE FOLHAS 5×3
-   15 espaços fixos no canto esquerdo do status do jogador.
-   ================================================================ */
-@media (min-width: 901px) {
-  .center-status {
-    display: grid;
-    grid-template-columns: 88px minmax(0, 1fr);
-    grid-template-rows: auto 1fr;
-    align-items: center;
-    column-gap: 8px;
-    row-gap: 2px;
-  }
-  .center-status .message { grid-column: 1 / -1; grid-row: 1; min-width: 0; }
-  .status-leaf-rack { grid-column: 1; grid-row: 2; width: 88px; align-self: center; justify-self: start; }
-  .status-leaf-title { display:flex; align-items:center; justify-content:space-between; margin-bottom:2px; color:var(--muted); font:700 7px/1 var(--display); letter-spacing:.08em; }
-  .status-leaf-title b { color:var(--brass-light); font-size:9px; }
-  .leaf-slot-grid { display:grid; grid-template-columns:repeat(5,14px); grid-template-rows:repeat(3,14px); gap:2px; width:max-content; }
-  .leaf-slot { width:14px; height:14px; display:grid; place-items:center; border:1px solid rgba(141,176,139,.22); border-radius:50%; background:rgba(4,12,7,.52); box-shadow:inset 0 1px 3px rgba(0,0,0,.45); }
-  .leaf-slot.is-filled { border-color:rgba(92,139,92,.45); background:rgba(35,67,38,.22); }
-  .leaf-slot .leaf-token { width:13px; height:13px; flex:0 0 13px; margin:0; filter:drop-shadow(0 1px 2px rgba(0,0,0,.52)); }
-  .center-status .player-hud { grid-column:2; grid-row:2; min-width:0; width:100%; display:flex; align-items:center; justify-content:space-between; gap:6px; padding:2px 3px; margin:0; }
-  .center-status .player-name { font-size:9px; }
-  .center-status .small { font-size:7px; white-space:nowrap; }
-}
-@media (max-width:900px) {
-  .status-leaf-rack { width:auto; }
-  .leaf-slot-grid { display:grid; grid-template-columns:repeat(5,16px); grid-template-rows:repeat(3,16px); gap:2px; width:max-content; }
-  .leaf-slot { width:16px; height:16px; }
-  .leaf-slot .leaf-token { width:15px; height:15px; flex-basis:15px; }
-}
