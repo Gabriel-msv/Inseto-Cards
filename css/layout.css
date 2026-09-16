@@ -1,21 +1,26 @@
 /* ==========================================================================
    layout.css
-   Foco exclusivo em ARQUITETURA e POSICIONAMENTO (CSS Grid + Flexbox).
-   Sem paleta de cores, sem texturas — apenas bordas neutras para permitir
-   visualizar as 4 regiões enquanto a identidade visual não é aplicada.
+   Arquitetura e posicionamento (Grid + Flexbox), sem paleta de cores.
+
+   PONTO CRÍTICO (era o motivo do corte no desktop):
+   a tela inteira é travada em 100vh/100vw com overflow:hidden no shell.
+   Nenhuma região pode "vazar" pra fora — cada uma que tem mais conteúdo
+   do que cabe (histórico, mão de cartas) ganha overflow-y:auto própria.
+   Toda a cadeia de pais até essa região precisa de min-height:0, senão
+   o flex/grid trata o conteúdo como se devesse crescer infinitamente
+   e o corte volta a acontecer.
    ========================================================================== */
 
 :root {
-  --largura-menu: 280px;
-  --largura-cartas: 320px;
-  --altura-painel-controle: 96px;
+  --largura-menu: 260px;
+  --largura-cartas: 300px;
+  --altura-painel-controle: 104px;
 
   --espaco-xs: 4px;
   --espaco-sm: 8px;
   --espaco-md: 16px;
   --espaco-lg: 24px;
 
-  /* Apenas para visualizar as divisões estruturais — trocar por design final */
   --linha-estrutural: 1px dashed #999;
 }
 
@@ -25,7 +30,9 @@
 
 html, body {
   height: 100%;
+  width: 100%;
   margin: 0;
+  overflow: hidden; /* trava a página — só as regiões internas rolam */
 }
 
 body {
@@ -33,34 +40,30 @@ body {
 }
 
 /* ==========================================================================
-   Contêiner raiz — Grid de 3 colunas x 2 linhas
-   Colunas: [menu fixo] [centro flexível] [cartas fixo]
-   Linhas:  [tabuleiro]  /  [painel de controle]
-   O menu (esquerda) e a exibição de cartas (direita) ocupam as duas linhas,
-   preenchendo 100% da altura da tela.
+   Contêiner raiz — Grid 3 colunas x 2 linhas, preso a 100vh/100vw
    ========================================================================== */
 .app-shell {
   display: grid;
   grid-template-columns: var(--largura-menu) minmax(0, 1fr) var(--largura-cartas);
-  grid-template-rows: 1fr var(--altura-painel-controle);
+  grid-template-rows: minmax(0, 1fr) var(--altura-painel-controle);
   grid-template-areas:
     "menu board cards"
     "menu control cards";
   height: 100vh;
-  width: 100%;
+  width: 100vw;
+  overflow: hidden;
 }
 
 /* ==========================================================================
-   1) Seção Esquerda — Menu e Histórico
-   Contêiner vertical de largura fixa (--largura-menu), dividido em duas
-   partes: bloco superior (menu + opções) de altura natural, e o histórico
-   que cresce para preencher o restante da altura com scroll interno.
+   1) Esquerda — Menu e Histórico
    ========================================================================== */
 .panel-menu {
   grid-area: menu;
   display: flex;
   flex-direction: column;
-  min-height: 0; /* necessário para o filho com overflow funcionar dentro do grid */
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
   border-right: var(--linha-estrutural);
   padding: var(--espaco-md);
   gap: var(--espaco-lg);
@@ -70,7 +73,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: var(--espaco-lg);
-  flex-shrink: 0;
+  flex: 0 0 auto;
 }
 
 .player-menu {
@@ -95,26 +98,26 @@ body {
   gap: var(--espaco-sm);
 }
 
-/* Histórico: ocupa o espaço restante da coluna e tem scroll próprio */
+/* Histórico: única parte da coluna esquerda que rola */
 .match-history {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
-  min-height: 0;
+  min-height: 0; /* essencial: sem isso o <ul> empurra o card pra fora da tela */
 }
 
 .match-history__title {
   margin: 0 0 var(--espaco-sm) 0;
-  flex-shrink: 0;
+  flex: 0 0 auto;
 }
 
 .match-history__list {
   list-style: none;
   margin: 0;
   padding: 0;
-  overflow-y: auto;
   flex: 1 1 auto;
   min-height: 0;
+  overflow-y: auto;
   border: var(--linha-estrutural);
 }
 
@@ -124,10 +127,7 @@ body {
 }
 
 /* ==========================================================================
-   2) Seção Centro-Cima — Tabuleiro Principal
-   Área expansível de maior destaque. Internamente organizada em flex
-   coluna: o grid de slots ocupa o espaço disponível, e as zonas
-   compartilhadas (Deck/Cemitério) ficam fixas ao lado ou abaixo dele.
+   2) Centro-Cima — Tabuleiro Principal
    ========================================================================== */
 .board-main {
   grid-area: board;
@@ -135,6 +135,7 @@ body {
   flex-direction: column;
   min-height: 0;
   min-width: 0;
+  overflow: hidden;
   padding: var(--espaco-lg);
 }
 
@@ -144,11 +145,9 @@ body {
   gap: var(--espaco-lg);
   flex: 1 1 auto;
   min-height: 0;
+  min-width: 0;
 }
 
-/* Grid do tabuleiro: 4 colunas x 2 linhas = 8 slots de carta.
-   Linha superior = Banco/Fronte do Jogador 1, linha inferior = Jogador 2
-   (a orientação exata é decidida na camada visual, não aqui). */
 .board-grid {
   flex: 1 1 auto;
   display: grid;
@@ -165,18 +164,17 @@ body {
   min-height: 0;
 }
 
-/* Slot de Fronte se destaca ligeiramente do Banco dentro do mesmo grid */
 .board-slot--front {
   outline: 2px solid #666;
   outline-offset: -2px;
 }
 
-/* Zonas compartilhadas (Deck/Cemitério): coluna fixa ao lado do grid principal */
 .board-shared-zones {
   display: flex;
   flex-direction: column;
   gap: var(--espaco-md);
   flex: 0 0 140px;
+  min-height: 0;
 }
 
 .shared-zone {
@@ -189,9 +187,8 @@ body {
 }
 
 /* ==========================================================================
-   3) Seção Centro-Baixo — Painel de Controle e Status
-   Contêiner horizontal, altura fixa (--altura-painel-controle), alinhado
-   diretamente abaixo do tabuleiro (mesma coluna do grid raiz).
+   3) Centro-Baixo — Painel de Controle e Status
+   Ocupa só a largura da coluna central (não invade o menu nem as cartas).
    ========================================================================== */
 .control-panel {
   grid-area: control;
@@ -203,13 +200,15 @@ body {
   padding: 0 var(--espaco-lg);
   border-top: var(--linha-estrutural);
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .status-indicators {
   display: flex;
   flex-direction: row;
   gap: var(--espaco-lg);
-  flex-shrink: 0;
+  flex: 0 0 auto;
 }
 
 .status-indicator {
@@ -225,18 +224,19 @@ body {
   gap: var(--espaco-sm);
   flex-wrap: wrap;
   justify-content: flex-end;
+  min-width: 0;
 }
 
 /* ==========================================================================
-   4) Seção Direita — Exibição de Cartas
-   Contêiner vertical de largura fixa (--largura-cartas), ocupando as duas
-   linhas do grid raiz (altura total da tela).
+   4) Direita — Exibição de Cartas (altura total da tela)
    ========================================================================== */
 .card-display {
   grid-area: cards;
   display: flex;
   flex-direction: column;
+  height: 100%;
   min-height: 0;
+  overflow: hidden;
   border-left: var(--linha-estrutural);
   padding: var(--espaco-md);
   gap: var(--espaco-md);
@@ -244,26 +244,27 @@ body {
 
 .card-display__title {
   margin: 0;
-  flex-shrink: 0;
+  flex: 0 0 auto;
 }
 
+/* Única parte da coluna direita que rola quando tem mais cartas do que cabe */
 .card-display__viewport {
   flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: var(--espaco-md);
   overflow-y: auto;
-  min-height: 0;
 }
 
 .card-display__slot {
   border: var(--linha-estrutural);
   aspect-ratio: 3 / 4;
-  flex-shrink: 0;
+  flex: 0 0 auto;
 }
 
 /* ==========================================================================
-   Botões — apenas estrutura (sem paleta de cores)
+   Botões — apenas estrutura
    ========================================================================== */
 .btn {
   border: 1px solid #333;

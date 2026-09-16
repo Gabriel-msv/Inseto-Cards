@@ -3,264 +3,128 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Inseto Cards — Crônicas Botânicas</title>
-<meta name="theme-color" content="#0d0a06">
-<!-- Projeto organizado em HTML + CSS + JS + assets/cards + assets/ui. -->
-<!-- Interface e motor separados; a camada visual não altera a estrutura mobile. -->
-<!-- v3.1.1 — Forest Glass: verde-musgo, verde-caçador, terra e acentos dourados. -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cinzel+Decorative:wght@700;900&family=Spectral:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
-<!-- CSS separado: todo o visual do jogo fica em css/style.css. -->
-<link rel="stylesheet" href="css/style.css">
-<!-- GSAP: timelines, FLIP, springs/easing e microinterações de alta performance -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js" defer></script>
-<!-- Favicon -->
-<link rel="icon" type="image/png" sizes="512x512" href="/assets/cards/icon.png?v=1.8.3">
-<link rel="shortcut icon" type="image/png" href="/assets/cards/icon.png?v=1.8.3">
-
-<!-- Suporte para dispositivos Apple (iOS) -->
-<link rel="apple-touch-icon" sizes="512x512" href="/assets/cards/icon.png?v=1.8.3">
+<title>Inseto Cards — Estrutura de Layout</title>
+<!--
+  Arquitetura pura: 4 regiões via CSS Grid (ver css/layout.css).
+  A tela inteira é travada em 100vh/100vw — nada rola a página como um
+  todo; cada região que pode ter mais conteúdo do que cabe (histórico,
+  cartas) rola SOZINHA por dentro. É isso que evita o corte que
+  acontecia antes no desktop.
+-->
+<link rel="stylesheet" href="css/layout.css">
 </head>
 <body>
-<div class="version-badge" aria-label="Versão atual">v3.1.1 · Battle Core</div>
-<div class="grain"></div>
-<div class="vignette"></div>
-<canvas id="fxCanvas" class="fx-canvas" aria-hidden="true"></canvas>
-<div id="antTrail" class="ant-trail" aria-hidden="true"></div>
-<div id="fxLayer" class="fx-layer" aria-hidden="true"></div>
-<!-- Container principal: painel lateral + campo de batalha -->
-<div id="startMenu" class="start-menu" aria-modal="true" role="dialog">
-  <div class="start-menu-card multiplayer-menu-card">
-    <div class="start-kicker">INSETO CARDS · BATTLE CORE</div>
-    <div class="start-logo"><span class="logo-mark"></span><div><strong>INSETO<br>CARDS</strong><small>DUELO BOTÂNICO</small></div></div>
-    <div class="menu-arena-title"><span>ARENA</span><strong>DUELO BOTÂNICO</strong></div>
-    <p class="start-copy">Entre na arena. Jogue sozinho contra o BOT ou desafie outro comandante pela rede.</p>
 
-    <label class="start-label" for="mpPlayerName">NOME DO COMANDANTE</label>
-    <input id="mpPlayerName" class="field-input start-input" maxlength="18" value="Jogador" autocomplete="off">
+  <div class="app-shell">
 
-    <div class="menu-mode-grid" role="tablist" aria-label="Modo de partida">
-      <button id="mpSoloBtn" class="menu-mode is-active" type="button">
-        <span class="mode-kicker">SOLO</span><strong>JOGAR CONTRA BOT</strong><small>Partida local · sem rede</small>
-      </button>
-      <button id="mpCreateTab" class="menu-mode" type="button">
-        <span class="mode-kicker">ONLINE</span><strong>CRIAR SALA</strong><small>Convide outro jogador</small>
-      </button>
-      <button id="mpJoinTab" class="menu-mode" type="button">
-        <span class="mode-kicker">ONLINE</span><strong>ENTRAR EM SALA</strong><small>Use um código de 4 caracteres</small>
-      </button>
-    </div>
+    <!-- 1) ESQUERDA — Menu e Histórico -->
+    <aside class="panel-menu" aria-label="Menu do jogador e histórico de jogadas">
 
-    <section id="mpPanelSolo" class="menu-panel is-active">
-      <div class="menu-panel-title">DUELO CONTRA O BOT</div>
-      <div class="menu-preview"><span>VOCÊ</span><b>VS</b><span>BOT</span></div>
-      <button id="mpSoloLaunch" class="btn btn-primary start-cta" type="button">ENTRAR NA ARENA</button>
+      <div class="panel-menu__top">
+        <nav class="player-menu" aria-label="Menu do jogador">
+          <h2 class="panel-menu__title">Menu do Jogador</h2>
+
+          <button type="button" class="btn btn-start-match">
+            Iniciar Partida
+          </button>
+
+          <div class="field-group">
+            <label for="playerName">Nome do jogador</label>
+            <input id="playerName" name="playerName" type="text" autocomplete="off">
+          </div>
+        </nav>
+
+        <div class="system-options" role="group" aria-label="Opções do sistema">
+          <button type="button" class="btn btn-secondary">Regras</button>
+          <button type="button" class="btn btn-danger">Abandonar Partida</button>
+        </div>
+      </div>
+
+      <!-- Histórico: cresce até o fim da coluna e rola sozinho -->
+      <section class="match-history" aria-label="Histórico de jogadas">
+        <h3 class="match-history__title">Histórico</h3>
+        <ul class="match-history__list">
+          <li class="match-history__item">Jogador comprou uma carta</li>
+          <li class="match-history__item">Jogador atacou o Banco inimigo</li>
+          <li class="match-history__item">Oponente colheu folhas</li>
+          <li class="match-history__item">Jogador posicionou carta no Banco</li>
+          <li class="match-history__item">Oponente vendeu uma carta</li>
+          <li class="match-history__item">Jogador comprou uma carta</li>
+          <li class="match-history__item">Jogador moveu carta do Banco pra Fronte</li>
+          <li class="match-history__item">Oponente atacou a Fronte</li>
+          <li class="match-history__item">Jogador colheu folhas</li>
+          <li class="match-history__item">Oponente comprou uma carta</li>
+        </ul>
+      </section>
+
+    </aside>
+
+    <!-- 2) CENTRO-CIMA — Tabuleiro Principal -->
+    <main class="board-main" aria-label="Tabuleiro principal">
+      <div class="board-main__inner">
+
+        <!-- 8 slots de carta: Banco/Fronte dos dois jogadores -->
+        <div class="board-grid" aria-label="Slots de cartas em campo">
+          <div class="board-slot" data-slot="p2-banco-1"></div>
+          <div class="board-slot" data-slot="p2-banco-2"></div>
+          <div class="board-slot" data-slot="p2-banco-3"></div>
+          <div class="board-slot board-slot--front" data-slot="p2-fronte"></div>
+
+          <div class="board-slot board-slot--front" data-slot="p1-fronte"></div>
+          <div class="board-slot" data-slot="p1-banco-1"></div>
+          <div class="board-slot" data-slot="p1-banco-2"></div>
+          <div class="board-slot" data-slot="p1-banco-3"></div>
+        </div>
+
+        <!-- Zonas compartilhadas: Deck (Natureza) e Cemitério -->
+        <div class="board-shared-zones" aria-label="Zonas compartilhadas">
+          <div class="shared-zone shared-zone--deck" aria-label="Deck da Natureza">
+            <span class="shared-zone__label">Natureza</span>
+          </div>
+          <div class="shared-zone shared-zone--graveyard" aria-label="Cemitério">
+            <span class="shared-zone__label">Cemitério</span>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- 3) CENTRO-BAIXO — Painel de Controle e Status (só a largura do centro) -->
+    <section class="control-panel" aria-label="Painel de controle e status">
+
+      <div class="status-indicators" aria-label="Indicadores de status">
+        <div class="status-indicator status-indicator--chips">
+          <span class="status-indicator__label">Folhas</span>
+          <span class="status-indicator__value">5</span>
+        </div>
+        <div class="status-indicator status-indicator--actions">
+          <span class="status-indicator__label">Ações restantes</span>
+          <span class="status-indicator__value">2</span>
+        </div>
+      </div>
+
+      <div class="action-buttons" role="group" aria-label="Ações do turno">
+        <button type="button" class="btn btn-action">Mover</button>
+        <button type="button" class="btn btn-action">Atacar</button>
+        <button type="button" class="btn btn-action">Colher Folhas</button>
+        <button type="button" class="btn btn-action">Vender Carta</button>
+        <button type="button" class="btn btn-action">Comprar Carta</button>
+      </div>
+
     </section>
 
-    <section id="mpPanelCreate" class="menu-panel">
-      <div class="menu-panel-title">CRIAR SALA ONLINE</div>
-      <div class="menu-panel-copy">Crie uma sala e compartilhe o código com o outro jogador.</div>
-      <label class="start-label" for="mpCreatePass">SENHA <span class="optional">(OPCIONAL)</span></label>
-      <input id="mpCreatePass" class="field-input" type="password" maxlength="24" placeholder="Deixe em branco para não usar senha">
-      <button id="mpCreateBtn" class="btn btn-primary start-cta" type="button">CRIAR SALA</button>
-    </section>
+    <!-- 4) DIREITA — Exibição de Cartas (altura total da tela) -->
+    <aside class="card-display" aria-label="Exibição de cartas em destaque">
+      <h2 class="card-display__title">Espécimes na Mão</h2>
+      <div class="card-display__viewport" aria-label="Cartas em tamanho ampliado">
+        <div class="card-display__slot"></div>
+        <div class="card-display__slot"></div>
+        <div class="card-display__slot"></div>
+        <div class="card-display__slot"></div>
+      </div>
+    </aside>
 
-    <section id="mpPanelJoin" class="menu-panel">
-      <div class="menu-panel-title">ENTRAR EM SALA</div>
-      <div class="menu-panel-copy">Digite o código recebido do outro jogador.</div>
-      <label class="start-label" for="mpGateCode">CÓDIGO DA SALA</label>
-      <input id="mpGateCode" class="field-input menu-code" maxlength="4" placeholder="ABCD" autocomplete="off">
-      <label class="start-label" for="mpJoinPass">SENHA <span class="optional">(SE HOUVER)</span></label>
-      <input id="mpJoinPass" class="field-input" type="password" maxlength="24" placeholder="Senha da sala">
-      <button id="mpJoinBtn" class="btn btn-primary start-cta" type="button">ENTRAR NA SALA</button>
-    </section>
-
-    <section id="mpPanelWait" class="menu-panel">
-      <div class="menu-panel-title" id="mpWaitTitle">CONECTANDO...</div>
-      <div id="mpWaitCode" class="mp-code-display" hidden></div>
-      <div id="mpWaitText" class="menu-panel-copy"></div>
-      <button id="mpStartBtn" class="btn btn-primary start-cta" type="button" hidden>INICIAR PARTIDA</button>
-      <button id="mpBackBtn" class="btn btn-secondary start-cta menu-back" type="button">VOLTAR</button>
-    </section>
-
-    <div id="mpGateError" class="menu-error" role="alert"></div>
-    <button id="mpRulesBtn" class="start-rules" type="button">REGRAS & MECÂNICAS</button>
   </div>
-</div>
-<div class="root">
-  <!-- ÁREA PRINCIPAL: o campo ocupa o máximo de espaço útil no desktop -->
-  <main class="battle-main board">
-    <div class="hud enemy-hud glass-panel">
-      <span id="enemyName" class="enemy-name">BOT — aguardando</span>
-      <span class="leaf">🍃 <span id="enemyLeaves">5</span></span>
-      <div id="enemyLeafTokens" class="token-row" aria-label="Fichas de folhas do oponente"></div>
-    </div>
 
-    <div class="field-row"><span class="row-label">BANCO</span><div class="slot" id="eb0"></div><div class="slot" id="eb1"></div><div class="slot" id="eb2"></div></div>
-    <div class="field-row"><span class="row-label">FRONTE</span><div class="slot fronte enemy-fronte" id="ef0"></div></div>
-
-    <div class="center-zone">
-      <div class="shared-zone natureza">
-        <div class="pile">
-          <div class="pile-card" style="top:6px;left:6px;opacity:.4"></div>
-          <div class="pile-card" style="top:3px;left:3px;opacity:.6"></div>
-          <div class="pile-card" style="z-index:3"></div>
-          <div id="deckCount2" class="pile-count">41</div>
-        </div>
-        <div class="pile-label">NATUREZA</div>
-      </div>
-      <div class="turn">TURNO<br><b id="turnNo">1</b></div>
-      <div class="shared-zone cemiterio">
-        <div class="pile">
-          <div class="pile-card" style="top:6px;left:6px;opacity:.4"></div>
-          <div class="pile-card" style="top:3px;left:3px;opacity:.6"></div>
-          <div id="graveTop" class="pile-card" style="z-index:3"></div>
-          <div id="graveCount2" class="pile-count">0</div>
-        </div>
-        <div class="pile-label">CEMITÉRIO</div>
-      </div>
-    </div>
-
-    <div class="field-row"><span class="row-label">FRONTE</span><div class="slot fronte" id="pf0"></div></div>
-    <div class="field-row player-bank-row"><span class="row-label">BANCO</span><div class="slot" id="pb0"></div><div class="slot" id="pb1"></div><div class="slot" id="pb2"></div></div>
-  </main>
-
-  <!-- PAINÉIS LATERAIS: no desktop ficam em lados opostos; no mobile viram fluxo vertical. -->
-  <aside class="battle-sidebar left-sidebar" aria-label="Informações da partida">
-    <section class="control-panel glass-panel match-console">
-      <div class="logo botanical-title" aria-label="Inseto Cards">
-        <span class="logo-mark" role="img" aria-label="Isotipo Inseto Cards"></span>
-        <span class="logo-name">INSETO<br>CARDS</span>
-        <span>BATTLE CORE · BOT</span>
-      </div>
-      <div class="match-title"><span>ARENA</span><strong>DUELO BOTÂNICO</strong></div>
-      <div class="name-editor">
-        <div class="field-label">COMANDANTE</div>
-        <input id="name" class="field-input" maxlength="18" value="Jogador" autocomplete="off">
-      </div>
-      <div class="match-preview">
-        <div><span>VOCÊ</span><b>VS</b><span>BOT</span></div>
-        <small>41 espécimes · 1 cópia de cada carta</small>
-      </div>
-      <div class="control-actions">
-        <button id="start" class="btn btn-primary">ENTRAR NA ARENA</button>
-        <button id="restart" class="btn btn-secondary">NOVA PARTIDA</button>
-        <button id="rules" class="btn btn-secondary">REGRAS & MECÂNICAS</button>
-      </div>
-      <div class="stats compact-stats">
-        <div>RODADA <b id="round">1</b></div>
-        <div>TURNO <b id="turn">VOCÊ</b></div>
-        <div>NATUREZA <b id="deckCount">41</b></div>
-        <div>CEMITÉRIO <b id="graveCount">0</b></div>
-      </div>
-      <div class="hint">1 movimento + 1 ação padrão por turno. Arraste, selecione ou clique nas ações.</div>
-    </section>
-
-    <section class="turn-status glass-panel">
-      <div id="message" class="message">Clique em INICIAR PARTIDA.</div>
-      <div class="hud player-hud">
-        <span id="playerName" class="player-name">VOCÊ</span>
-        <span class="leaf">🍃 <span id="playerLeaves">5</span></span>
-        <div id="playerLeafTokens" class="token-row" aria-label="Fichas de folhas do jogador"></div>
-        <span class="small">MOV: <b id="moves">1</b> · PADRÃO: <b id="std">1</b></span>
-      </div>
-    </section>
-
-    <section class="action-history glass-panel">
-      <div class="action-header">DIÁRIO DA EXPEDIÇÃO</div>
-      <div id="log" class="log"></div>
-    </section>
-  </aside>
-
-  <aside class="battle-sidebar right-sidebar" aria-label="Ações e mão do jogador">
-    <section class="action-panel glass-panel">
-      <div class="action-summary" aria-live="polite">
-        <span>AÇÕES PADRÃO: <b id="stdActions">1</b></span>
-        <span>MOVIMENTOS: <b id="moveActions">1</b></span>
-        <span id="mpTurnTimer" hidden>00:30</span>
-      </div>
-      <div class="action-group">
-        <div class="action-header">AÇÕES PADRÃO</div>
-        <div class="actions">
-          <button class="action" id="draw">COMPRAR <span class="action-cost">3 🍃</span></button>
-          <button class="action" id="harvest">COLHER <span class="action-cost">+1 🍃</span></button>
-          <button class="action" id="end">ENCERRAR TURNO</button>
-        </div>
-      </div>
-      <div class="action-group">
-        <div class="action-header">MOVIMENTO</div>
-        <div class="actions">
-          <button class="action" id="secondMove">2º MOVIMENTO</button>
-        </div>
-      </div>
-      <div class="action-group">
-        <div class="action-header">AÇÕES COM SELEÇÃO</div>
-        <div class="actions target-actions">
-          <button class="action target-action" id="attackBtn">ATACAR</button>
-          <button class="action target-action" id="returnBtn">PUXAR DE VOLTA</button>
-          <button class="action target-action" id="sell">VENDER</button>
-        </div>
-      </div>
-    </section>
-
-    <section id="cardInspector" class="card-inspector glass-panel" aria-hidden="true">
-      <div class="inspector-top"><span class="action-header">CARTA SELECIONADA</span><span class="inspector-source">MÃO</span></div>
-      <div class="inspector-main">
-        <div class="inspector-art"></div>
-        <div class="inspector-copy">
-          <div class="inspector-name"></div>
-          <div class="inspector-stats"><span class="inspect-atk"></span><span class="inspect-hp"></span></div>
-          <div class="inspector-meta"></div>
-          <div class="inspector-ability"></div>
-          <div class="inspector-equipment"></div>
-        </div>
-      </div>
-      <button id="inspectUse" class="action inspector-use" type="button" hidden></button>
-    </section>
-
-
-    <section class="hand-panel glass-panel">
-      <div class="hand-panel-head">
-        <div>
-          <div class="action-header">ESPÉCIMES NA MÃO <span class="hand-count-badge"><b id="handCount">3/6</b></span></div>
-          <div id="handStatus" class="hand-subtitle">3 ESPAÇOS</div>
-        </div>
-        <div class="mobile-hand-status" aria-live="polite">
-          <span>FOLHAS <b id="handLeaves">5</b></span>
-          <span>AÇÃO <b id="handStd">1</b></span>
-          <span>MOV. <b id="handMoves">1</b></span>
-        </div>
-        <div class="hand-carousel-controls" aria-hidden="true">
-          <button class="hand-nav" type="button" data-dir="-1">‹</button>
-          <button class="hand-nav" type="button" data-dir="1">›</button>
-        </div>
-      </div>
-      <div class="hand-carousel">
-        <div id="hand" class="hand"></div>
-      </div>
-    </section>
-  </aside>
-</div>
-<div id="enemyActionPopup" class="enemy-action-popup" role="status" aria-live="polite"></div>
-<div id="actionBlockPopup" class="action-block-popup" role="alert" aria-live="assertive"></div>
-<!-- Tooltip dinâmico das cartas -->
-<div id="tip" class="tip"><b id="tipName"></b><span id="tipCond" class="cond"></span><br><span id="tipAbility"></span></div>
-<!-- Modal de regras / fim de partida -->
-<div id="overlay" class="overlay"><div class="modal glass-panel"><div id="modalContent"></div><button id="modalClose" class="btn btn-primary">FECHAR</button></div></div>
-  <!-- JavaScript separado: regras, BOT, renderização e interações (inalterado) -->
-  <script src="js/game.js"></script>
-  <script src="js/multiplayer.js"></script>
-<script src="js/battle-fx.js"></script>
-  <script>
-    // Navegação visual da mão: não interfere na lógica do jogo.
-    document.querySelectorAll('.hand-nav').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const hand = document.getElementById('hand');
-        const amount = Math.max(150, hand.clientWidth * 0.72);
-        hand.scrollBy({ left: Number(btn.dataset.dir) * amount, behavior: 'smooth' });
-      });
-    });
-  </script>
-
-</body></html>
+</body>
+</html>
