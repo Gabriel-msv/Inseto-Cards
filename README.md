@@ -2,9 +2,9 @@
 
 Jogo de cartas em HTML, CSS e JavaScript, jogável contra um BOT ou outro jogador pela rede.
 
-**Versão atual:** `3.2.16`
+**Versão atual:** `3.2.18`
 
-## 3.2.16 — Modo Editor e ajuste final do campo desktop
+## 3.2.18 — Modo Editor e ajuste final do campo desktop
 
 - Adicionado modo Editor local com catálogo completo de cartas.
 - Qualquer carta pode ser colocada diretamente em qualquer Banco/Fronte.
@@ -15,7 +15,7 @@ Jogo de cartas em HTML, CSS e JavaScript, jogável contra um BOT ou outro jogado
 - Natureza/Cemitério recebem uma faixa central mais espaçada.
 - Ajustes acima não alteram a composição mobile.
 
-## 3.2.13 — Controles ao lado do tabuleiro no celular
+## 3.2.18 — Controles ao lado do tabuleiro no celular
 
 - No celular, o painel de status e ações fica ao lado direito do tabuleiro.
 - A mão de cartas continua abaixo do tabuleiro, ocupando a largura disponível.
@@ -164,7 +164,12 @@ A versão segue `X.Y.Z`: `X` para reformas grandes/estruturais, `Y` para novas f
 - Reduzida apenas a altura da faixa inferior de status e ações.
 
 
-### v3.2.16
-- Corrige a versão exibida pelo motor para 3.2.16.
+### v3.2.18
+- Corrige a versão exibida pelo motor para 3.2.18.
 - Modo Editor agora suporta arrastar cartas do catálogo para qualquer slot.
 - Cartas já posicionadas no Editor também podem ser arrastadas entre slots, com troca quando o destino estiver ocupado.
+
+
+### 3.2.18
+- Ajuste geométrico final do campo desktop: bancos com 10vw entre slots, 10vh entre Banco e Fronte, Natureza/Cemitério alinhados às extremidades externas dos Bancos e eixo Y central do campo.
+- Editor: ataque por arraste do Fronte para carta inimiga.

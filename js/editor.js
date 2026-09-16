@@ -1,5 +1,5 @@
 /* ========================================================================
-   INSETO CARDS — MODO EDITOR 3.2.16
+   INSETO CARDS — MODO EDITOR 3.2.18
    Ferramenta local de testes. Não usa BOT, rede, custo ou ações normais.
    ======================================================================== */
 (() => {
@@ -40,7 +40,115 @@
       const style = document.createElement('style');
       style.id = 'editor-runtime-style';
       style.textContent = `
-        /* 3.2.16 — campo desktop: cartas maiores, bancos mais espaçados,
+        /* 3.2.18 — geometria desktop exata do campo.
+           Bancos: 10vw entre slots. Banco↔Fronte: 10vh.
+           Natureza/Cemitério: mesmos X dos bancos externos e Y=50% do campo. */
+        @media (min-width:901px) {
+          .battle-main {
+            position: relative !important;
+            display: grid !important;
+            grid-template-rows: 34px minmax(0,1fr) !important;
+            gap: 0 !important;
+            padding: 8px 18px !important;
+            overflow: hidden !important;
+          }
+          .battle-main {
+            --editor-slot-w: clamp(87px, calc(6.1vw + 15px), 103px);
+            --editor-slot-h: clamp(107px, calc(8.1vw + 15px), 127px);
+            --editor-bank-gap: 10vw;
+            --editor-front-gap: 10vh;
+          }
+          .battle-main .enemy-hud {
+            grid-row: 1 !important;
+            width: 100% !important;
+            height: 34px !important;
+          }
+          .battle-main .field-row:nth-child(2),
+          .battle-main .field-row:nth-child(3),
+          .battle-main .center-zone,
+          .battle-main .field-row:nth-child(5),
+          .battle-main .field-row:nth-child(6) {
+            position: absolute !important;
+            left: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+          }
+          .battle-main .field-row:nth-child(2),
+          .battle-main .player-bank-row {
+            display: grid !important;
+            grid-template-columns: repeat(3, var(--editor-slot-w)) !important;
+            column-gap: var(--editor-bank-gap) !important;
+            justify-content: center !important;
+            align-items: center !important;
+            height: var(--editor-slot-h) !important;
+          }
+          .battle-main .field-row:nth-child(2) {
+            top: calc(50% - var(--editor-front-gap) - var(--editor-slot-h) - var(--editor-slot-h) / 2) !important;
+          }
+          .battle-main .field-row:nth-child(6) {
+            bottom: calc(50% - var(--editor-front-gap) - var(--editor-slot-h) - var(--editor-slot-h) / 2) !important;
+          }
+          .battle-main .field-row:nth-child(3),
+          .battle-main .field-row:nth-child(5) {
+            height: var(--editor-slot-h) !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+          }
+          .battle-main .field-row:nth-child(3) {
+            top: calc(50% - var(--editor-front-gap) / 2 - var(--editor-slot-h)) !important;
+          }
+          .battle-main .field-row:nth-child(5) {
+            top: calc(50% + var(--editor-front-gap) / 2) !important;
+          }
+          .battle-main .center-zone {
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            height: 1px !important;
+            min-height: 1px !important;
+            display: block !important;
+            z-index: 4 !important;
+          }
+          .battle-main .center-zone .natureza,
+          .battle-main .center-zone .cemiterio {
+            position: absolute !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            width: 58px !important;
+            height: 78px !important;
+            flex: none !important;
+          }
+          .battle-main .center-zone .natureza {
+            left: calc(50% - var(--editor-slot-w) - var(--editor-bank-gap)) !important;
+            transform: translate(-50%,-50%) !important;
+          }
+          .battle-main .center-zone .cemiterio {
+            left: calc(50% + var(--editor-slot-w) + var(--editor-bank-gap)) !important;
+            transform: translate(-50%,-50%) !important;
+          }
+          .battle-main .center-zone .turn {
+            position: absolute !important;
+            left: 50% !important;
+            top: 50% !important;
+            transform: translate(-50%,-50%) !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          .battle-main .slot,
+          .battle-main .slot.fronte {
+            width: var(--editor-slot-w) !important;
+            height: var(--editor-slot-h) !important;
+            flex: 0 0 var(--editor-slot-w) !important;
+          }
+          .battle-main .slot > .card,
+          .battle-main .slot .fronte-card {
+            width: calc(100% - 6px) !important;
+            height: calc(100% - 6px) !important;
+          }
+          .battle-main .row-label { left: 6px !important; }
+        }
+
+                /* 3.2.18 — campo desktop: cartas maiores, bancos mais espaçados,
            natureza/cemitério paralelos aos Frontes e banco inferior ancorado. */
         @media (min-width:901px) {
           .battle-main .field-row { gap: clamp(24px, 3vw, 42px); }
@@ -101,6 +209,125 @@
           }
         }
 
+        /* 3.2.18 — geometria final do campo desktop.
+           Bancos: 10vw entre centros dos slots.
+           Banco ↔ Fronte: 10vh entre as bordas.
+           Natureza/Cemitério: mesmo X das extremidades dos Bancos e Y=50% do campo. */
+        @media (min-width:901px) {
+          .battle-main {
+            --board-slot-w: clamp(87px, calc(6.1vw + 15px), 103px);
+            --board-slot-h: clamp(107px, calc(8.1vw + 15px), 127px);
+            --board-gap-x: 10vw;
+            --board-gap-y: 10vh;
+            position: relative !important;
+            display: grid !important;
+            grid-template-rows: 34px minmax(0,1fr) !important;
+            padding: 8px 18px !important;
+            overflow: hidden !important;
+          }
+          .battle-main .enemy-hud { grid-row:1 !important; width:100% !important; height:34px !important; }
+          .battle-main .field-row:nth-child(2),
+          .battle-main .field-row:nth-child(3),
+          .battle-main .center-zone,
+          .battle-main .field-row:nth-child(5),
+          .battle-main .field-row:nth-child(6) {
+            position:absolute !important;
+            left:0 !important;
+            width:100% !important;
+            margin:0 !important;
+          }
+          .battle-main .slot,
+          .battle-main .slot.fronte {
+            width:var(--board-slot-w) !important;
+            height:var(--board-slot-h) !important;
+            flex:0 0 var(--board-slot-w) !important;
+          }
+          .battle-main .slot > .card,
+          .battle-main .slot .fronte-card {
+            width:calc(100% - 6px) !important;
+            height:calc(100% - 6px) !important;
+          }
+          /* Bancos: 10vw entre centros */
+          .battle-main .field-row:nth-child(2),
+          .battle-main .player-bank-row {
+            display:grid !important;
+            grid-template-columns:repeat(3,var(--board-slot-w)) !important;
+            column-gap:var(--board-gap-x) !important;
+            justify-content:center !important;
+            align-items:center !important;
+            height:var(--board-slot-h) !important;
+          }
+          /* Fronte superior: sua borda inferior fica 10vh acima do banco superior. */
+          .battle-main .field-row:nth-child(3) {
+            height:var(--board-slot-h) !important;
+            top:calc(50% - var(--board-gap-y) / 2 - var(--board-slot-h)) !important;
+            display:flex !important;
+            align-items:center !important;
+            justify-content:center !important;
+          }
+          /* Banco superior: 10vh acima do Fronte. */
+          .battle-main .field-row:nth-child(2) {
+            top:calc(50% - var(--board-gap-y) / 2 - var(--board-slot-h) - var(--board-slot-h) - var(--board-gap-y)) !important;
+          }
+          /* Fronte inferior */
+          .battle-main .field-row:nth-child(5) {
+            height:var(--board-slot-h) !important;
+            top:calc(50% + var(--board-gap-y) / 2) !important;
+            display:flex !important;
+            align-items:center !important;
+            justify-content:center !important;
+          }
+          /* Banco inferior: 10vh abaixo do Fronte. */
+          .battle-main .field-row:nth-child(6) {
+            bottom:calc(50% - var(--board-gap-y) / 2 - var(--board-slot-h) - var(--board-slot-h) - var(--board-gap-y)) !important;
+          }
+          /* Centro exato do campo: Y = 50%. */
+          .battle-main .center-zone {
+            top:50% !important;
+            transform:translateY(-50%) !important;
+            height:1px !important;
+            min-height:1px !important;
+            display:block !important;
+            z-index:4 !important;
+          }
+          /* Natureza/Cemitério nos mesmos X dos centros dos Bancos externos. */
+          .battle-main .center-zone .natureza,
+          .battle-main .center-zone .cemiterio {
+            position:absolute !important;
+            top:50% !important;
+            width:58px !important;
+            height:78px !important;
+            flex:none !important;
+            transform:translate(-50%,-50%) !important;
+          }
+          .battle-main .center-zone .natureza { left:calc(50% - var(--board-slot-w) - var(--board-gap-x)) !important; }
+          .battle-main .center-zone .cemiterio { left:calc(50% + var(--board-slot-w) + var(--board-gap-x)) !important; }
+          .battle-main .center-zone .turn {
+            position:absolute !important;
+            left:50% !important;
+            top:50% !important;
+            transform:translate(-50%,-50%) !important;
+            margin:0 !important;
+            padding:0 !important;
+            white-space:nowrap !important;
+          }
+        }
+
+        /* 3.2.18 — morte: clone visual voando para o Cemitério. */
+        .editor-death-flight {
+          position:fixed !important;
+          z-index:2000 !important;
+          pointer-events:none !important;
+          margin:0 !important;
+          transform-origin:50% 50% !important;
+          will-change:transform,opacity,filter !important;
+        }
+
+        /* Editor: ataque por arraste sobre qualquer carta inimiga. */
+        body.editor-mode .battle-main .card.editor-attack-target {
+          border-color:rgba(176,70,70,.98) !important;
+          box-shadow:0 0 0 2px rgba(176,70,70,.35),0 0 26px rgba(176,70,70,.28) !important;
+        }
         .editor-launcher-badge { border-color: rgba(156,191,121,.55) !important; }
         #editorPanel {
           position: fixed;
@@ -135,6 +362,7 @@
         body.editor-mode .battle-main .card { cursor:grab; }
         body.editor-mode .battle-main .card.editor-dragging { opacity:.55; cursor:grabbing; }
         body.editor-mode .battle-main .slot.editor-drop-hover { border-color:rgba(214,186,103,.95) !important; box-shadow:0 0 0 2px rgba(214,186,103,.22), inset 0 0 22px rgba(214,186,103,.1); }
+        body.editor-mode .battle-main .card.editor-attack-target { border-color:rgba(176,70,70,.98) !important; box-shadow:0 0 0 2px rgba(176,70,70,.35), 0 0 26px rgba(176,70,70,.28) !important; }
 
         #editorPanel .editor-card-btn.is-selected { border-color:rgba(214,186,103,.9); box-shadow:0 0 0 1px rgba(214,186,103,.22); }
         #editorPanel .editor-card-btn img { width:40px; height:54px; object-fit:cover; border-radius:4px; border:1px solid rgba(214,186,103,.24); background:#102015; }
@@ -207,8 +435,8 @@
       this.setEditorState();
       this.renderCatalog();
       this.bindFieldInteraction();
-      document.querySelector('.version-badge')?.replaceChildren(document.createTextNode('v3.2.16 · Editor'));
-      document.title = 'Inseto Cards — Editor · v3.2.16';
+      document.querySelector('.version-badge')?.replaceChildren(document.createTextNode('v3.2.18 · Editor'));
+      document.title = 'Inseto Cards — Editor · v3.2.18';
       this.setStatus('Editor ativo. Selecione uma carta e clique em qualquer slot.');
       if (typeof render === 'function') render();
       this.highlightField();
@@ -286,6 +514,20 @@
 
       document.addEventListener('dragover', e => {
         if (!this.active || !this.dragPayload) return;
+        const targetCard = e.target.closest('.battle-main .card[data-card-id]');
+        if (this.dragPayload.type === 'field' && targetCard) {
+          const src = this.dragPayload;
+          const target = this.findFieldById(targetCard.dataset.cardId);
+          if (target && target.pi !== src.pi && src.zone === 'front') {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            document.querySelectorAll('.editor-drop-hover').forEach(el => el.classList.remove('editor-drop-hover'));
+            document.querySelectorAll('.editor-attack-target').forEach(el => el.classList.remove('editor-attack-target'));
+            targetCard.classList.add('editor-attack-target');
+            e.dataTransfer.dropEffect = 'move';
+            return;
+          }
+        }
         const slot = e.target.closest('#pb0,#pb1,#pb2,#pf0,#eb0,#eb1,#eb2,#ef0');
         if (!slot) return;
         e.preventDefault();
@@ -307,13 +549,25 @@
 
       document.addEventListener('drop', e => {
         if (!this.active || !this.dragPayload) return;
+        const payload = this.dragPayload;
+        const targetCard = e.target.closest('.battle-main .card[data-card-id]');
+        if (payload.type === 'field' && targetCard) {
+          const target = this.findFieldById(targetCard.dataset.cardId);
+          if (target && target.pi !== payload.pi && payload.zone === 'front') {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            document.querySelectorAll('.editor-drop-hover,.editor-attack-target').forEach(el => el.classList.remove('editor-drop-hover','editor-attack-target'));
+            this.dragPayload = null;
+            this.editorAttack(payload, target);
+            return;
+          }
+        }
         const slot = e.target.closest('#pb0,#pb1,#pb2,#pf0,#eb0,#eb1,#eb2,#ef0');
         if (!slot) return;
         e.preventDefault();
         e.stopImmediatePropagation();
         slot.classList.remove('editor-drop-hover');
         const info = this.slotInfo(slot.id);
-        const payload = this.dragPayload;
         this.dragPayload = null;
         if (payload.type === 'catalog') {
           this.selectedKey = payload.key;
@@ -376,6 +630,31 @@
       refreshPassiveStats();
       this.updateSelectedLabel();
       this.setStatus(`${CARDS[srcCard.key].name} movido para ${target.player === 0 ? 'seu' : 'alvo'} ${target.zone === 'front' ? 'Fronte' : `Banco ${target.slot+1}`}.`);
+      render();
+      this.highlightField();
+    },
+
+    editorAttack(source, target) {
+      const attackerPlayer = state.players[source.pi];
+      const defenderPlayer = state.players[target.pi];
+      const attacker = source.zone === 'front' ? attackerPlayer.front : attackerPlayer.bank[source.slot];
+      const defender = target.zone === 'front' ? defenderPlayer.front : defenderPlayer.bank[target.slot];
+      if (!attacker || !defender) return;
+      if (!insect(attacker) || !insect(defender)) return this.setStatus('Ataques do Editor exigem duas cartas inseto.');
+      this.pushHistory(`Ataque: ${CARDS[attacker.key].name}`);
+      const oldTurn = state.turn, oldStd = attackerPlayer.std;
+      state.turn = source.pi;
+      attackerPlayer.std = 1;
+      try {
+        attack(source.pi, attacker, defender);
+      } finally {
+        state.turn = oldTurn;
+        attackerPlayer.std = oldStd;
+      }
+      this.selectedField = null;
+      this.selectedKey = null;
+      this.updateSelectedLabel();
+      this.setStatus(`${CARDS[attacker.key].name} atacou ${CARDS[defender.key].name}.`);
       render();
       this.highlightField();
     },

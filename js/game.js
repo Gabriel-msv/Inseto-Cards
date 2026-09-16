@@ -189,7 +189,7 @@ const DECK_KEYS = Object.keys(CARDS); // catálogo completo atual, uma cópia de
 // 2. ESTADO DA PARTIDA
 // Guarda jogadores, baralho, cemitério, turno e seleção do jogador.
 // ================================================================
-const APP_VERSION = '3.2.16'; // versão cumulativa: catálogo, combate, efeitos e UX.
+const APP_VERSION = '3.2.18'; // versão cumulativa: catálogo, combate, efeitos e UX.
 const state = { started: false, over: false, round: 1, turn: 'player', deck: [], grave: [], players: [null, null], selected: null, selectedField: null, targetMode: null, log: [], skip: [false, false], tie: false, vagaReveal: null };
 function P(name, bot = false) { return { name, bot, leaves: 5, hand: [], front: null, bank: [null, null, null], moves: 1, std: 1, passiveBuy: false, adubo: 0, antiSteal: 0, revealed: 0 }; }
 function card(key, owner) { let c = CARDS[key]; return { id: Math.random().toString(36).slice(2), key, owner, atk: c.atk ?? 0, hp: c.hp ?? 0, maxHp: c.hp ?? 0, baseAtk: c.atk ?? 0, baseHp: c.hp ?? 0, damage: 0, buffs: [], equipment: [], activeTurns: 0, poison: 0, poisonTurns: 0, root: 0, skipAttack: 0, reload: 0, protectedOnce: key === 'louva', barataUsed: false, mel: false, customAbility: null, copiedKey: null, debuffNext: false, bonusAtk: 0, bonusHp: 0, passiveAtkBonus: 0, passiveHpBonus: 0, debuffAtk: 0, lupa: 0, teia: 0, effectMarks: [] }; }
@@ -615,6 +615,36 @@ function triggerCopied(killerCard, event, pi, target) {
     if (k === 'libelula') killerCard.root = 0;
   }
 }
+function animateCardDeathToGrave(cardObj) {
+  try {
+    const el = document.querySelector(`.battle-main .card[data-card-id="${cardObj.id}"]`);
+    const target = document.getElementById('graveTop');
+    if (!el || !target || typeof el.getBoundingClientRect !== 'function') return;
+    const a = el.getBoundingClientRect();
+    const b = target.getBoundingClientRect();
+    const clone = el.cloneNode(true);
+    clone.classList.add('editor-death-flight');
+    clone.classList.remove('selected','dragging','editor-dragging','editor-field-selected');
+    clone.draggable = false;
+    clone.style.left = `${a.left}px`;
+    clone.style.top = `${a.top}px`;
+    clone.style.width = `${a.width}px`;
+    clone.style.height = `${a.height}px`;
+    clone.style.opacity = '1';
+    document.body.appendChild(clone);
+    const dx = (b.left + b.width / 2) - (a.left + a.width / 2);
+    const dy = (b.top + b.height / 2) - (a.top + a.height / 2);
+    const arc = Math.max(24, Math.abs(dy) * 0.22);
+    const animation = clone.animate([
+      { transform:'translate(0,0) rotate(0deg) scale(1)', opacity:0.98, filter:'brightness(1)' },
+      { transform:`translate(${dx * .25}px,${dy * .25 - arc}px) rotate(-7deg) scale(.94)`, opacity:0.95, filter:'brightness(1.08)' },
+      { transform:`translate(${dx * .68}px,${dy * .68 + arc * .2}px) rotate(11deg) scale(.58)`, opacity:0.72, filter:'brightness(.92)' },
+      { transform:`translate(${dx}px,${dy}px) rotate(18deg) scale(.18)`, opacity:0, filter:'brightness(.65)' }
+    ], { duration:620, easing:'cubic-bezier(.2,.75,.22,1)', fill:'forwards' });
+    animation.finished.then(() => clone.remove()).catch(() => clone.remove());
+  } catch (_) {}
+}
+
 function defeat(owner, c, killer) {
   const p = owner; let idx = -1;
   if (p.front === c) p.front = null; else idx = p.bank.indexOf(c);
@@ -624,8 +654,9 @@ function defeat(owner, c, killer) {
     c.barataUsed = true; c.bonusAtk += c.baseAtk; c.bonusHp += c.baseHp;
     c.hp = c.maxHp = c.baseHp + c.bonusHp;
     if (canReceiveHand(p === state.players[0] ? 0 : 1)) { p.hand.push(c); log('Barata voltou para a mão com os atributos dobrados.'); }
-    else { state.grave.push(c); log('A Barata não pôde voltar: a mão estava cheia.'); }
+    else { animateCardDeathToGrave(c); state.grave.push(c); log('A Barata não pôde voltar: a mão estava cheia.'); }
   } else {
+    animateCardDeathToGrave(c);
     state.grave.push(c);
     if (c.key === 'cigarra') { const defeatedPi = p === state.players[0] ? 0 : 1; state.skip[1 - defeatedPi] = true; }
     if (c.key === 'ovos') drawFree(p === state.players[0] ? 0 : 1, 2);
