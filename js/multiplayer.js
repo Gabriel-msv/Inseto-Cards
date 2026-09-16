@@ -57,101 +57,81 @@ const MP = {
 function buildGate() {
   const menu = document.getElementById('startMenu');
   if (!menu) return;
-  const card = menu.querySelector('.start-menu-card');
-  if (!card) return;
 
-  card.innerHTML = `
-    <div class="start-kicker">INSETO CARDS · BATTLE CORE</div>
-    <div class="start-logo"><span class="logo-mark"></span><div><strong>INSETO<br>CARDS</strong><small>DUEL0 BOTÂNICO</small></div></div>
-    <div class="menu-arena-title"><span>ARENA</span><strong>DUEL0 BOTÂNICO</strong></div>
-    <p class="start-copy">Entre na arena. Jogue sozinho contra o BOT ou desafie outro comandante pela rede.</p>
-
-    <label class="start-label" for="mpPlayerName">NOME DO COMANDANTE</label>
-    <input id="mpPlayerName" class="field-input start-input" maxlength="18" value="Jogador" autocomplete="off">
-
-    <div class="menu-mode-grid" role="tablist" aria-label="Modo de partida">
-      <button id="mpSoloBtn" class="menu-mode is-active" type="button"><span class="mode-kicker">SOLO</span><strong>JOGAR CONTRA BOT</strong><small>Partida local · sem rede</small></button>
-      <button id="mpCreateTab" class="menu-mode" type="button"><span class="mode-kicker">ONLINE</span><strong>CRIAR SALA</strong><small>Convide outro jogador</small></button>
-      <button id="mpJoinTab" class="menu-mode" type="button"><span class="mode-kicker">ONLINE</span><strong>ENTRAR EM SALA</strong><small>Use um código de 4 caracteres</small></button>
-    </div>
-
-    <section id="mpPanelSolo" class="menu-panel is-active">
-      <div class="menu-panel-title">DUELO CONTRA O BOT</div>
-      <div class="menu-preview"><span>VOCÊ</span><b>VS</b><span>BOT</span></div>
-      <button id="mpSoloLaunch" class="btn btn-primary start-cta" type="button">ENTRAR NA ARENA</button>
-    </section>
-
-    <section id="mpPanelCreate" class="menu-panel">
-      <div class="menu-panel-title">CRIAR SALA ONLINE</div>
-      <div class="menu-panel-copy">Crie uma sala e compartilhe o código com o outro jogador.</div>
-      <label class="start-label" for="mpCreatePass">SENHA <span class="optional">(OPCIONAL)</span></label>
-      <input id="mpCreatePass" class="field-input" type="password" maxlength="24" placeholder="Deixe em branco para não usar senha">
-      <button id="mpCreateBtn" class="btn btn-primary start-cta" type="button">CRIAR SALA</button>
-    </section>
-
-    <section id="mpPanelJoin" class="menu-panel">
-      <div class="menu-panel-title">ENTRAR EM SALA</div>
-      <div class="menu-panel-copy">Digite o código recebido do outro jogador.</div>
-      <label class="start-label" for="mpGateCode">CÓDIGO DA SALA</label>
-      <input id="mpGateCode" class="field-input menu-code" maxlength="4" placeholder="ABCD" autocomplete="off">
-      <label class="start-label" for="mpJoinPass">SENHA <span class="optional">(SE HOUVER)</span></label>
-      <input id="mpJoinPass" class="field-input" type="password" maxlength="24" placeholder="Senha da sala">
-      <button id="mpJoinBtn" class="btn btn-primary start-cta" type="button">ENTRAR NA SALA</button>
-    </section>
-
-    <section id="mpPanelWait" class="menu-panel">
-      <div class="menu-panel-title" id="mpWaitTitle">CONECTANDO...</div>
-      <div id="mpWaitCode" class="mp-code-display" hidden></div>
-      <div id="mpWaitText" class="menu-panel-copy"></div>
-      <button id="mpStartBtn" class="btn btn-primary start-cta" type="button" hidden>INICIAR PARTIDA</button>
-      <button id="mpBackBtn" class="btn btn-secondary start-cta menu-back" type="button">VOLTAR</button>
-    </section>
-
-    <div id="mpGateError" class="menu-error" role="alert"></div>
-    <button id="mpRulesBtn" class="start-rules" type="button">REGRAS & MECÂNICAS</button>
-  `;
-
-  const activate = panel => {
+  // 3.1.1: o menu já existe no index.html. Não recriamos o DOM aqui.
+  // Isso evita duplicação de IDs, eventos quebrados e o menu antigo cobrindo o novo.
+  const activate = (buttonId, panelId) => {
     menu.querySelectorAll('.menu-mode').forEach(b => b.classList.remove('is-active'));
     menu.querySelectorAll('.menu-panel').forEach(p => p.classList.remove('is-active'));
-    panel.button.classList.add('is-active');
-    panel.el.classList.add('is-active');
+    document.getElementById(buttonId)?.classList.add('is-active');
+    document.getElementById(panelId)?.classList.add('is-active');
     setError('');
   };
 
-  const soloPanel = { button: $('mpSoloBtn'), el: $('mpPanelSolo') };
-  const createPanel = { button: $('mpCreateTab'), el: $('mpPanelCreate') };
-  const joinPanel = { button: $('mpJoinTab'), el: $('mpPanelJoin') };
-  soloPanel.button.onclick = () => activate(soloPanel);
-  createPanel.button.onclick = () => activate(createPanel);
-  joinPanel.button.onclick = () => activate(joinPanel);
+  document.getElementById('mpSoloBtn')?.addEventListener('click', () => activate('mpSoloBtn', 'mpPanelSolo'));
+  document.getElementById('mpCreateTab')?.addEventListener('click', () => activate('mpCreateTab', 'mpPanelCreate'));
+  document.getElementById('mpJoinTab')?.addEventListener('click', () => activate('mpJoinTab', 'mpPanelJoin'));
 
-  $('mpPlayerName').value = getSavedName();
-  $('mpPlayerName').addEventListener('input', () => {
-    MP.localName = readLocalName(); saveLocalName(MP.localName); syncNameToGame(MP.localName);
-  });
+  const nameInput = document.getElementById('mpPlayerName');
+  if (nameInput) {
+    nameInput.value = getSavedName();
+    MP.localName = readLocalName();
+    nameInput.addEventListener('input', () => {
+      MP.localName = readLocalName();
+      saveLocalName(MP.localName);
+      syncNameToGame(MP.localName);
+    });
+  }
 
-  $('mpSoloLaunch').onclick = () => {
-    MP.active = false; MP.role = null; MP.peerReady = false;
-    try { if (MP.ws) MP.ws.close(); } catch {}
-    MP.ws = null; MP.connected = false; MP.connecting = false;
-    const name = readLocalName(); MP.localName = name; saveLocalName(name); syncNameToGame(name);
+  document.getElementById('mpSoloLaunch')?.addEventListener('click', () => {
+    MP.active = false;
+    MP.role = null;
+    MP.peerReady = false;
+    try { MP.ws?.close(); } catch {}
+    MP.ws = null;
+    MP.connected = false;
+    MP.connecting = false;
+    const name = readLocalName();
+    MP.localName = name;
+    saveLocalName(name);
+    syncNameToGame(name);
     closeGate();
     if (typeof init === 'function') init();
-  };
-  $('mpCreateBtn').onclick = createRoom;
-  $('mpJoinBtn').onclick = joinRoom;
-  $('mpStartBtn').onclick = () => MP.startGame?.();
-  $('mpBackBtn').onclick = () => {
-    try { if (MP.ws) MP.ws.close(); } catch {}
-    MP.ws = null; MP.connected = false; MP.connecting = false; MP.active = false; MP.role = null; MP.peerReady = false;
-    activate(soloPanel);
-  };
-  $('mpRulesBtn').onclick = () => {
-    menu.style.zIndex = '90';
+  });
+
+  document.getElementById('mpCreateBtn')?.addEventListener('click', createRoom);
+  document.getElementById('mpJoinBtn')?.addEventListener('click', joinRoom);
+  document.getElementById('mpStartBtn')?.addEventListener('click', () => MP.startGame?.());
+
+  document.getElementById('mpBackBtn')?.addEventListener('click', () => {
+    try { MP.ws?.close(); } catch {}
+    MP.ws = null;
+    MP.connected = false;
+    MP.connecting = false;
+    MP.active = false;
+    MP.role = null;
+    MP.peerReady = false;
+    document.getElementById('mpWaitCode')?.setAttribute('hidden', '');
+    activate('mpSoloBtn', 'mpPanelSolo');
+  });
+
+  document.getElementById('mpRulesBtn')?.addEventListener('click', () => {
     if (typeof rules === 'function') rules();
-    $('modalClose')?.addEventListener('click', () => { menu.style.zIndex = '450'; }, { once: true });
-  };
+  });
+
+  // Enter nos campos do menu aciona o botão correspondente.
+  document.getElementById('mpCreatePass')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('mpCreateBtn')?.click();
+  });
+  document.getElementById('mpGateCode')?.addEventListener('input', e => {
+    e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
+  });
+  document.getElementById('mpJoinPass')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('mpJoinBtn')?.click();
+  });
+
+  // Estado inicial limpo.
+  activate('mpSoloBtn', 'mpPanelSolo');
 }
 
 function readLocalName() {

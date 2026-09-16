@@ -2,9 +2,18 @@
 
 Jogo de cartas em HTML, CSS e JavaScript, jogável contra um BOT ou outro jogador pela rede.
 
-**Versão atual:** `3.1.0`
+**Versão atual:** `3.1.1`
 
-## 3.1.0 — Forest Glass UX
+## 3.1.1 — Menu principal corrigido
+
+- Corrigido o menu duplicado: `multiplayer.js` não recria mais a interface que já está definida no `index.html`.
+- Corrigidos IDs e eventos do menu Solo, Criar Sala, Entrar em Sala e sala em espera.
+- Corrigida a navegação por abas e os atalhos `Enter` dos campos de criação/entrada.
+- Corrigido o código da sala para aceitar somente 4 caracteres alfanuméricos em maiúsculas.
+- Corrigido o texto `DUELO BOTÂNICO`.
+- Mantida a estrutura mobile da 3.1.0; esta versão é uma correção de fluxo/menu.
+
+## 3.1.1 — Forest Glass UX
 
 - Novo menu principal com BOT, criação de sala e entrada em sala no mesmo fluxo.
 - Interface redesenhada com verde-musgo, verde-caçador e marrom-terra; dourado usado apenas em contornos/detalhes.

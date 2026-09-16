@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Inseto Cards 3.1.0 — Relay | Inseto-Cards</title>
+<meta name="generator" content="Jekyll v3.10.0" />
+<meta property="og:title" content="Inseto Cards 3.1.0 — Relay" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="um player para meu jogo de cartas" />
+<meta property="og:description" content="um player para meu jogo de cartas" />
+<link rel="canonical" href="https://gabriel-msv.github.io/Inseto-Cards/server/" />
+<meta property="og:url" content="https://gabriel-msv.github.io/Inseto-Cards/server/" />
+<meta property="og:site_name" content="Inseto-Cards" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Inseto Cards 3.1.0 — Relay" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"um player para meu jogo de cartas","headline":"Inseto Cards 3.1.0 — Relay","url":"https://gabriel-msv.github.io/Inseto-Cards/server/"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/Inseto-Cards/assets/css/style.css?v=4faf852cc3c167e86dd8c71a520689dae9bbced0">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/Inseto-Cards/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+    <div class="container-lg px-3 my-5 markdown-body">
+      
+      <h1><a href="https://gabriel-msv.github.io/Inseto-Cards/">Inseto-Cards</a></h1>
+      
+
+      <h2 id="inseto-cards-310--relay">Inseto Cards 3.1.0 — Relay</h2>
+
+<h1 id="inseto-cards--multiplayer-server">Inseto Cards — Multiplayer Server</h1>
+
+<p>Relay WebSocket da edição 3.1.0, compatível com <code class="language-plaintext highlighter-rouge">js/multiplayer.js</code> 3.1.0.</p>
+
+<h2 id="rodar">Rodar</h2>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npm <span class="nb">install
+</span>npm start
+</code></pre></div></div>
+
+<p>Defina <code class="language-plaintext highlighter-rouge">PORT</code> no ambiente de hospedagem. O servidor usa <code class="language-plaintext highlighter-rouge">10000</code> como padrão.</p>
+
+<h2 id="protocolo">Protocolo</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">create</code> → cria sala</li>
+  <li><code class="language-plaintext highlighter-rouge">join</code> → entra na sala</li>
+  <li><code class="language-plaintext highlighter-rouge">player-name</code> → sincroniza nomes</li>
+  <li><code class="language-plaintext highlighter-rouge">action</code> → guest → host</li>
+  <li><code class="language-plaintext highlighter-rouge">state</code> → host → guest</li>
+  <li><code class="language-plaintext highlighter-rouge">revenge</code> → sincroniza revanche</li>
+  <li><code class="language-plaintext highlighter-rouge">peer-joined</code> / <code class="language-plaintext highlighter-rouge">peer-left</code> → presença</li>
+</ul>
+
+<p>O servidor não executa regras do jogo: ele apenas retransmite ações e o estado autoritativo do host.</p>
+
+
+      
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.1.0/anchor.min.js" integrity="sha256-lZaRhKri35AyJSypXXs4o6OPFTbTmUoltBbDCbdzegg=" crossorigin="anonymous"></script>
+    <script>anchors.add();</script>
+  </body>
+</html>
