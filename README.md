@@ -2,7 +2,13 @@
 
 Jogo de cartas em HTML, CSS e JavaScript, jogável contra um BOT ou outro jogador pela rede.
 
-**Versão atual:** `3.2.3`
+**Versão atual:** `3.2.4`
+
+## 3.2.4 — Botões horizontais
+
+- Reorganizados os controles centrais para manter COMPRAR, COLHER, ENCERRAR TURNO e 2º MOVIMENTO na mesma linha.
+- Ações dependentes de seleção permanecem em uma segunda linha compacta.
+- Correção somente visual; regras, combate, BOT e multiplayer não foram alterados.
 
 ## 3.2.3 — Ajuste fino do campo e controles
 

@@ -1255,9 +1255,7 @@ body { background-color:#08110c; background-image:radial-gradient(circle at 20% 
 @media (min-width: 901px) {
   .root {
     grid-template-columns: 248px minmax(0, 1fr) 332px;
-    /* 82px não cabia nem o texto dos botões (cortava "2º MOVIMENTO").
-       138px dá espaço real para o cabeçalho + a linha de botões. */
-    grid-template-rows: minmax(0, 1fr) 138px;
+    grid-template-rows: minmax(0, 1fr) 82px;
     gap: 8px;
     padding: 8px;
   }
@@ -1302,75 +1300,58 @@ body { background-color:#08110c; background-image:radial-gradient(circle at 20% 
   .center-controls {
     grid-template-columns: minmax(205px, .72fr) minmax(0, 1.9fr);
     gap: 7px;
-    height: 100%;
+    height: 82px;
   }
 
   .center-status {
-    padding: 6px 10px;
-    gap: 5px;
-    justify-content: center;
+    padding: 4px 8px;
+    gap: 3px;
   }
 
   .center-status .message {
-    min-height: 15px;
+    min-height: 13px;
     padding: 0 2px;
-    font-size: 10px;
+    font-size: 8px;
   }
 
   .center-status .player-hud {
     grid-template-columns: auto auto minmax(0,1fr) auto;
-    gap: 5px;
+    gap: 4px;
     padding: 2px 3px;
   }
 
-  .center-status .player-name { font-size: 10px; }
-  .center-status .small { font-size: 9px; }
-  .center-status .leaf-token { width: 20px; height: 20px; flex-basis: 20px; }
+  .center-status .player-name { font-size: 9px; }
+  .center-status .small { font-size: 7px; }
+  .center-status .leaf-token { width: 18px; height: 18px; flex-basis: 18px; }
 
   .center-actions {
-    padding: 6px 10px;
+    padding: 4px 7px;
     display: grid;
-    /* Antes era 1.7fr .8fr 1.7fr: a coluna do meio (UM botão, "2º
-       MOVIMENTO") recebia menos espaço absoluto que cada botão das
-       colunas de 3 (COMPRAR/COLHER/ENCERRAR, ATACAR/DEVOLVER/VENDER),
-       por isso o texto estourava e o ellipsis cortava "MOVIMEN...". */
-    grid-template-columns: 1fr .85fr 1fr;
-    grid-template-rows: 20px auto;
-    align-content: center;
-    gap: 4px 10px;
-    overflow: visible;
+    grid-template-columns: 1.7fr .8fr 1.7fr;
+    grid-template-rows: 16px 1fr;
+    gap: 3px 7px;
+    overflow: hidden;
   }
 
   .center-actions .action-summary {
     grid-column: 1 / -1;
-    min-height: 15px;
-    padding: 0 0 2px;
-    font-size: 9px;
+    min-height: 13px;
+    padding: 0 0 1px;
+    font-size: 7px;
     border-bottom: 1px solid rgba(141,176,139,.12);
   }
 
-  .center-actions .action-summary b { font-size: 10px; }
-  .center-actions .action-group { min-width: 0; gap: 3px; }
-  .center-actions .action-header { font-size: 7px; line-height: 1; white-space: nowrap; }
-  .center-actions .actions { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 4px; min-height: 0; }
-  .center-actions .action {
-    min-height: 34px;
-    height: auto;
-    padding: 6px 5px;
-    font-size: 9.5px;
-    line-height: 1.15;
-    white-space: normal;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+  .center-actions .action-summary b { font-size: 8px; }
+  .center-actions .action-group { min-width: 0; gap: 2px; }
+  .center-actions .action-header { font-size: 6px; line-height: 1; white-space: nowrap; }
+  .center-actions .actions { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 3px; min-height: 0; }
+  .center-actions .action { min-height: 24px; height: 24px; padding: 2px 4px; font-size: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   .center-actions .action-group:nth-of-type(1) { grid-column: 1; }
   .center-actions .action-group:nth-of-type(2) { grid-column: 2; }
   .center-actions .action-group:nth-of-type(3) { grid-column: 3; }
   .center-actions .action-group:nth-of-type(1) .actions,
   .center-actions .action-group:nth-of-type(3) .actions { grid-template-columns: repeat(3, minmax(0,1fr)); }
-  /* Um único botão: deixa ele ocupar a coluna toda em vez de imitar
-     o grid de 3 colunas das outras ações. */
   .center-actions .action-group:nth-of-type(2) .actions { grid-template-columns: 1fr; }
 
   .right-sidebar .hand-panel { padding: 8px; }
@@ -1388,12 +1369,77 @@ body { background-color:#08110c; background-image:radial-gradient(circle at 20% 
 }
 
 @media (max-width: 1050px) and (min-width: 901px) {
-  /* Essa regra vem por último no arquivo, então é ela que "ganha" da
-     regra genérica acima — por isso precisa repetir os mesmos 138px
-     e não pode voltar a espremer o texto dos botões em 6.5px. */
-  .root { grid-template-columns: 205px minmax(0,1fr) 270px; grid-template-rows:minmax(0,1fr) 138px; }
+  .root { grid-template-columns: 205px minmax(0,1fr) 270px; grid-template-rows:minmax(0,1fr) 82px; }
   .battle-main { padding-left: 8px; padding-right: 8px; }
   .center-controls { grid-template-columns:minmax(175px,.72fr) minmax(0,1.85fr); }
-  .center-actions { gap: 4px 6px; }
-  .center-actions .action { font-size: 8.5px; padding-inline: 4px; }
+  .center-actions { gap: 3px 5px; }
+  .center-actions .action { font-size: 6.5px; padding-inline: 3px; }
+}
+
+/* ================================================================
+   3.2.4 — BOTÕES HORIZONTAIS NO PAINEL CENTRAL
+   Mantém a lógica do jogo. Corrige apenas a composição dos controles.
+   ================================================================ */
+@media (min-width: 901px) {
+  .center-actions {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 4px 6px;
+    padding: 5px 8px;
+    overflow: hidden;
+  }
+
+  .center-actions .action-summary {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    min-height: 12px;
+    padding: 0 0 2px;
+    border-bottom: 1px solid rgba(141,176,139,.12);
+    font-size: 7px;
+  }
+
+  /* Os grupos deixam de criar colunas verticais próprias.
+     Seus botões passam a ocupar diretamente a grade do painel. */
+  .center-actions .action-group {
+    display: contents;
+  }
+
+  .center-actions .action-header {
+    display: none;
+  }
+
+  .center-actions .actions,
+  .center-actions .target-actions {
+    display: contents !important;
+  }
+
+  .center-actions .action {
+    min-width: 0;
+    width: 100%;
+    min-height: 30px;
+    height: 30px;
+    padding: 4px 5px;
+    font-size: 8px;
+    line-height: 1.05;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+@media (max-width: 1050px) and (min-width: 901px) {
+  .center-actions {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 3px 4px;
+    padding-inline: 5px;
+  }
+
+  .center-actions .action {
+    min-height: 28px;
+    height: 28px;
+    padding-inline: 3px;
+    font-size: 7px;
+  }
 }
