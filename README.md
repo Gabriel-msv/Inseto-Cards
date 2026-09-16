@@ -2,7 +2,7 @@
 
 Jogo de cartas em HTML, CSS e JavaScript, jogável contra um BOT ou outro jogador pela rede.
 
-**Versão atual:** `3.2.21`
+**Versão atual:** `3.2.22`
 
 ## 3.2.21 — Restauração estrutural do campo de batalha desktop
 
@@ -14,6 +14,12 @@ Jogo de cartas em HTML, CSS e JavaScript, jogável contra um BOT ou outro jogado
 - Modo Editor continua isolado por `body.editor-mode`.
 - Mecânicas, BOT, multiplayer e catálogo de cartas não foram alterados.
 - Cache busting atualizado para `3.2.21`.
+
+## 3.2.22 — Aproximação do Banco ao Fronte
+
+- Reduzida a distância vertical entre o `FRONTE` do jogador e o `BANCO` logo abaixo.
+- Ajuste aplicado somente no desktop, preservando o layout mobile.
+- Nenhuma mecânica de jogo foi alterada.
 
 ## Estrutura
 
