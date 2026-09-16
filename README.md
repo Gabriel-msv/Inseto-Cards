@@ -1,42 +1,58 @@
-# Inseto Cards — v2.1.3
+# Inseto Cards - Battle Edition
 
-Correção focada em multiplayer + menu principal + habilidade do Vaga-lume.
+Jogo de cartas em HTML, CSS e JavaScript, jogável contra um BOT ou outro jogador pela rede.
 
-## O que foi corrigido
+**Versão atual:** `3.1.0`
 
-- **Multiplayer:** o player 1 não é mais tratado como BOT. O motor só executa `botTurn()` quando o jogador realmente tem `bot: true`.
-- **Turno do Guest:** o host não executa a IA durante o turno do segundo jogador.
-- **Vaga-lume:** ao ser invocado, escolhe até 2 cartas aleatórias da mão adversária e abre um pop-up com as artes reais das cartas.
-- **Vaga-lume no multiplayer:** a revelação acompanha o estado autoritativo e aparece somente para o jogador que invocou o Vaga-lume.
-- **Efeitos por alvo no multiplayer:** clique e arraste de Inseticida, Lupa e Teia enviam corretamente o alvo ao host.
-- **Menu principal:** o menu dourado/retro-botânico virou a tela inicial principal. Ele concentra:
-  - Jogar contra BOT
-  - Criar sala
-  - Entrar em sala
-  - Código da sala
-  - Senha opcional
-  - Espera pelo adversário
-  - Botão de iniciar partida para o host
-  - Regras
-- **Conexão:** WebSocket não é reutilizado quando já está fechado e estados antigos do host não sobrescrevem estados mais novos.
+## 3.1.0 — Forest Glass UX
 
-## Arquivos
+- Novo menu principal com BOT, criação de sala e entrada em sala no mesmo fluxo.
+- Interface redesenhada com verde-musgo, verde-caçador e marrom-terra; dourado usado apenas em contornos/detalhes.
+- Glassmorphism aplicado aos painéis e controles, mantendo a leitura das informações.
+- Novo sistema visual de fichas de folha usando `assets/ui/ficha-folha.png`, com fileira horizontal e feedback de ganho/gasto.
+- Limite de 15 folhas por jogador.
+- Limite de 6 cartas na mão; compras, retornos e efeitos que geram cartas respeitam o limite.
+- Cartas no campo continuam podendo existir além do limite da mão, mas não podem retornar se a mão estiver cheia.
+- Arrastar um inseto sobre outro inseto aliado troca as posições e consome 1 movimento.
+- Sistema de seleção unificado para cartas da mão, Fronte e Banco.
+- Clique seleciona; hover não abre mais informação.
+- Área neutra ou `Esc` cancela seleção.
+- VENDER funciona diretamente para carta selecionada na mão ou no campo.
+- Novo inspetor de carta mostra arte, ATK, HP, custo, tipo, condição, habilidade e equipamentos.
+- ATK/HP receberam contorno e fundo para melhorar a leitura sobre a arte.
+- Cartas com equipamento recebem detalhes dourados discretos.
+- Mobile mantém a estrutura de interação existente; o redesign de ações é focado no desktop.
+- Correções de fluxo multiplayer preservadas da série 2.1.x: BOT não joga em partidas online, socket reconecta de forma segura e ações do guest são enviadas ao host.
 
-Substitua os arquivos correspondentes no seu projeto:
+## Estrutura
 
-- `index.html`
-- `css/style.css`
-- `js/game.js`
-- `js/multiplayer.js`
-- `js/battle-fx.js`
-- `server/*` se estiver usando o relay incluído
+- `index.html` — interface, menu principal, campo, ações, mão, inspetor e pop-ups.
+- `css/style.css` — tema visual, glassmorphism, layout, cartas, fichas e responsividade.
+- `js/game.js` — regras, BOT, combate, efeitos, seleção, drag & drop e renderização.
+- `js/multiplayer.js` — salas multiplayer, sincronização host/guest, timer e fluxo de sessão.
+- `js/battle-fx.js` — efeitos visuais adicionais.
+- `assets/ui/ficha-folha.png` — ficha visual de folha.
+- `assets/cards/` — artes das cartas referenciadas por `CARD_IMAGES`.
 
-As imagens de `assets/cards/` continuam sendo as do seu projeto; o Vaga-lume usa `assets/cards/vaga.jpg` e o restante do mapa `CARD_IMAGES` existente.
+## Regras de interação 3.1
+
+- A mão possui no máximo 6 cartas.
+- Folhas possuem no máximo 15 unidades.
+- Invocação e movimentação usam movimentos; ações padrão continuam separadas.
+- Arrastar um inseto sobre outro aliado troca as posições.
+- Clique em uma carta da mão seleciona e libera `VENDER`; cartas de efeito podem ser usadas pelo botão no inspetor ou por arraste.
+- Clique em uma carta do campo seleciona para `ATACAR`, `PUXAR DE VOLTA` ou `VENDER`, conforme a ação disponível.
+- Informações completas são exibidas por seleção, não por hover.
 
 ## Multiplayer
 
-O cliente continua apontando para:
+- `CRIAR SALA` gera um código de quatro letras.
+- `ENTRAR EM SALA` usa código e senha opcional.
+- O host inicia a partida quando o segundo jogador entra.
+- O host mantém o estado autoritativo; o guest envia ações.
+- Em partidas online, o player 1 é humano e não executa `botTurn()`.
+- O Vaga-lume mantém a revelação de duas cartas como informação temporária para o jogador correto.
 
-`wss://server-dh1h.onrender.com`
+## Versionamento
 
-O relay incluído em `server/` usa Node.js + `ws` e deve ser publicado em um serviço compatível com WebSocket. Se o seu servidor já está funcionando nesse endereço, não é necessário trocar a URL.
+A versão segue `X.Y.Z`: `X` para reformas grandes/estruturais, `Y` para novas funções/mecânicas e `Z` para correções de bugs. O valor exibido no badge do jogo acompanha `APP_VERSION`.

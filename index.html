@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#0d0a06">
 <!-- Projeto organizado em HTML + CSS + JS + assets/cards + assets/ui. -->
 <!-- Interface e motor separados; a camada visual não altera a estrutura mobile. -->
-<!-- v2.1 — Edição "Naturalista / Manuscrito Botânico": paleta madeira/latão/pergaminho -->
+<!-- v3.1.0 — Forest Glass: verde-musgo, verde-caçador, terra e acentos dourados. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cinzel+Decorative:wght@700;900&family=Spectral:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@
 <link rel="apple-touch-icon" sizes="512x512" href="/assets/cards/icon.png?v=1.8.3">
 </head>
 <body>
-<div class="version-badge" aria-label="Versão atual">v2.1.3 · Battle Core</div>
+<div class="version-badge" aria-label="Versão atual">v3.1.0 · Battle Core</div>
 <div class="grain"></div>
 <div class="vignette"></div>
 <canvas id="fxCanvas" class="fx-canvas" aria-hidden="true"></canvas>
@@ -204,11 +204,27 @@
       </div>
     </section>
 
+    <section id="cardInspector" class="card-inspector glass-panel" aria-hidden="true">
+      <div class="inspector-top"><span class="action-header">CARTA SELECIONADA</span><span class="inspector-source">MÃO</span></div>
+      <div class="inspector-main">
+        <div class="inspector-art"></div>
+        <div class="inspector-copy">
+          <div class="inspector-name"></div>
+          <div class="inspector-stats"><span class="inspect-atk"></span><span class="inspect-hp"></span></div>
+          <div class="inspector-meta"></div>
+          <div class="inspector-ability"></div>
+          <div class="inspector-equipment"></div>
+        </div>
+      </div>
+      <button id="inspectUse" class="action inspector-use" type="button" hidden></button>
+    </section>
+
+
     <section class="hand-panel glass-panel">
       <div class="hand-panel-head">
         <div>
-          <div class="action-header">ESPÉCIMES NA MÃO</div>
-          <div class="hand-subtitle">Posicione arrastando ao Fronte ou Banco</div>
+          <div class="action-header">ESPÉCIMES NA MÃO <span class="hand-count-badge"><b id="handCount">3/6</b></span></div>
+          <div id="handStatus" class="hand-subtitle">3 ESPAÇOS</div>
         </div>
         <div class="mobile-hand-status" aria-live="polite">
           <span>FOLHAS <b id="handLeaves">5</b></span>

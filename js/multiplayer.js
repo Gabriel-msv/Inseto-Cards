@@ -563,6 +563,22 @@ function applyGuestAction(action) {
         if (c) { p.bank[action.fromSlot] = null; p.front = c; c.root = 0; p.moves--; log(`${p.name} moveu ${CARDS[c.key].name} para o Fronte.`); render(); }
       }
       break;
+    case 'swap': {
+      if (!validMove(pi) || p.moves <= 0) break;
+      const source = findCardById(p, action.sourceId);
+      const target = findCardById(p, action.targetId);
+      if (!source || !target || source === target || !insect(source) || !insect(target)) break;
+      if (source.root > 0 || target.root > 0) break;
+      const sourceZone = action.sourceZone, sourceSlot = Number(action.sourceSlot || 0);
+      const targetZone = action.targetZone, targetSlot = Number(action.targetSlot || 0);
+      if (sourceZone === 'front') p.front = target; else p.bank[sourceSlot] = target;
+      if (targetZone === 'front') p.front = source; else p.bank[targetSlot] = source;
+      p.moves--;
+      log(`${p.name} trocou ${CARDS[source.key].name} e ${CARDS[target.key].name} de posição.`);
+      if (typeof FX !== 'undefined') FX.boardState('fx-move',480);
+      render();
+      break;
+    }
     case 'return':
       if (validMove(pi) && p.moves > 0) { if (returnToHand(pi, action.zone, action.slot)) render(); }
       break;
@@ -621,7 +637,7 @@ function installGuestHooks() {
   const _drawCost = drawCost, _harvest = harvest, _summonFromHand = summonFromHand,
         _moveCard = moveCard, _returnToHand = returnToHand, _attack = attack,
         _equip = equip, _activateEffect = activateEffect, _sellSelected = sellSelected,
-        _secondMove = secondMove, _endTurn = endTurn, _handleDropOnSlot = handleDropOnSlot, _resolveTargetEffect = resolveTargetEffect;
+        _secondMove = secondMove, _endTurn = endTurn, _handleDropOnSlot = handleDropOnSlot, _resolveTargetEffect = resolveTargetEffect, _swapFieldCards = swapFieldCards;
 
   attackPlayer = function () {
     const p = state.players[0], o = state.players[1];
@@ -661,6 +677,17 @@ function installGuestHooks() {
   moveCard = function (pi, fromZone, toSlot) {
     if (pi === 0) { sendAction({ kind: 'move', fromZone, toSlot }); return; }
     return _moveCard(pi, fromZone, toSlot);
+  };
+
+  swapFieldCards = function (pi, fromZone, fromSlot, toZone, toSlot) {
+    if (pi === 0) {
+      const p = state.players[0];
+      const source = fromZone === 'front' ? p.front : p.bank[fromSlot];
+      const target = toZone === 'front' ? p.front : p.bank[toSlot];
+      if (source && target) sendAction({ kind: 'swap', sourceId: source.id, targetId: target.id, sourceZone: fromZone, sourceSlot: fromSlot, targetZone: toZone, targetSlot: toSlot });
+      return true;
+    }
+    return _swapFieldCards(pi, fromZone, fromSlot, toZone, toSlot);
   };
 
   returnToHand = function (pi, zone, slot) {
@@ -726,9 +753,20 @@ function installGuestHooks() {
       }
       if (data?.type === 'effect') return;
     }
+    const localTargetId = slotEl.id;
+    if (found && (found.zone === 'front' || found.zone === 'bank') && !localTargetId.startsWith('e')) {
+      const toZone = localTargetId === 'pf0' ? 'front' : 'bank';
+      const toSlot = toZone === 'front' ? 0 : Number(localTargetId.slice(-1));
+      const targetCard = toZone === 'front' ? state.players[0].front : state.players[0].bank[toSlot];
+      if (targetCard && targetCard.id !== found.c.id && insect(found.c) && insect(targetCard)) {
+        sendAction({ kind: 'swap', sourceId: found.c.id, targetId: targetCard.id, sourceZone: found.zone, sourceSlot: found.slot, targetZone: toZone, targetSlot: toSlot });
+        clearDropTargets();
+        return;
+      }
+    }
     if (found && found.zone === 'bank' && slotEl.id === 'pf0') {
       slotEl.classList.remove('drag-over');
-      sendAction({ kind: 'move', fromZone: 'bank', fromSlot: found.slot });
+      sendAction({ kind: 'move', fromZone: 'bank', fromSlot: found.slot, toSlot: 0 });
       clearDropTargets();
       return;
     }
@@ -761,6 +799,8 @@ function applyHostState(hostState, seq) {
   MP.lastHostSeq = n || MP.lastHostSeq + 1;
 
   const previousLog = state.log?.[0];
+  const previousPlayerLeaves = state.players[0]?.leaves ?? null;
+  const previousEnemyLeaves = state.players[1]?.leaves ?? null;
   const swapped = cloneState(hostState);
   const [p0, p1] = swapped.players;
   swapped.players = [p1, p0];
@@ -778,6 +818,10 @@ function applyHostState(hostState, seq) {
   if (typeof render === 'function') render();
   relabelOpponent();
   updateMultiplayerUI();
+  if (typeof animateLeafDelta === 'function') {
+    if (previousPlayerLeaves !== null) { const d = state.players[0].leaves - previousPlayerLeaves; if (d) animateLeafDelta(0, d, document.getElementById('playerLeafTokens')); }
+    if (previousEnemyLeaves !== null) { const d = state.players[1].leaves - previousEnemyLeaves; if (d) animateLeafDelta(1, d, document.getElementById('enemyLeafTokens')); }
+  }
 
   const reveal = state.vagaReveal;
   if (reveal && reveal.viewer === 0 && reveal.id !== MP.vagaRevealShown) {

@@ -1,6 +1,8 @@
+## Inseto Cards 3.1.0 — Relay
+
 # Inseto Cards — Multiplayer Server
 
-Relay WebSocket compatível com `js/multiplayer.js` 2.1.1.
+Relay WebSocket da edição 3.1.0, compatível com `js/multiplayer.js` 3.1.0.
 
 ## Rodar
 

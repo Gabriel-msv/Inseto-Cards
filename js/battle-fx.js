@@ -1,5 +1,5 @@
 /* ============================================================================
-   INSETO CARDS — BATTLE FX 2.0.3
+   INSETO CARDS — BATTLE FX 3.1.0
    Camada puramente visual. NÃO altera a estrutura do tabuleiro nem as regras.
    Requer GSAP 3.x carregado antes deste arquivo.
    ============================================================================ */

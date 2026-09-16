@@ -70,6 +70,19 @@ const FX = {
       this.layer.appendChild(q); setTimeout(()=>q.remove(),850);
     }
   },
+  leafTokens(pi, delta, anchor) {
+    const layer = this.layer || document.body;
+    const p = this.point(anchor || document.getElementById(pi === 0 ? 'playerLeafTokens' : 'enemyLeafTokens'));
+    const amount = Math.min(5, Math.max(1, Math.abs(Number(delta) || 0)));
+    for (let i = 0; i < amount; i++) {
+      const q = document.createElement('img'); q.className = 'fx-token'; q.src = 'assets/ui/ficha-folha.png'; q.alt = ''; q.setAttribute('aria-hidden','true');
+      q.style.left = `${p.x + Math.random()*26 - 13}px`; q.style.top = `${p.y + Math.random()*18 - 9}px`;
+      q.style.setProperty('--dx', `${Math.random()*90 - 45}px`);
+      q.style.setProperty('--dy', `${delta > 0 ? -(30 + Math.random()*50) : (20 + Math.random()*40)}px`);
+      q.style.setProperty('--rot', `${Math.random()*260 - 130}deg`);
+      layer.appendChild(q); setTimeout(() => q.remove(), 850);
+    }
+  },
   loop() {
     requestAnimationFrame(()=>this.loop());
   }
@@ -176,7 +189,7 @@ const DECK_KEYS = Object.keys(CARDS); // catálogo completo atual, uma cópia de
 // 2. ESTADO DA PARTIDA
 // Guarda jogadores, baralho, cemitério, turno e seleção do jogador.
 // ================================================================
-const APP_VERSION = '2.1.3'; // versão cumulativa: catálogo, combate, efeitos e UX.
+const APP_VERSION = '3.1.0'; // versão cumulativa: catálogo, combate, efeitos e UX.
 const state = { started: false, over: false, round: 1, turn: 'player', deck: [], grave: [], players: [null, null], selected: null, selectedField: null, targetMode: null, log: [], skip: [false, false], tie: false, vagaReveal: null };
 function P(name, bot = false) { return { name, bot, leaves: 5, hand: [], front: null, bank: [null, null, null], moves: 1, std: 1, passiveBuy: false, adubo: 0, antiSteal: 0, revealed: 0 }; }
 function card(key, owner) { let c = CARDS[key]; return { id: Math.random().toString(36).slice(2), key, owner, atk: c.atk ?? 0, hp: c.hp ?? 0, maxHp: c.hp ?? 0, baseAtk: c.atk ?? 0, baseHp: c.hp ?? 0, damage: 0, buffs: [], equipment: [], activeTurns: 0, poison: 0, poisonTurns: 0, root: 0, skipAttack: 0, reload: 0, protectedOnce: key === 'louva', barataUsed: false, mel: false, customAbility: null, copiedKey: null, debuffNext: false, bonusAtk: 0, bonusHp: 0, passiveAtkBonus: 0, passiveHpBonus: 0, debuffAtk: 0, lupa: 0, teia: 0, effectMarks: [] }; }
@@ -201,18 +214,27 @@ function init() {
   // ================================================================
   document.getElementById('start').disabled = true; startTurn(0); render()
 }
-function drawRaw(pi) { if (!state.deck.length) return null; let k = state.deck.pop(); let c = card(k, pi); state.players[pi].hand.push(c); return c }
+function handLimit(pi) { return 6; }
+function canReceiveHand(pi, amount = 1) { const p = state.players[pi]; return !!p && p.hand.length + amount <= handLimit(pi); }
+function drawRaw(pi) {
+  if (!state.deck.length || !canReceiveHand(pi)) return null;
+  let k = state.deck.pop();
+  let c = card(k, pi);
+  state.players[pi].hand.push(c);
+  return c;
+}
 function drawCost(pi) {
   let p = state.players[pi];
   if (!p) return false;
+  if (p.hand.length >= handLimit(pi)) { if (pi === 0) blockAction('Sua mão está cheia. O máximo é 6 cartas.'); return false; }
   if (p.leaves < 3) { if (pi === 0) blockAction('Você precisa de 3 folhas para comprar uma carta.'); return false; }
   if (!state.deck.length) { if (pi === 0) blockAction('A Natureza está sem cartas.'); return false; }
-  p.leaves -= 3; FX.boardState('fx-draw',650); FX.ring(document.querySelector('.natureza .pile')); FX.leaves(document.querySelector('.natureza .pile'), document.getElementById(pi===0?'playerLeaves':'enemyLeaves'));
+  p.leaves -= 3; animateLeafDelta(pi, -3, document.getElementById(pi===0?'playerLeafTokens':'enemyLeafTokens')); FX.boardState('fx-draw',650); FX.ring(document.querySelector('.natureza .pile')); FX.leaves(document.querySelector('.natureza .pile'), document.getElementById(pi===0?'playerLeaves':'enemyLeaves'));
   let c = drawRaw(pi);
   if (c) log(`${p.name} comprou ${CARDS[c.key].name} por 3 folhas.`);
   return !!c;
 }
-function drawFree(pi, n) { for (let i = 0; i < n; i++) { let c = drawRaw(pi); if (c) log(`${state.players[pi].name} recebeu ${CARDS[c.key].name} grátis.`) } }
+function drawFree(pi, n) { for (let i = 0; i < n; i++) { let c = drawRaw(pi); if (c) log(`${state.players[pi].name} recebeu ${CARDS[c.key].name} grátis.`); else if (state.players[pi]?.hand.length >= handLimit(pi)) { log(`${state.players[pi].name} está com a mão cheia (6 cartas).`); break; } else break; } }
 function countField(pi) { const p = state.players[pi]; return p ? fieldCards(pi).filter(insect).length : 0 }
 function allInsectsGone(pi) { const p = state.players[pi]; return !p.hand.some(insect) && !insect(p.front) && !p.bank.some(insect) }
 function mandatoryInsectDraw(pi) {
@@ -245,6 +267,8 @@ function hasAvailableMove(pi) {
   if (!p || p.moves <= 0) return false;
   if (p.front && p.front.root <= 0 && p.bank.some(x => !x)) return true;
   if (!p.front && p.bank.some(x => x && x.root <= 0)) return true;
+  const movable = [p.front, ...p.bank].filter(c => c && insect(c) && c.root <= 0);
+  if (movable.length >= 2) return true;
   if ([p.front, ...p.bank].some(c => c && c.root <= 0 && c.hp >= c.maxHp && !CARDS[c.key].type)) return true;
   return p.hand.some(c => {
     const d = CARDS[c.key];
@@ -304,7 +328,7 @@ function startTurn(pi) {
   p.moves = 1;
 
   // A partir da rodada 2, cada jogador recebe 1 folha no início do próprio turno.
-  if (state.round > 1) p.leaves = Math.min(15, p.leaves + 1);
+  if (state.round > 1) { p.leaves = Math.min(15, p.leaves + 1); animateLeafDelta(pi, 1, document.getElementById(pi===0?'playerLeafTokens':'enemyLeafTokens')); }
 
   // Cooldowns/impedimentos pertencem ao inseto e avançam somente no turno do dono.
   for (const c of fieldCards(pi)) {
@@ -375,7 +399,7 @@ function summonFromHand(pi, idx, zone, slot) {
   if (p.leaves < d.cost) { if (pi === 0) blockAction(`Folhas insuficientes para invocar ${d.name}.`); return false; }
   if (zone === 'front' && p.front) { if (pi === 0) blockAction('O Fronte já está ocupado.'); return false; }
   if (zone === 'bank' && p.bank[slot]) { if (pi === 0) blockAction('Esse espaço do Banco já está ocupado.'); return false; }
-  p.leaves -= d.cost; FX.boardState('fx-summon',600);
+  p.leaves -= d.cost; animateLeafDelta(pi, -d.cost, document.getElementById(pi===0?'playerLeafTokens':'enemyLeafTokens')); FX.boardState('fx-summon',600);
   FX.ring(document.getElementById(zone==='front' ? (pi===0?'pf0':'ef0') : (pi===0?'pb'+slot:'eb'+slot)));
   p.hand.splice(idx, 1); c.owner = pi;
   if (zone === 'front') p.front = c; else p.bank[slot] = c;
@@ -406,7 +430,8 @@ function onSummon(pi, c) {
       nc.atk = Math.max(1, Math.floor(old.atk / 2));
       nc.hp = Math.max(1, Math.floor(old.maxHp / 2));
       nc.maxHp = nc.hp;
-      p.hand.push(nc);
+      if (canReceiveHand(pi)) p.hand.push(nc);
+      else { state.grave.push(nc); log(`${p.name} está com a mão cheia; a carta recuperada foi para o Cemitério.`); }
     }
   }
   if (c.key === 'formigaRainha') drawFree(pi, countField(pi) - 1);
@@ -428,6 +453,25 @@ function onSummon(pi, c) {
     log(`${p.name} revelou ${revealedCards.length} carta(s) aleatória(s) da mão de ${o.name}.`);
   }
   if (c.key === 'libelula') c.root = 0;
+}
+// ---------------------------------------------------------------
+// Troca de posição por arraste: inseto sobre outro aliado = 1 movimento.
+function swapFieldCards(pi, fromZone, fromSlot, toZone, toSlot) {
+  const p = state.players[pi];
+  if (!p || !validMove(pi) || p.moves <= 0) return false;
+  const source = fromZone === 'front' ? p.front : p.bank[fromSlot];
+  const target = toZone === 'front' ? p.front : p.bank[toSlot];
+  if (!source || !target || source === target || !insect(source) || !insect(target)) return false;
+  if (source.root > 0 || target.root > 0) { if (pi === 0) blockAction('Uma das cartas está presa e não pode ser trocada.'); return false; }
+  if (fromZone === 'front' && toZone === 'front') return false;
+  if (fromZone === 'bank' && toZone === 'bank' && fromSlot === toSlot) return false;
+  if (fromZone === 'front') p.front = target; else p.bank[fromSlot] = target;
+  if (toZone === 'front') p.front = source; else p.bank[toSlot] = source;
+  source.root = 0; target.root = 0; p.moves--;
+  FX.boardState('fx-move', 480);
+  log(`${p.name} trocou ${CARDS[source.key].name} e ${CARDS[target.key].name} de posição.`);
+  render(); endTurnIfBlocked(pi);
+  return true;
 }
 // ---------------------------------------------------------------
 // Movimentação entre Banco e Fronte.
@@ -459,6 +503,7 @@ function returnToHand(pi, zone, slot) {
   if (c.hp < c.maxHp) { blockAction('Só é possível puxar cartas com a vida cheia.'); return false; }
   if (c.root > 0) { blockAction(`${CARDS[c.key].name} está presa e não pode ser movida agora.`); return false; }
   if (p.moves <= 0) { blockAction('Você não tem movimento disponível.'); return false; }
+  if (!canReceiveHand(pi)) { if (pi === 0) blockAction('Sua mão está cheia. Uma carta com 6 na mão não pode voltar.'); return false; }
   FX.boardState('fx-move',480);
   if (zone === 'front') p.front = null; else p.bank[slot] = null;
   p.hand.push(c); p.moves--;
@@ -507,7 +552,7 @@ function attack(pi, a, t) {
   if (a.key === 'besouro' && a.hp <= Math.ceil(a.maxHp / 2)) damage *= 2;
   if (a.key === 'cupim') clearBuffs(t);
   if (a.key === 'gafanhoto') steal(pi, 1);
-  fieldCards(pi).filter(x => x.key === 'grilo').forEach(() => { p.leaves = Math.min(15, p.leaves + 1); });
+  fieldCards(pi).filter(x => x.key === 'grilo').forEach(() => { p.leaves = Math.min(15, p.leaves + 1); animateLeafDelta(pi, 1, document.getElementById(pi===0?'playerLeafTokens':'enemyLeafTokens')); });
   if (a.key === 'escorpiao') { t.poison = 1; t.poisonTurns = Math.max(t.poisonTurns, 2); }
   if (a.key === 'aranha' && !isImmuneRoot(t)) { t.root = Math.max(t.root, 1); t.effectMarks ||= []; if (!t.effectMarks.includes('aranha')) t.effectMarks.push('aranha'); }
   if (a.key === 'centopeia' && t.hp <= t.maxHp / 2 && !isImmuneRoot(t)) { t.root = Math.max(t.root, 2); t.effectMarks ||= []; if (!t.effectMarks.includes('centopeia')) t.effectMarks.push('centopeia'); }
@@ -577,7 +622,9 @@ function defeat(owner, c, killer) {
   const d = CARDS[c.key]; log(`${p.name}: ${d.name} foi derrotado.`);
   if (c.key === 'barata' && !c.barataUsed) {
     c.barataUsed = true; c.bonusAtk += c.baseAtk; c.bonusHp += c.baseHp;
-    c.hp = c.maxHp = c.baseHp + c.bonusHp; p.hand.push(c); log('Barata voltou para a mão com os atributos dobrados.');
+    c.hp = c.maxHp = c.baseHp + c.bonusHp;
+    if (canReceiveHand(p === state.players[0] ? 0 : 1)) { p.hand.push(c); log('Barata voltou para a mão com os atributos dobrados.'); }
+    else { state.grave.push(c); log('A Barata não pôde voltar: a mão estava cheia.'); }
   } else {
     state.grave.push(c);
     if (c.key === 'cigarra') { const defeatedPi = p === state.players[0] ? 0 : 1; state.skip[1 - defeatedPi] = true; }
@@ -596,7 +643,7 @@ function defeat(owner, c, killer) {
   }
   refreshPassiveStats();
 }
-function steal(pi, n) { let p = state.players[pi], o = state.players[1 - pi]; if (o.antiSteal > 0) { log('Roubo bloqueado pelo Formigueiro.'); return } let a = Math.min(n, o.leaves); o.leaves -= a; p.leaves = Math.min(15, p.leaves + a); if (a) log(`${p.name} roubou ${a} folha(s).`) }
+function steal(pi, n) { let p = state.players[pi], o = state.players[1 - pi]; if (o.antiSteal > 0) { log('Roubo bloqueado pelo Formigueiro.'); return } let a = Math.min(n, o.leaves); o.leaves -= a; p.leaves = Math.min(15, p.leaves + a); if (a) animateLeafDelta(pi, a, document.getElementById(pi===0?'playerLeafTokens':'enemyLeafTokens')); if (a) log(`${p.name} roubou ${a} folha(s).`) }
 function playEffect(pi, idx) { return activateEffect(pi, idx, 'bank', -1); }
 function activateEffect(pi, idx, zone, slot) {
   const p = state.players[pi], c = p?.hand[idx], d = c && CARDS[c.key];
@@ -608,7 +655,7 @@ function activateEffect(pi, idx, zone, slot) {
   const requestedSlot = Number.isInteger(slot) && slot >= 0 && slot < p.bank.length && !p.bank[slot] ? slot : -1;
   const bankSlot = requestedSlot >= 0 ? requestedSlot : p.bank.findIndex(x => !x);
   if (bankSlot < 0) { if (pi === 0) blockAction(`Não há espaço no Banco para ${d.name}.`); return false; }
-  p.leaves -= d.cost; p.hand.splice(idx, 1); state.targetMode = null;
+  p.leaves -= d.cost; p.hand.splice(idx, 1); state.targetMode = null; if (pi === 0) state.selected = null;
   if (c.key === 'ninho') {
     p.bank[bankSlot] = card('larvas', pi);
     log(`${p.name} usou Ninho e colocou uma Larva grátis no Banco.`);
@@ -632,7 +679,7 @@ function equip(pi, idx, target) {
   if (!target || !insect(target)) { if (pi === 0) blockAction('Escolha um inseto próprio para equipar.'); return false; }
   if (p.std <= 0) { if (pi === 0) blockAction('Você já gastou sua ação padrão.'); return false; }
   if (p.leaves < d.cost) { if (pi === 0) blockAction('Folhas insuficientes.'); return false; }
-  p.leaves -= d.cost; p.hand.splice(idx, 1); target.equipment ||= []; target.equipment.push(c);
+  p.leaves -= d.cost; p.hand.splice(idx, 1); if (pi === 0) state.selected = null; target.equipment ||= []; target.equipment.push(c);
   if (c.key === 'veneno') { target.poison = 1; target.poisonTurns = 2; }
   if (c.key === 'propolis') { target.poison = 0; target.poisonTurns = 0; }
   p.std--; state.targetMode = null; refreshPassiveStats();
@@ -641,39 +688,26 @@ function equip(pi, idx, target) {
 let touchDropAt = 0;
 function clickCard(pi, zone, slot) {
   if (Date.now() < touchDropAt) return;
-  let p = state.players[pi], c = zone === 'hand' ? p.hand[slot] : (zone === 'front' ? p.front : p.bank[slot]);
+  const p = state.players[pi];
+  const c = zone === 'hand' ? p?.hand[slot] : (zone === 'front' ? p?.front : p?.bank[slot]);
   if (!c) return;
-  // Equipar uma carta de efeito já selecionada.
-  if (state.targetMode && state.targetMode.pi === 0 && state.targetMode.type === 'equip' && pi === 0) {
-    equip(0, state.targetMode.idx, c); return;
-  }
-  // Alvo de efeito não-equipável.
-  if (state.targetMode && state.targetMode.pi === 0 && state.targetMode.type === 'effectTarget' && pi === 1) {
-    resolveTargetEffect(0, state.targetMode.idx, c); return;
-  }
-  if (state.targetMode && state.targetMode.pi === 0 && state.targetMode.type === 'attack' && pi === 1) {
-    resolveAttackTarget(c); return;
-  }
-  if (state.turn !== 0 || state.over) return;
-  if (pi !== 0) return;
+  if (state.targetMode && state.targetMode.pi === 0 && state.targetMode.type === 'equip' && pi === 0) { equip(0, state.targetMode.idx, c); return; }
+  if (state.targetMode && state.targetMode.pi === 0 && state.targetMode.type === 'effectTarget' && pi === 1) { resolveTargetEffect(0, state.targetMode.idx, c); return; }
+  if (state.targetMode && state.targetMode.pi === 0 && state.targetMode.type === 'attack' && pi === 1) { resolveAttackTarget(c); return; }
+  if (state.turn !== 0 || state.over || pi !== 0) return;
   if (zone === 'hand') {
-    if (CARDS[c.key].type === 'effect') {
-      state.selected = null;
-      playEffect(0, slot);
-      render();
-      return;
-    }
+    state.selectedField = null;
     state.selected = state.selected === slot ? null : slot;
-    render(); return;
+    render();
+    return;
   }
-  // Se uma carta da mão está selecionada, clique no slot para invocá-la.
   if (state.selected !== null) {
-    let idx = state.selected;
-    if (zone === 'front' && slot === 0) { if (summonFromHand(0, idx, 'front', 0)) state.selected = null; return }
-    if (zone === 'bank' && slot >= 0) { if (summonFromHand(0, idx, 'bank', slot)) state.selected = null; return }
+    const idx = state.selected;
+    if (zone === 'front' && slot === 0 && !c) { if (summonFromHand(0, idx, 'front', 0)) state.selected = null; return; }
+    if (zone === 'bank' && slot >= 0 && !c) { if (summonFromHand(0, idx, 'bank', slot)) state.selected = null; return; }
   }
-  // Seleciona uma carta do campo para ações de ataque/devolver.
-  state.selectedField = { zone, slot };
+  state.selected = null;
+  state.selectedField = (state.selectedField?.zone === zone && state.selectedField?.slot === slot) ? null : { zone, slot };
   render();
 }
 function getSelectedField() { let s = state.selectedField; if (!s) return null; let p = state.players[0]; return s.zone === 'front' ? p.front : p.bank[s.slot] }
@@ -731,6 +765,7 @@ function resolveTargetEffect(pi, idx, target) {
   p.leaves -= d.cost;
   p.hand.splice(idx, 1);
   state.targetMode = null;
+  if (pi === 0) state.selected = null;
   p.std--;
 
   if (c.key === 'inseticida') {
@@ -790,7 +825,7 @@ function sellSelected() {
     const c = p.hand[state.selected];
     if (!c) { blockAction('A carta selecionada não existe mais.'); return; }
     p.hand.splice(state.selected, 1); state.grave.push(c);
-    p.leaves = Math.min(15, p.leaves + 1); p.std--; state.selected = null;
+    p.leaves = Math.min(15, p.leaves + 1); animateLeafDelta(0, 1, document.getElementById('playerLeafTokens')); p.std--; state.selected = null;
     log(`${p.name} vendeu ${CARDS[c.key].name} por 1 folha.`);
     render(); winCheck(); endTurnIfBlocked(0); return;
   }
@@ -801,7 +836,7 @@ function sellSelected() {
   if (c.root > 0) { blockAction(`${CARDS[c.key].name} está presa e não pode ser vendida agora.`); return; }
   cleanupActiveEffect(c);
   if (s.zone === 'front') p.front = null; else p.bank[s.slot] = null;
-  state.grave.push(c); p.leaves = Math.min(15, p.leaves + 1); p.std--; state.selectedField = null;
+  state.grave.push(c); p.leaves = Math.min(15, p.leaves + 1); animateLeafDelta(0, 1, document.getElementById('playerLeafTokens')); p.std--; state.selectedField = null;
   log(`${p.name} vendeu ${CARDS[c.key].name} por 1 folha.`);
   render(); winCheck(); endTurnIfBlocked(0);
 }
@@ -852,80 +887,44 @@ function clearDropTargets() { document.querySelectorAll('.slot').forEach(s => s.
 function findPlayerCardById(id) { let p = state.players[0]; if (!p) return null; let hi = p.hand.findIndex(c => c.id === id); if (hi >= 0) return { c: p.hand[hi], zone: 'hand', slot: hi }; if (p.front && p.front.id === id) return { c: p.front, zone: 'front', slot: 0 }; for (let i = 0; i < 3; i++)if (p.bank[i] && p.bank[i].id === id) return { c: p.bank[i], zone: 'bank', slot: i }; return null }
 function handleDropOnHand(e) { e.preventDefault(); let found = findPlayerCardById(e.dataTransfer.getData('text/plain')); if (!found || found.zone === 'hand' || state.turn !== 0 || state.over) return; if (returnToHand(0, found.zone, found.slot)) { state.selectedField = null; clearDropTargets(); render(); winCheck() } }
 function handleDropOnSlot(slotEl, e) {
-  e.preventDefault();
-  slotEl.classList.remove('drag-over');
-  const id = e.dataTransfer.getData('text/plain');
-  const found = findPlayerCardById(id);
+  e.preventDefault(); slotEl.classList.remove('drag-over');
+  const id = e.dataTransfer.getData('text/plain'); const found = findPlayerCardById(id);
   if (!found || state.turn !== 0 || state.over) return;
-
-  const targetId = slotEl.id;
-  const p = state.players[0];
-  const o = state.players[1];
+  const targetId = slotEl.id; const p = state.players[0], o = state.players[1];
   const enemyTarget = targetId === 'ef0' || targetId.startsWith('eb');
-
   if (enemyTarget) {
     const targetCard = targetId === 'ef0' ? o.front : o.bank[Number(targetId.slice(-1))];
     if (!targetCard) { blockAction('Esse espaço está vazio.'); return; }
-
-    if (found.zone === 'hand' && CARDS[found.c.key]?.type === 'effect') {
-      if (['inseticida', 'lupa', 'teia'].includes(found.c.key)) {
-        resolveTargetEffect(0, found.slot, targetCard);
-      } else blockAction('Esse efeito não usa uma carta inimiga como alvo.');
-      clearDropTargets();
-      return;
-    }
-
-    if (found.zone === 'front' || found.zone === 'bank') {
-      if (found.zone !== 'front') { blockAction('Somente o inseto no Fronte pode atacar.'); return; }
+    if (found.zone === 'hand' && ['inseticida','lupa','teia'].includes(found.c.key)) { resolveTargetEffect(0, found.slot, targetCard); clearDropTargets(); return; }
+    if (found.zone === 'front') {
       if (!isValidAttackTarget(found.c, targetCard)) { blockAction('Esse alvo está protegido pelo Fronte.'); return; }
-      attack(0, found.c, targetCard);
-      clearDropTargets();
-      return;
+      attack(0, found.c, targetCard); clearDropTargets(); return;
     }
-    blockAction('Arraste um inseto do Fronte para atacar.');
-    return;
+    blockAction('Somente o inseto no Fronte pode atacar.'); return;
   }
-
-  const zone = targetId === 'pf0' ? 'front' : 'bank';
-  const slot = zone === 'bank' ? Number(targetId.slice(-1)) : 0;
+  const zone = targetId === 'pf0' ? 'front' : 'bank'; const slot = zone === 'bank' ? Number(targetId.slice(-1)) : 0;
   const destCard = zone === 'front' ? p.front : p.bank[slot];
-
   if (found.zone === 'hand' && CARDS[found.c.key]?.equip) {
     if (!destCard || !insect(destCard)) { blockAction('Arraste o equipamento sobre um inseto próprio.'); return; }
-    equip(0, found.slot, destCard);
-    clearDropTargets();
-    return;
+    equip(0, found.slot, destCard); clearDropTargets(); return;
   }
-
   if (found.zone === 'hand' && CARDS[found.c.key]?.type === 'effect') {
-    activateEffect(0, found.slot, 'bank', zone === 'bank' ? slot : -1);
-    clearDropTargets();
-    return;
+    activateEffect(0, found.slot, 'bank', zone === 'bank' ? slot : -1); clearDropTargets(); return;
   }
-
+  if ((found.zone === 'front' || found.zone === 'bank') && destCard && found.c !== destCard) {
+    if (insect(found.c) && insect(destCard)) { swapFieldCards(0, found.zone, found.slot, zone, slot); clearDropTargets(); return; }
+    blockAction('Somente insetos podem trocar de posição.'); return;
+  }
   if (destCard) { blockAction('Esse espaço já está ocupado.'); return; }
-
-  if (found.zone === 'hand') {
-    summonFromHand(0, found.slot, zone, slot);
-  } else if (found.zone === 'front' && zone === 'bank') {
-    moveCard(0, 'front', slot);
-  } else if (found.zone === 'bank' && zone === 'front') {
+  if (found.zone === 'hand') summonFromHand(0, found.slot, zone, slot);
+  else if (found.zone === 'front' && zone === 'bank') moveCard(0, 'front', slot);
+  else if (found.zone === 'bank' && zone === 'front') {
     if (p.moves <= 0) { blockAction('Você não tem movimento disponível.'); return; }
-    if (p.front) { blockAction('O Fronte já está ocupado.'); return; }
     const c = p.bank[found.slot];
     if (!c || !insect(c)) { blockAction('Somente insetos podem ocupar o Fronte.'); return; }
     if (c.root > 0) { blockAction(`${CARDS[c.key].name} está presa e não pode se mover.`); return; }
-    p.bank[found.slot] = null;
-    p.front = c;
-    p.moves--;
-    log(`${p.name} moveu ${CARDS[c.key].name} para o Fronte.`);
-    render();
-    endTurnIfBlocked(0);
+    p.bank[found.slot] = null; p.front = c; p.moves--; log(`${p.name} moveu ${CARDS[c.key].name} para o Fronte.`); render(); endTurnIfBlocked(0);
   }
-
-  clearDropTargets();
-  render();
-  winCheck();
 }
 function installDropTargets() { document.querySelectorAll('#pf0,#pb0,#pb1,#pb2,#ef0,#eb0,#eb1,#eb2').forEach(slot => { slot.addEventListener('dragover', e => { if (!e.dataTransfer.types.includes('text/plain')) return; e.preventDefault(); if (state.turn === 0 && !state.over) slot.classList.add('drag-over') }); slot.addEventListener('dragleave', () => slot.classList.remove('drag-over')); slot.addEventListener('drop', e => handleDropOnSlot(slot, e)); }); let hand = document.getElementById('hand'); hand.addEventListener('dragover', e => { if (!e.dataTransfer.types.includes('text/plain')) return; e.preventDefault(); if (state.turn === 0 && !state.over) hand.classList.add('drag-over') }); hand.addEventListener('dragleave', () => hand.classList.remove('drag-over')); hand.addEventListener('drop', handleDropOnHand); }
 function syncTouchCardIds() {
@@ -1003,6 +1002,7 @@ function renderGrave() {
     ? `<img class="grave-art" src="${art}" alt="${d.name}"><span class="grave-name">${d.name}</span>`
     : `<span class="grave-emoji">${d.emoji}</span><span class="grave-name">${d.name}</span>`;
 }
+function animateLeafDelta(pi, delta, sourceEl) { if (!delta || typeof FX === 'undefined' || !FX.leafTokens) return; FX.leafTokens(pi, delta, sourceEl); }
 function renderLeafTokens(id, count) {
   const host = document.getElementById(id);
   if (!host) return;
@@ -1022,8 +1022,25 @@ function renderLeafTokens(id, count) {
 // RENDERIZAÇÃO
 // Atualiza o tabuleiro inteiro a partir do estado atual.
 // ================================================================
-function render() { refreshPassiveStats(); let p = state.players[0], o = state.players[1]; if (!p) return; document.getElementById('round').textContent = state.round; document.getElementById('turn').textContent = state.turn === 0 ? 'VOCÊ' : 'BOT'; document.getElementById('turnNo').textContent = state.round; document.getElementById('deckCount').textContent = state.deck.length; document.getElementById('deckCount2').textContent = state.deck.length; document.getElementById('graveCount').textContent = state.grave.length; document.getElementById('graveCount2').textContent = state.grave.length; document.getElementById('playerLeaves').textContent = p.leaves; document.getElementById('enemyLeaves').textContent = o.leaves; renderLeafTokens('playerLeafTokens', p.leaves); renderLeafTokens('enemyLeafTokens', o.leaves); document.getElementById('playerName').textContent = p.name.toUpperCase(); document.getElementById('moves').textContent = p.moves; document.getElementById('std').textContent = p.std; document.getElementById('draw').disabled = state.turn !== 0 || p.std <= 0 || p.leaves < 3 || !state.deck.length; document.getElementById('harvest').disabled = state.turn !== 0 || p.std <= 0; document.getElementById('attackBtn').disabled = state.turn !== 0 || state.over || p.std <= 0 || !p.front; document.getElementById('secondMove').disabled = state.turn !== 0 || state.over || p.moves <= 0 || p.std <= 0; document.getElementById('returnBtn').disabled = state.turn !== 0 || state.over || p.moves <= 0 || !state.selectedField; document.getElementById('sell').disabled = state.turn !== 0 || p.std <= 0 || state.selected === null && !state.selectedField; document.getElementById('end').disabled = state.turn !== 0 || state.over; document.getElementById('attackBtn').classList.toggle('waiting', !!(state.targetMode && state.targetMode.type === 'attack')); document.getElementById('returnBtn').classList.toggle('waiting', !!state.selectedField); document.getElementById('sell').classList.toggle('waiting', !!(state.selected !== null || state.selectedField)); renderSlot('ef0', o.front, true, true); for (let i = 0; i < 3; i++) { renderSlot('eb' + i, o.bank[i], true, false); renderSlot('pb' + i, p.bank[i], false, false) } renderSlot('pf0', p.front, false, true); let h = document.getElementById('hand'); h.innerHTML = ''; p.hand.forEach((c, i) => { let el = makeCard(c, false); if (state.selected === i) el.classList.add('selected'); el.onclick = () => clickCard(0, 'hand', i); h.appendChild(el) }); document.getElementById('log').innerHTML = state.log.map(x => `<div>› ${x}</div>`).join('') }
-function renderSlot(id, c, enemy, front) { let s = document.getElementById(id); s.innerHTML = ''; if (!c) { s.textContent = front ? 'FRONTE' : 'BANCO'; return } let el = makeCard(c, enemy); el.draggable = false; el.dataset.enemy = enemy ? 'true' : 'false'; el.dataset.cardId = c.id; if (front) el.classList.add('fronte-card'); if (c.equipment && c.equipment.length) { el.classList.add('equipped-card'); c.equipment.forEach(item => { let badge = document.createElement('span'); badge.className = 'equipment-preview'; badge.textContent = CARDS[item.key].emoji; el.appendChild(badge) }) } if (c.activeTurns > 0) { let counter = document.createElement('span'); counter.className = 'effect-counter'; counter.textContent = `${c.activeTurns} turnos`; el.appendChild(counter) } s.appendChild(el); el.onclick = () => clickCard(enemy ? 1 : 0, front ? 'front' : 'bank', front ? 0 : Number(id.slice(-1))); if (!enemy) el.title = 'Clique para mover'; }
+function render() {
+  refreshPassiveStats(); const p = state.players[0], o = state.players[1]; if (!p || !o) return;
+  document.getElementById('round').textContent = state.round; document.getElementById('turn').textContent = state.turn === 0 ? 'VOCÊ' : (o.bot ? 'BOT' : 'ADVERSÁRIO'); document.getElementById('turnNo').textContent = state.round;
+  document.getElementById('deckCount').textContent = state.deck.length; document.getElementById('deckCount2').textContent = state.deck.length; document.getElementById('graveCount').textContent = state.grave.length; document.getElementById('graveCount2').textContent = state.grave.length;
+  document.getElementById('playerLeaves').textContent = p.leaves; document.getElementById('enemyLeaves').textContent = o.leaves; renderLeafTokens('playerLeafTokens', p.leaves); renderLeafTokens('enemyLeafTokens', o.leaves);
+  document.getElementById('playerName').textContent = p.name.toUpperCase(); document.getElementById('moves').textContent = p.moves; document.getElementById('std').textContent = p.std;
+  document.getElementById('draw').disabled = state.turn !== 0 || p.std <= 0 || p.hand.length >= handLimit(0) || p.leaves < 3 || !state.deck.length;
+  document.getElementById('harvest').disabled = state.turn !== 0 || p.std <= 0 || p.leaves >= 15;
+  document.getElementById('attackBtn').disabled = state.turn !== 0 || state.over || p.std <= 0 || !p.front;
+  document.getElementById('secondMove').disabled = state.turn !== 0 || state.over || p.moves <= 0 || p.std <= 0;
+  document.getElementById('returnBtn').disabled = state.turn !== 0 || state.over || p.moves <= 0 || !state.selectedField || p.hand.length >= handLimit(0);
+  document.getElementById('sell').disabled = state.turn !== 0 || p.std <= 0 || (state.selected === null && !state.selectedField); document.getElementById('end').disabled = state.turn !== 0 || state.over;
+  document.getElementById('attackBtn').classList.toggle('waiting', !!(state.targetMode && state.targetMode.type === 'attack')); document.getElementById('returnBtn').classList.toggle('waiting', !!state.selectedField); document.getElementById('sell').classList.toggle('waiting', !!(state.selected !== null || state.selectedField));
+  renderSlot('ef0', o.front, true, true); for (let i=0;i<3;i++){ renderSlot('eb'+i,o.bank[i],true,false); renderSlot('pb'+i,p.bank[i],false,false); } renderSlot('pf0',p.front,false,true);
+  const h=document.getElementById('hand'); h.innerHTML=''; p.hand.forEach((c,i)=>{ const el=makeCard(c,false); if(state.selected===i) el.classList.add('selected'); el.onclick=()=>clickCard(0,'hand',i); h.appendChild(el); });
+  const hc=document.getElementById('handCount'); if(hc) hc.textContent=`${p.hand.length}/${handLimit(0)}`; const hs=document.getElementById('handStatus'); if(hs) hs.textContent=p.hand.length>=handLimit(0)?'MÃO CHEIA':`${handLimit(0)-p.hand.length} ESPAÇOS`;
+  document.getElementById('log').innerHTML=state.log.map(x=>`<div>› ${x}</div>`).join(''); renderGrave(); updateCardInspector();
+}
+function renderSlot(id, c, enemy, front) { let s = document.getElementById(id); s.innerHTML = ''; if (!c) { s.textContent = front ? 'FRONTE' : 'BANCO'; return } let el = makeCard(c, enemy); el.draggable = false; el.dataset.enemy = enemy ? 'true' : 'false'; el.dataset.cardId = c.id; if (front) el.classList.add('fronte-card'); if (!enemy && state.selectedField && state.selectedField.zone === (front ? 'front' : 'bank') && state.selectedField.slot === (front ? 0 : Number(id.slice(-1)))) el.classList.add('selected'); if (c.equipment && c.equipment.length) { el.classList.add('equipped-card'); c.equipment.forEach(item => { let badge = document.createElement('span'); badge.className = 'equipment-preview'; badge.textContent = CARDS[item.key].emoji; el.appendChild(badge) }) } if (c.activeTurns > 0) { let counter = document.createElement('span'); counter.className = 'effect-counter'; counter.textContent = `${c.activeTurns} turnos`; el.appendChild(counter) } s.appendChild(el); el.onclick = () => clickCard(enemy ? 1 : 0, front ? 'front' : 'bank', front ? 0 : Number(id.slice(-1))); if (!enemy) el.title = 'Clique para selecionar'; }
 // Cria o elemento visual de uma carta e liga eventos de interação.
 function makeCard(c, enemy) {
   const d = CARDS[c.key], el = document.createElement('div');
@@ -1043,8 +1060,6 @@ function makeCard(c, enemy) {
     badge.title = marks.map(mark => ({lupa:'Lupa', teia:'Teia', aranha:'Aranha', centopeia:'Centopeia'}[mark] || mark)).join(' · ');
     el.appendChild(badge);
   }
-  el.addEventListener('mouseenter', e => showTip(e, c));
-  el.addEventListener('mouseleave', hideTip);
   if (!enemy) {
     el.addEventListener('dragstart', e => { e.stopPropagation(); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', c.id); el.classList.add('dragging'); prepareDropTargets(c) });
     el.addEventListener('dragend', () => { el.classList.remove('dragging'); clearDropTargets() });
@@ -1054,7 +1069,18 @@ function makeCard(c, enemy) {
 // ================================================================
 // TOOLTIPS E MODAIS
 // ================================================================
-function showTip(e, c) { let d = CARDS[c.key], t = document.getElementById('tip'); document.getElementById('tipName').textContent = d.name; document.getElementById('tipCond').textContent = '[' + d.cond + ']'; document.getElementById('tipAbility').textContent = d.ability + (c.customAbility ? ' | Copiada: ' + c.customAbility : ''); t.style.display = 'block'; t.style.left = Math.min(innerWidth - 255, e.clientX + 10) + 'px'; t.style.top = Math.min(innerHeight - 150, e.clientY + 10) + 'px' } function hideTip() { document.getElementById('tip').style.display = 'none' }
+function showTip() {}
+function hideTip() {}
+function updateCardInspector() {
+  const panel=document.getElementById('cardInspector'); if(!panel) return; const p=state.players[0]; let c=null,source='';
+  if(state.selected!==null && p?.hand[state.selected]){ c=p.hand[state.selected]; source='MÃO'; } else if(state.selectedField){ c=getSelectedField(); source=state.selectedField.zone==='front'?'FRONTE':'BANCO'; }
+  if(!c){ panel.classList.remove('is-visible'); panel.setAttribute('aria-hidden','true'); return; }
+  const d=CARDS[c.key], art=CARD_IMAGES[c.key], eq=(c.equipment||[]).map(e=>CARDS[e.key]?.name).filter(Boolean);
+  panel.querySelector('.inspector-source').textContent=source; panel.querySelector('.inspector-art').innerHTML=art?`<img src="${art}" alt="${d.name}">`:`<span>${d.emoji}</span>`; panel.querySelector('.inspector-name').textContent=d.name;
+  panel.querySelector('.inspector-stats').innerHTML=`<span class="inspect-atk">⚔ ${Math.max(0,c.atk)}</span><span class="inspect-hp">♥ ${Math.max(0,c.hp)}/${c.maxHp||''}</span>`;
+  panel.querySelector('.inspector-meta').textContent=`${d.cost} folhas · ${d.type==='effect'?'EFEITO':'INSETO'} · ${d.cond}`; panel.querySelector('.inspector-ability').textContent=d.ability+(c.customAbility?` · Copiada: ${c.customAbility}`:''); panel.querySelector('.inspector-equipment').textContent=eq.length?`Equipamentos: ${eq.join(', ')}`:'Sem equipamentos';
+  const btn=document.getElementById('inspectUse'); btn.hidden=d.type!=='effect'; btn.textContent=d.equip?'EQUIPAR':'USAR EFEITO'; btn.onclick=()=>{ if(state.selected!==null){ playEffect(0,state.selected); if(state.targetMode) msg(state.targetMode.type==='equip'?`Selecione o inseto para equipar ${d.name}.`:`Selecione o alvo de ${d.name}.`); render(); } }; panel.classList.add('is-visible'); panel.setAttribute('aria-hidden','false');
+}
 function showVagalumeReveal(reveal) {
   if (!reveal || !reveal.keys?.length || reveal.viewer !== 0) return;
   let popup = document.getElementById('vagalumeReveal');
@@ -1072,9 +1098,9 @@ function showVagalumeReveal(reveal) {
   document.getElementById('vagalumeRevealClose').onclick = () => popup.classList.remove('is-visible');
 }
 
-function showModal(html) { document.getElementById('modalContent').innerHTML = html; document.getElementById('overlay').style.display = 'flex' } function rules() { showModal(`<h2>INSETO CARDS — REGRAS</h2><ul><li>2 jogadores; cada um tem 1 Fronte, 3 Banco e mão própria. Natureza e Cemitério são compartilhados.</li><li>Cada turno: 1 Movimento + 1 Ação Padrão. Você pode abrir mão da Padrão para ganhar um segundo Movimento.</li><li>Movimento: invocar carta, mover campo ou devolver carta sem dano à mão.</li><li>Padrão: atacar, colher +1, vender, ou comprar da Natureza por 3 folhas.</li><li>Começo: 5 folhas e 3 cartas. A partir da rodada 2: +1 folha automática. Limite 15.</li><li>Combate é mútuo. O Fronte só pode atacar Banco se o Fronte inimigo estiver vazio, exceto Meganeura.</li><li>Vitória: eliminar todos os insetos da mão e do campo inimigo; efeitos não contam.</li></ul><h3 style="color:var(--amber);margin:10px 0 5px">Decisões necessárias para a implementação</h3><p>Venda = +1 folha; Vaga-lume revela 2 cartas aleatórias da mão do inimigo em um pop-up; empate técnico = se ambos zerarem na mesma resolução, a partida termina empatada. A mão inicial foi fixada em 3, conforme as simulações mencionadas no GDD.</p><p class="small" style="margin-top:10px">O baralho usa as 41 cartas atualmente disponíveis, uma cópia de cada.</p>`) }
+function showModal(html) { document.getElementById('modalContent').innerHTML = html; document.getElementById('overlay').style.display = 'flex' } function rules() { showModal(`<h2>INSETO CARDS — REGRAS</h2><ul><li>2 jogadores; cada um tem 1 Fronte, 3 Banco e mão própria. Natureza e Cemitério são compartilhados.</li><li>Cada turno: 1 Movimento + 1 Ação Padrão. Você pode abrir mão da Padrão para ganhar um segundo Movimento.</li><li>Movimento: invocar carta, mover campo, trocar a posição de dois insetos aliados por arraste ou devolver carta sem dano à mão.</li><li>Padrão: atacar, colher +1, vender, ou comprar da Natureza por 3 folhas.</li><li>Começo: 5 folhas e 3 cartas. A partir da rodada 2: +1 folha automática. Limite de 15 folhas e 6 cartas na mão.</li><li>Combate é mútuo. O Fronte só pode atacar Banco se o Fronte inimigo estiver vazio, exceto Meganeura.</li><li>Vitória: eliminar todos os insetos da mão e do campo inimigo; efeitos não contam.</li></ul><h3 style="color:var(--amber);margin:10px 0 5px">Decisões necessárias para a implementação</h3><p>Venda = +1 folha; Vaga-lume revela 2 cartas aleatórias da mão do inimigo em um pop-up; empate técnico = se ambos zerarem na mesma resolução, a partida termina empatada. A mão inicial foi fixada em 3, conforme as simulações mencionadas no GDD.</p><p class="small" style="margin-top:10px">O baralho usa as 41 cartas atualmente disponíveis, uma cópia de cada.</p>`) }
 document.getElementById('start').onclick = init; document.getElementById('restart').onclick = () => { document.getElementById('start').disabled = false; init() }; document.getElementById('rules').onclick = rules; document.getElementById('draw').onclick = playerDraw; document.getElementById('harvest').onclick = () => harvest(0); document.getElementById('attackBtn').onclick = attackPlayer; document.getElementById('secondMove').onclick = secondMove; document.getElementById('returnBtn').onclick = returnSelected; document.getElementById('sell').onclick = sellSelected; document.getElementById('end').onclick = () => { if (validMove(0)) endTurn(0) }; document.getElementById('modalClose').onclick = () => document.getElementById('overlay').style.display = 'none';
-document.addEventListener('click', hideEnemyActions); document.addEventListener('keydown', hideEnemyActions);
+document.addEventListener('click', e => { hideEnemyActions(); if(e.target.closest('.card,button,input,.action,.start-menu,.card-inspector')) return; state.selected=null; state.selectedField=null; state.targetMode=null; hideTip(); if(state.started) render(); }); document.addEventListener('keydown', e => { hideEnemyActions(); if(e.key==='Escape'){ state.selected=null; state.selectedField=null; state.targetMode=null; hideTip(); if(state.started) render(); } });
 renderLeafTokens('playerLeafTokens', 5); renderLeafTokens('enemyLeafTokens', 5);
 document.querySelector('.version-badge').textContent = `v${APP_VERSION}`;
 const renderWithActionControls = render;
