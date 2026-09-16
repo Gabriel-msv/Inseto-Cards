@@ -1007,16 +1007,31 @@ function renderLeafTokens(id, count) {
   const host = document.getElementById(id);
   if (!host) return;
   const total = Math.max(0, Math.min(15, Number(count) || 0));
-  host.innerHTML = '';
-  for (let i = 0; i < total; i++) {
-    const token = document.createElement('img');
-    token.className = 'leaf-token';
-    token.src = 'assets/ui/ficha-folha.png';
-    token.alt = 'Ficha de folha';
-    token.draggable = false;
-    token.title = `Ficha ${i + 1}`;
-    host.appendChild(token);
+  const current = host.querySelectorAll('.leaf-token').length;
+  const initialized = host.dataset.tokensInitialized === '1';
+
+  if (current < total) {
+    for (let i = current; i < total; i++) {
+      const token = document.createElement('img');
+      token.className = `leaf-token${initialized ? ' leaf-token--enter' : ''}`;
+      token.src = 'assets/ui/ficha-folha.png';
+      token.alt = 'Ficha de folha';
+      token.draggable = false;
+      token.title = `Ficha ${i + 1}`;
+      host.appendChild(token);
+    }
+  } else if (current > total) {
+    const removeCount = current - total;
+    const tokens = [...host.querySelectorAll('.leaf-token')];
+    tokens.slice(-removeCount).forEach(token => {
+      token.classList.add('leaf-token--exit');
+      setTimeout(() => token.remove(), 290);
+    });
   }
+
+  host.dataset.tokensInitialized = '1';
+  host.dataset.tokenCount = String(total);
+  [...host.querySelectorAll('.leaf-token')].forEach((token, i) => { token.title = `Ficha ${i + 1}`; });
 }
 // ================================================================
 // RENDERIZAÇÃO
