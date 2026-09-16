@@ -2,9 +2,9 @@
 
 Jogo de cartas em HTML, CSS e JavaScript, jogável contra um BOT ou outro jogador pela rede.
 
-**Versão atual:** `3.2.14`
+**Versão atual:** `3.2.16`
 
-## 3.2.14 — Modo Editor e ajuste final do campo desktop
+## 3.2.16 — Modo Editor e ajuste final do campo desktop
 
 - Adicionado modo Editor local com catálogo completo de cartas.
 - Qualquer carta pode ser colocada diretamente em qualquer Banco/Fronte.
@@ -162,3 +162,9 @@ A versão segue `X.Y.Z`: `X` para reformas grandes/estruturais, `Y` para novas f
 - Corrigido o selo de versão para 3.2.2.
 - Mantido o tabuleiro e a mão sem novas mudanças de estrutura.
 - Reduzida apenas a altura da faixa inferior de status e ações.
+
+
+### v3.2.16
+- Corrige a versão exibida pelo motor para 3.2.16.
+- Modo Editor agora suporta arrastar cartas do catálogo para qualquer slot.
+- Cartas já posicionadas no Editor também podem ser arrastadas entre slots, com troca quando o destino estiver ocupado.

@@ -189,7 +189,7 @@ const DECK_KEYS = Object.keys(CARDS); // catálogo completo atual, uma cópia de
 // 2. ESTADO DA PARTIDA
 // Guarda jogadores, baralho, cemitério, turno e seleção do jogador.
 // ================================================================
-const APP_VERSION = '3.2.14'; // versão cumulativa: catálogo, combate, efeitos e UX.
+const APP_VERSION = '3.2.16'; // versão cumulativa: catálogo, combate, efeitos e UX.
 const state = { started: false, over: false, round: 1, turn: 'player', deck: [], grave: [], players: [null, null], selected: null, selectedField: null, targetMode: null, log: [], skip: [false, false], tie: false, vagaReveal: null };
 function P(name, bot = false) { return { name, bot, leaves: 5, hand: [], front: null, bank: [null, null, null], moves: 1, std: 1, passiveBuy: false, adubo: 0, antiSteal: 0, revealed: 0 }; }
 function card(key, owner) { let c = CARDS[key]; return { id: Math.random().toString(36).slice(2), key, owner, atk: c.atk ?? 0, hp: c.hp ?? 0, maxHp: c.hp ?? 0, baseAtk: c.atk ?? 0, baseHp: c.hp ?? 0, damage: 0, buffs: [], equipment: [], activeTurns: 0, poison: 0, poisonTurns: 0, root: 0, skipAttack: 0, reload: 0, protectedOnce: key === 'louva', barataUsed: false, mel: false, customAbility: null, copiedKey: null, debuffNext: false, bonusAtk: 0, bonusHp: 0, passiveAtkBonus: 0, passiveHpBonus: 0, debuffAtk: 0, lupa: 0, teia: 0, effectMarks: [] }; }
@@ -944,6 +944,7 @@ function updateMobileHandVisibility() {
 function installTouchDrag() {
   let drag = null;
   document.addEventListener('pointerdown', e => {
+    if (document.body?.classList.contains('editor-mode')) return;
     let cardEl = e.target.closest('.card');
     if (!cardEl || cardEl.dataset.enemy === 'true' || !cardEl.dataset.cardId) return;
     e.preventDefault();
@@ -958,6 +959,7 @@ function installTouchDrag() {
     moveGhost(e);
   }, { passive: true });
   document.addEventListener('pointermove', e => {
+    if (document.body?.classList.contains('editor-mode')) return;
     if (!drag) return;
     e.preventDefault();
     moveGhost(e);
@@ -1055,7 +1057,7 @@ function render() {
   const hc=document.getElementById('handCount'); if(hc) hc.textContent=`${p.hand.length}/${handLimit(0)}`; const hs=document.getElementById('handStatus'); if(hs) hs.textContent=p.hand.length>=handLimit(0)?'MÃO CHEIA':`${handLimit(0)-p.hand.length} ESPAÇOS`;
   document.getElementById('log').innerHTML=state.log.map(x=>`<div>› ${x}</div>`).join(''); renderGrave(); updateCardInspector();
 }
-function renderSlot(id, c, enemy, front) { let s = document.getElementById(id); s.innerHTML = ''; if (!c) { s.textContent = front ? 'FRONTE' : 'BANCO'; return } let el = makeCard(c, enemy); el.draggable = false; el.dataset.enemy = enemy ? 'true' : 'false'; el.dataset.cardId = c.id; if (front) el.classList.add('fronte-card'); if (!enemy && state.selectedField && state.selectedField.zone === (front ? 'front' : 'bank') && state.selectedField.slot === (front ? 0 : Number(id.slice(-1)))) el.classList.add('selected'); if (c.equipment && c.equipment.length) { el.classList.add('equipped-card'); c.equipment.forEach(item => { let badge = document.createElement('span'); badge.className = 'equipment-preview'; badge.textContent = CARDS[item.key].emoji; el.appendChild(badge) }) } if (c.activeTurns > 0) { let counter = document.createElement('span'); counter.className = 'effect-counter'; counter.textContent = `${c.activeTurns} turnos`; el.appendChild(counter) } s.appendChild(el); el.onclick = () => clickCard(enemy ? 1 : 0, front ? 'front' : 'bank', front ? 0 : Number(id.slice(-1))); if (!enemy) el.title = 'Clique para selecionar'; }
+function renderSlot(id, c, enemy, front) { let s = document.getElementById(id); s.innerHTML = ''; if (!c) { s.textContent = front ? 'FRONTE' : 'BANCO'; return } let el = makeCard(c, enemy); el.draggable = !!document.body?.classList.contains('editor-mode') && !enemy; el.dataset.enemy = enemy ? 'true' : 'false'; el.dataset.cardId = c.id; if (front) el.classList.add('fronte-card'); if (!enemy && state.selectedField && state.selectedField.zone === (front ? 'front' : 'bank') && state.selectedField.slot === (front ? 0 : Number(id.slice(-1)))) el.classList.add('selected'); if (c.equipment && c.equipment.length) { el.classList.add('equipped-card'); c.equipment.forEach(item => { let badge = document.createElement('span'); badge.className = 'equipment-preview'; badge.textContent = CARDS[item.key].emoji; el.appendChild(badge) }) } if (c.activeTurns > 0) { let counter = document.createElement('span'); counter.className = 'effect-counter'; counter.textContent = `${c.activeTurns} turnos`; el.appendChild(counter) } s.appendChild(el); el.onclick = () => clickCard(enemy ? 1 : 0, front ? 'front' : 'bank', front ? 0 : Number(id.slice(-1))); if (!enemy) el.title = 'Clique para selecionar'; }
 // Cria o elemento visual de uma carta e liga eventos de interação.
 function makeCard(c, enemy) {
   const d = CARDS[c.key], el = document.createElement('div');

@@ -1808,3 +1808,31 @@ body { background-color:#08110c; background-image:radial-gradient(circle at 20% 
   .battle-main .field-row:nth-child(2),
   .battle-main .field-row:nth-child(6) { transform: translateY(-2px); }
 }
+
+
+/* ================================================================
+   3.2.15 — CAMPO DESKTOP: BANCOS MAIS PRÓXIMOS + ZONAS CENTRADAS
+   Somente >= 901px. Mobile permanece inalterado.
+   ================================================================ */
+@media (min-width: 901px) {
+  /* Encosta visualmente Banco e Fronte sem alterar a faixa de controles. */
+  .battle-main .field-row:nth-child(2) { align-items: flex-end; }
+  .battle-main .field-row:nth-child(3) { align-items: flex-start; }
+  .battle-main .field-row:nth-child(5) { align-items: flex-end; }
+  .battle-main .player-bank-row { align-items: flex-start; }
+
+  /* Natureza e Cemitério ficam simétricos em torno do TURNO. */
+  .battle-main .center-zone {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    justify-items: center;
+    column-gap: clamp(18px, 2.2vw, 34px);
+    width: min(560px, 72%);
+    height: 42px;
+    min-height: 42px;
+  }
+  .battle-main .center-zone .natureza { grid-column: 1; justify-self: center; }
+  .battle-main .center-zone .turn { grid-column: 2; justify-self: center; }
+  .battle-main .center-zone .cemiterio { grid-column: 3; justify-self: center; }
+}

@@ -1,5 +1,5 @@
 /* ========================================================================
-   INSETO CARDS — MODO EDITOR 3.2.14
+   INSETO CARDS — MODO EDITOR 3.2.16
    Ferramenta local de testes. Não usa BOT, rede, custo ou ações normais.
    ======================================================================== */
 (() => {
@@ -15,6 +15,7 @@
     list: null,
     search: null,
     status: null,
+    dragPayload: null,
 
     init() {
       this.installStyles();
@@ -39,10 +40,27 @@
       const style = document.createElement('style');
       style.id = 'editor-runtime-style';
       style.textContent = `
-        /* 3.2.14 — campo desktop: cartas maiores, bancos mais espaçados,
+        /* 3.2.16 — campo desktop: cartas maiores, bancos mais espaçados,
            natureza/cemitério paralelos aos Frontes e banco inferior ancorado. */
         @media (min-width:901px) {
           .battle-main .field-row { gap: clamp(24px, 3vw, 42px); }
+          .battle-main .field-row:nth-child(2) { align-items: flex-end; }
+          .battle-main .field-row:nth-child(3) { align-items: flex-start; }
+          .battle-main .field-row:nth-child(5) { align-items: flex-end; }
+          .battle-main .player-bank-row { align-items: flex-start; }
+          .battle-main .center-zone {
+            display:grid;
+            grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+            align-items:center;
+            justify-items:center;
+            column-gap:clamp(18px,2.2vw,34px);
+            width:min(560px,72%);
+            height:42px;
+            min-height:42px;
+          }
+          .battle-main .center-zone .natureza { grid-column:1; justify-self:center; }
+          .battle-main .center-zone .turn { grid-column:2; justify-self:center; }
+          .battle-main .center-zone .cemiterio { grid-column:3; justify-self:center; }
           .battle-main .slot,
           .battle-main .slot.fronte,
           .battle-main .shared-zone {
@@ -112,6 +130,12 @@
         #editorPanel .editor-cards { min-height:0; flex:1 1 auto; overflow:auto; margin-top:8px; padding-right:2px; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; align-content:start; }
         #editorPanel .editor-card-btn { display:grid; grid-template-columns:40px 1fr; gap:6px; align-items:center; min-width:0; padding:5px; border:1px solid rgba(141,176,139,.16); border-radius:8px; background:rgba(0,0,0,.18); text-align:left; cursor:pointer; }
         #editorPanel .editor-card-btn:hover { border-color:rgba(214,186,103,.52); background:rgba(72,105,73,.22); }
+        #editorPanel .editor-card-btn { cursor:grab; }
+        #editorPanel .editor-card-btn:active { cursor:grabbing; }
+        body.editor-mode .battle-main .card { cursor:grab; }
+        body.editor-mode .battle-main .card.editor-dragging { opacity:.55; cursor:grabbing; }
+        body.editor-mode .battle-main .slot.editor-drop-hover { border-color:rgba(214,186,103,.95) !important; box-shadow:0 0 0 2px rgba(214,186,103,.22), inset 0 0 22px rgba(214,186,103,.1); }
+
         #editorPanel .editor-card-btn.is-selected { border-color:rgba(214,186,103,.9); box-shadow:0 0 0 1px rgba(214,186,103,.22); }
         #editorPanel .editor-card-btn img { width:40px; height:54px; object-fit:cover; border-radius:4px; border:1px solid rgba(214,186,103,.24); background:#102015; }
         #editorPanel .editor-card-btn .editor-card-emoji { width:40px; height:54px; display:grid; place-items:center; font-size:22px; border-radius:4px; background:#102015; }
@@ -183,8 +207,8 @@
       this.setEditorState();
       this.renderCatalog();
       this.bindFieldInteraction();
-      document.querySelector('.version-badge')?.replaceChildren(document.createTextNode('v3.2.14 · Editor'));
-      document.title = 'Inseto Cards — Editor · v3.2.14';
+      document.querySelector('.version-badge')?.replaceChildren(document.createTextNode('v3.2.16 · Editor'));
+      document.title = 'Inseto Cards — Editor · v3.2.16';
       this.setStatus('Editor ativo. Selecione uma carta e clique em qualquer slot.');
       if (typeof render === 'function') render();
       this.highlightField();
@@ -216,8 +240,11 @@
     bindFieldInteraction() {
       if (this._bound) return;
       this._bound = true;
+
+      // Clique: mantém a interação rápida original.
       document.addEventListener('click', e => {
         if (!this.active) return;
+        if (e.defaultPrevented) return;
         const slot = e.target.closest('#pb0,#pb1,#pb2,#pf0,#eb0,#eb1,#eb2,#ef0');
         const fieldCard = e.target.closest('.battle-main .card[data-card-id]');
         if (slot) {
@@ -233,6 +260,75 @@
           this.selectFieldById(fieldCard.dataset.cardId);
         }
       }, true);
+
+      // Drag & drop do Editor. Captura os eventos antes do motor normal para
+      // que as regras de drag da partida não interfiram no Editor.
+      document.addEventListener('dragstart', e => {
+        if (!this.active) return;
+        const catalogCard = e.target.closest('.editor-card-btn[data-editor-card-key]');
+        const fieldCard = e.target.closest('.battle-main .card[data-card-id]');
+        if (!catalogCard && !fieldCard) return;
+        e.stopImmediatePropagation();
+        if (catalogCard) {
+          this.dragPayload = { type:'catalog', key:catalogCard.dataset.editorCardKey };
+          catalogCard.classList.add('editor-dragging');
+          e.dataTransfer?.setData('text/plain', `editor-card:${catalogCard.dataset.editorCardKey}`);
+          if (e.dataTransfer) e.dataTransfer.effectAllowed = 'copy';
+        } else {
+          const info = this.findFieldById(fieldCard.dataset.cardId);
+          if (!info) return;
+          this.dragPayload = { type:'field', ...info };
+          fieldCard.classList.add('editor-dragging');
+          e.dataTransfer?.setData('text/plain', `editor-field:${fieldCard.dataset.cardId}`);
+          if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
+        }
+      }, true);
+
+      document.addEventListener('dragover', e => {
+        if (!this.active || !this.dragPayload) return;
+        const slot = e.target.closest('#pb0,#pb1,#pb2,#pf0,#eb0,#eb1,#eb2,#ef0');
+        if (!slot) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        e.dataTransfer.dropEffect = this.dragPayload.type === 'catalog' ? 'copy' : 'move';
+        slot.classList.add('editor-drop-hover');
+      }, true);
+
+      document.addEventListener('dragenter', e => {
+        if (!this.active || !this.dragPayload) return;
+        const slot = e.target.closest('#pb0,#pb1,#pb2,#eb0,#eb1,#eb2,#pf0,#ef0');
+        if (slot) slot.classList.add('editor-drop-hover');
+      }, true);
+
+      document.addEventListener('dragleave', e => {
+        const slot = e.target.closest?.('#pb0,#pb1,#pb2,#pf0,#eb0,#eb1,#eb2,#ef0');
+        if (slot && !slot.contains(e.relatedTarget)) slot.classList.remove('editor-drop-hover');
+      }, true);
+
+      document.addEventListener('drop', e => {
+        if (!this.active || !this.dragPayload) return;
+        const slot = e.target.closest('#pb0,#pb1,#pb2,#pf0,#eb0,#eb1,#eb2,#ef0');
+        if (!slot) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        slot.classList.remove('editor-drop-hover');
+        const info = this.slotInfo(slot.id);
+        const payload = this.dragPayload;
+        this.dragPayload = null;
+        if (payload.type === 'catalog') {
+          this.selectedKey = payload.key;
+          this.selectedField = null;
+          this.placeSelected(info.player, info.zone, info.slot);
+        } else if (payload.type === 'field') {
+          this.moveField(payload, info);
+        }
+      }, true);
+
+      document.addEventListener('dragend', e => {
+        if (!this.active) return;
+        this.dragPayload = null;
+        document.querySelectorAll('.editor-dragging,.editor-drop-hover').forEach(el => el.classList.remove('editor-dragging','editor-drop-hover'));
+      }, true);
     },
 
     slotInfo(id) {
@@ -241,6 +337,47 @@
       if (/^pb[0-2]$/.test(id)) return { player:0, zone:'bank', slot:Number(id.slice(2)) };
       if (/^eb[0-2]$/.test(id)) return { player:1, zone:'bank', slot:Number(id.slice(2)) };
       return null;
+    },
+
+    findFieldById(id) {
+      for (let pi=0; pi<2; pi++) {
+        const p = state.players[pi];
+        if (p?.front?.id === id) return { pi, zone:'front', slot:0 };
+        const slot = p?.bank.findIndex(c => c?.id === id);
+        if (slot >= 0) return { pi, zone:'bank', slot };
+      }
+      return null;
+    },
+
+    moveField(source, target) {
+      if (!source || !target) return;
+      if (source.pi === target.player && source.zone === target.zone && source.slot === target.slot) {
+        this.setStatus('A carta já está nesse slot.');
+        return;
+      }
+      const srcPlayer = state.players[source.pi];
+      const dstPlayer = state.players[target.player];
+      const srcCard = source.zone === 'front' ? srcPlayer.front : srcPlayer.bank[source.slot];
+      if (!srcCard) return;
+      this.pushHistory(`Mover ${CARDS[srcCard.key].name}`);
+      const dstCard = target.zone === 'front' ? dstPlayer.front : dstPlayer.bank[target.slot];
+
+      // Permite mover entre qualquer slot do Editor. Se o destino estiver ocupado,
+      // troca as duas cartas para tornar a ferramenta útil para montagem rápida.
+      if (source.zone === 'front') srcPlayer.front = dstCard || null;
+      else srcPlayer.bank[source.slot] = dstCard || null;
+      if (target.zone === 'front') dstPlayer.front = srcCard;
+      else dstPlayer.bank[target.slot] = srcCard;
+      srcCard.owner = target.player;
+      if (dstCard) dstCard.owner = source.pi;
+
+      this.selectedField = { pi:target.player, zone:target.zone, slot:target.slot };
+      this.selectedKey = null;
+      refreshPassiveStats();
+      this.updateSelectedLabel();
+      this.setStatus(`${CARDS[srcCard.key].name} movido para ${target.player === 0 ? 'seu' : 'alvo'} ${target.zone === 'front' ? 'Fronte' : `Banco ${target.slot+1}`}.`);
+      render();
+      this.highlightField();
     },
 
     selectFieldById(id) {
@@ -274,6 +411,8 @@
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'editor-card-btn' + (this.selectedKey === key ? ' is-selected' : '');
+        btn.draggable = true;
+        btn.dataset.editorCardKey = key;
         const img = document.createElement('img');
         img.alt = '';
         img.loading = 'lazy';
@@ -419,7 +558,14 @@
       this.setStatus(`Desfeito: ${last.label}.`);
     },
 
+    refreshFieldDragables() {
+      document.querySelectorAll('.battle-main .card[data-card-id]').forEach(cardEl => {
+        cardEl.draggable = true;
+      });
+    },
+
     highlightField() {
+      this.refreshFieldDragables();
       document.querySelectorAll('.editor-field-selected').forEach(el => el.classList.remove('editor-field-selected'));
       if (!this.selectedField) return;
       const s = this.selectedField;
